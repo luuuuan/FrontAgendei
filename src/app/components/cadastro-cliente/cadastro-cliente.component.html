@@ -1,0 +1,262 @@
+<div class="cadastro-wrapper">
+  <div class="auth-container">
+
+    <!-- Hero -->
+    <div class="auth-hero">
+      <div class="auth-hero-content">
+        <h1>Crie sua conta grátis</h1>
+        <p>Cadastre-se e comece a agendar serviços de forma prática e rápida.</p>
+        <ul class="features-list">
+          <li><i class="fas fa-check-circle"></i><span>Agende 24 horas por dia</span></li>
+          <li><i class="fas fa-check-circle"></i><span>Gerencie seus agendamentos</span></li>
+          <li><i class="fas fa-check-circle"></i><span>Receba lembretes automáticos</span></li>
+          <li><i class="fas fa-check-circle"></i><span>Histórico completo de serviços</span></li>
+        </ul>
+
+        <!-- Steps indicator no hero -->
+        <div class="steps-hero">
+          <div class="step-hero-item" [class.ativo]="stepAtual === 1" [class.concluido]="stepAtual > 1">
+            <div class="step-hero-num">
+              <i class="fas fa-check" *ngIf="stepAtual > 1"></i>
+              <span *ngIf="stepAtual <= 1">1</span>
+            </div>
+            <span>Dados Pessoais</span>
+          </div>
+          <div class="step-hero-sep"></div>
+          <div class="step-hero-item" [class.ativo]="stepAtual === 2">
+            <div class="step-hero-num">2</div>
+            <span>Endereço</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulário -->
+    <div class="auth-forms">
+      <div class="logo">
+        <i class="fas fa-calendar-check"></i>
+        <span>Agendei</span>
+      </div>
+
+      <!-- Header do step -->
+      <div class="step-header">
+        <div>
+          <h2>{{ stepInfo.titulo }}</h2>
+          <p class="auth-sub">{{ stepInfo.sub }}</p>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="progressoPorcentagem"></div>
+          </div>
+          <span class="progress-label">{{ stepAtual }}/2</span>
+        </div>
+      </div>
+
+      <!-- ===== STEP 1: Dados Pessoais ===== -->
+      <div *ngIf="stepAtual === 1">
+        <form [formGroup]="formStep1">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nome *</label>
+              <div class="input-icon-wrapper">
+                <i class="fas fa-user"></i>
+                <input type="text" formControlName="nome" placeholder="Seu nome" />
+              </div>
+              <div class="erro-campo" *ngIf="invalido(formStep1, 'nome')">Nome é obrigatório.</div>
+            </div>
+            <div class="form-group">
+              <label>Sobrenome *</label>
+              <div class="input-icon-wrapper">
+                <i class="fas fa-user"></i>
+                <input type="text" formControlName="sobrenome" placeholder="Seu sobrenome" />
+              </div>
+              <div class="erro-campo" *ngIf="invalido(formStep1, 'sobrenome')">Sobrenome é obrigatório.</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>E-mail *</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-envelope"></i>
+              <input type="email" formControlName="email" placeholder="seu@email.com" />
+            </div>
+            <div class="erro-campo" *ngIf="invalido(formStep1, 'email')">E-mail inválido.</div>
+          </div>
+
+          <div class="form-group">
+            <label>Telefone *</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-phone"></i>
+              <input type="tel" formControlName="telefone" placeholder="(00) 00000-0000"
+                maxlength="15" (input)="aplicarMascaraTelefone($event)" />
+            </div>
+            <div class="erro-campo" *ngIf="invalido(formStep1, 'telefone')">Telefone inválido.</div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Data de Nascimento *</label>
+              <div class="input-icon-wrapper">
+                <i class="fas fa-calendar"></i>
+                <input type="date" formControlName="dataNascimento" />
+              </div>
+              <div class="erro-campo" *ngIf="invalido(formStep1, 'dataNascimento')">Data obrigatória.</div>
+            </div>
+            <div class="form-group">
+              <label>CPF *</label>
+              <div class="input-icon-wrapper">
+                <i class="fas fa-id-card"></i>
+                <input type="text" formControlName="cpf" placeholder="000.000.000-00"
+                  maxlength="14" (input)="aplicarMascaraCpf($event)" />
+              </div>
+              <div class="erro-campo" *ngIf="invalido(formStep1, 'cpf')">CPF inválido.</div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Senha *</label>
+              <div class="input-icon-wrapper">
+                <i class="fas fa-lock"></i>
+                <input [type]="mostrarSenha ? 'text' : 'password'"
+                  formControlName="senha" placeholder="Mínimo 8 caracteres" />
+                <button type="button" class="btn-olho" (click)="toggleSenha('senha')">
+                  <i [class]="mostrarSenha ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
+                </button>
+              </div>
+              <div class="erro-campo" *ngIf="invalido(formStep1, 'senha')">Mínimo 8 caracteres.</div>
+            </div>
+            <div class="form-group">
+              <label>Confirmar Senha *</label>
+              <div class="input-icon-wrapper">
+                <i class="fas fa-lock"></i>
+                <input [type]="mostrarConfirmar ? 'text' : 'password'"
+                  formControlName="confirmarSenha" placeholder="Confirme a senha" />
+                <button type="button" class="btn-olho" (click)="toggleSenha('confirmar')">
+                  <i [class]="mostrarConfirmar ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
+                </button>
+              </div>
+              <div class="erro-campo"
+                *ngIf="campo(formStep1, 'confirmarSenha')?.errors?.['senhasDiferentes']">
+                As senhas não coincidem.
+              </div>
+            </div>
+          </div>
+
+          <div class="termos-check">
+            <input type="checkbox" id="termos" formControlName="termos" />
+            <label for="termos">
+              Concordo com os <a href="#">Termos de Uso</a> e <a href="#">Política de Privacidade</a>
+            </label>
+          </div>
+          <div class="erro-campo"
+            *ngIf="campo(formStep1, 'termos')?.invalid && campo(formStep1, 'termos')?.touched">
+            Você precisa aceitar os termos para continuar.
+          </div>
+
+        </form>
+
+        <div class="form-footer">
+          <div></div>
+          <button class="btn-proximo" (click)="proximo()">
+            Próximo <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== STEP 2: Endereço ===== -->
+      <div *ngIf="stepAtual === 2">
+        <form [formGroup]="formStep2">
+
+          <div class="cep-row">
+            <div class="form-group" style="flex:1">
+              <label>CEP *</label>
+              <div class="input-icon-wrapper">
+                <i class="fas fa-map-marker-alt"></i>
+                <input type="text" formControlName="cep" placeholder="00000-000"
+                  maxlength="9" (input)="aplicarMascaraCep($event)" />
+              </div>
+              <div class="erro-campo" *ngIf="invalido(formStep2, 'cep')">CEP inválido.</div>
+            </div>
+            <button type="button" class="btn-buscar-cep" (click)="buscarCep()" [disabled]="buscandoCep">
+              <span *ngIf="buscandoCep"><i class="fas fa-spinner fa-spin"></i></span>
+              <span *ngIf="!buscandoCep"><i class="fas fa-search"></i> Buscar</span>
+            </button>
+          </div>
+
+          <div class="form-group">
+            <label>Logradouro *</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-road"></i>
+              <input type="text" formControlName="logradouro" placeholder="Rua, Avenida..." />
+            </div>
+            <div class="erro-campo" *ngIf="invalido(formStep2, 'logradouro')">Logradouro obrigatório.</div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Número *</label>
+              <div class="input-icon-wrapper">
+                <i class="fas fa-hashtag"></i>
+                <input type="text" formControlName="numero" placeholder="123" />
+              </div>
+              <div class="erro-campo" *ngIf="invalido(formStep2, 'numero')">Número obrigatório.</div>
+            </div>
+            <div class="form-group">
+              <label>Complemento</label>
+              <div class="input-icon-wrapper">
+                <i class="fas fa-info"></i>
+                <input type="text" formControlName="complemento" placeholder="Apto, Sala..." />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Bairro *</label>
+              <div class="input-icon-wrapper">
+                <i class="fas fa-city"></i>
+                <input type="text" formControlName="bairro" />
+              </div>
+              <div class="erro-campo" *ngIf="invalido(formStep2, 'bairro')">Bairro obrigatório.</div>
+            </div>
+            <div class="form-group">
+              <label>Cidade *</label>
+              <div class="input-icon-wrapper">
+                <i class="fas fa-city"></i>
+                <input type="text" formControlName="cidade" />
+              </div>
+              <div class="erro-campo" *ngIf="invalido(formStep2, 'cidade')">Cidade obrigatória.</div>
+            </div>
+          </div>
+
+          <div class="form-group" style="max-width:150px">
+            <label>Estado *</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-flag"></i>
+              <input type="text" formControlName="estado" placeholder="SP" maxlength="2" />
+            </div>
+            <div class="erro-campo" *ngIf="invalido(formStep2, 'estado')">Estado obrigatório.</div>
+          </div>
+
+        </form>
+
+        <div class="form-footer">
+          <button class="btn-voltar" (click)="voltar()">
+            <i class="fas fa-arrow-left"></i> Voltar
+          </button>
+          <button class="btn-cadastrar" (click)="salvar()" [disabled]="salvando">
+            <span *ngIf="salvando"><i class="fas fa-spinner fa-spin"></i> Cadastrando...</span>
+            <span *ngIf="!salvando"><i class="fas fa-user-plus"></i> Criar Conta</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="auth-footer">
+        Já tem conta? <a routerLink="/login">Fazer login</a>
+      </div>
+
+    </div>
+  </div>
+</div>

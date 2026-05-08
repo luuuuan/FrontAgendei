@@ -1,0 +1,119 @@
+/* Logo no topo da sidebar */
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary, #4361ee);
+  padding: 8px 14px 20px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  margin-bottom: 8px;
+}
+.sidebar-logo i { font-size: 18px; }
+
+/* Sidebar desktop */
+.sidebar {
+  position: fixed;
+  top: var(--header-height, 64px);
+  left: 0;
+  width: var(--sidebar-width, 220px);
+  height: calc(100vh - var(--header-height, 64px));
+  background: white;
+  box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,.08));
+  padding: 16px 12px;
+  overflow-y: auto;
+  z-index: 800;
+  transition: transform .3s ease;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  transition: all .2s;
+  color: var(--dark, #1e293b);
+  font-size: 14px;
+  font-weight: 500;
+  user-select: none;
+}
+
+.nav-item i {
+  width: 20px;
+  text-align: center;
+  font-size: 16px;
+  color: var(--gray, #64748b);
+  transition: all .2s;
+}
+
+.nav-item:hover { background-color: var(--light, #f8fafc); }
+.nav-item:hover i { color: var(--primary, #4361ee); }
+.nav-item.active { background-color: var(--primary, #4361ee); color: white; }
+.nav-item.active i { color: white; }
+
+/* Botão hamburger — oculto no desktop */
+.hamburger-btn {
+  display: none;
+  position: fixed;
+  top: 14px;
+  left: 16px;
+  z-index: 1001;
+  background: white;
+  border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  flex-direction: column;
+  gap: 5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.hamburger-btn span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--dark, #1e293b);
+  border-radius: 2px;
+  transition: all .3s;
+}
+
+/* Animação do X quando aberto */
+.hamburger-btn.ativo span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger-btn.ativo span:nth-child(2) { opacity: 0; }
+.hamburger-btn.ativo span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Overlay */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 899;
+}
+
+/* === MOBILE === */
+@media (max-width: 768px) {
+  .hamburger-btn {
+    display: flex;
+  }
+
+  .sidebar-overlay {
+    display: block;
+  }
+
+  .sidebar {
+    top: 0;
+    height: 100vh;
+    transform: translateX(-100%);
+    padding-top: 24px;
+    z-index: 900;
+  }
+
+  .sidebar.aberto {
+    transform: translateX(0);
+  }
+}

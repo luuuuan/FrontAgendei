@@ -1,0 +1,129 @@
+<div class="login-wrapper">
+  <div class="auth-container">
+
+    <!-- Hero lateral -->
+    <div class="auth-hero">
+      <div class="auth-hero-content">
+        <h1>Simplifique seus agendamentos</h1>
+        <p>O Agendei é a plataforma completa para gerenciar sua empresa e agendar serviços de forma prática.</p>
+        <ul class="features-list">
+          <li><i class="fas fa-check-circle"></i><span>Agendamento online 24/7</span></li>
+          <li><i class="fas fa-check-circle"></i><span>Gestão completa de clientes</span></li>
+          <li><i class="fas fa-check-circle"></i><span>Relatórios e analytics</span></li>
+          <li><i class="fas fa-check-circle"></i><span>Lembretes automáticos</span></li>
+          <li><i class="fas fa-check-circle"></i><span>Pagamentos integrados</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Formulário -->
+    <div class="auth-forms">
+      <div class="logo">
+        <i class="fas fa-calendar-check"></i>
+        <span>Agendei</span>
+      </div>
+
+      <!-- ===== TELA LOGIN ===== -->
+      <div *ngIf="telaAtiva === 'login'">
+        <h2>Bem-vindo de volta</h2>
+        <p class="auth-sub">Entre com seu e-mail e senha para acessar</p>
+
+        <form [formGroup]="form" (ngSubmit)="login()">
+
+          <div class="form-group">
+            <label>E-mail</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-envelope"></i>
+              <input type="email" formControlName="email" placeholder="seu@email.com" autocomplete="email" />
+            </div>
+            <div class="erro-campo" *ngIf="form.get('email')?.invalid && form.get('email')?.touched">
+              <span *ngIf="form.get('email')?.errors?.['required']">E-mail é obrigatório.</span>
+              <span *ngIf="form.get('email')?.errors?.['email']">E-mail inválido.</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Senha</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-lock"></i>
+              <input [type]="mostrarSenha ? 'text' : 'password'" formControlName="senha" placeholder="Sua senha" autocomplete="current-password" />
+              <button type="button" class="btn-olho" (click)="mostrarSenha = !mostrarSenha">
+                <i [class]="mostrarSenha ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
+              </button>
+            </div>
+            <div class="erro-campo" *ngIf="form.get('senha')?.invalid && form.get('senha')?.touched">
+              Senha deve ter no mínimo 6 caracteres.
+            </div>
+          </div>
+
+          <!-- Link Esqueci minha senha -->
+          <div style="text-align:right;margin-bottom:16px">
+            <button type="button" class="btn-link-text" (click)="telaAtiva = 'recuperar'">
+              <i class="fas fa-key"></i> Esqueci minha senha
+            </button>
+          </div>
+
+          <button type="submit" class="btn-login" [disabled]="carregando">
+            <span *ngIf="carregando"><i class="fas fa-spinner fa-spin"></i> Entrando...</span>
+            <span *ngIf="!carregando">Entrar</span>
+          </button>
+
+        </form>
+
+        <!-- Links de cadastro -->
+        <div class="cadastro-links">
+          <div class="cadastro-link-item">
+            <i class="fas fa-building"></i>
+            <div>
+              <div class="cadastro-link-titulo">Sou prestador / empresa</div>
+              <a routerLink="/cadastro-prestador">Cadastrar minha empresa</a>
+            </div>
+          </div>
+          <div class="cadastro-link-item">
+            <i class="fas fa-user"></i>
+            <div>
+              <div class="cadastro-link-titulo">Sou cliente</div>
+              <a routerLink="/cadastro-cliente">Criar minha conta</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TELA RECUPERAR SENHA ===== -->
+      <div *ngIf="telaAtiva === 'recuperar'">
+        <button type="button" class="btn-voltar-link" (click)="telaAtiva = 'login'">
+          <i class="fas fa-arrow-left"></i> Voltar ao login
+        </button>
+        <h2>Recuperar Senha</h2>
+        <p class="auth-sub">Informe seu e-mail cadastrado e enviaremos as instruções de recuperação.</p>
+
+        <div *ngIf="recuperacaoEnviada" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;text-align:center;margin-bottom:16px">
+          <i class="fas fa-check-circle" style="color:#16a34a;font-size:32px"></i>
+          <p style="margin-top:8px;color:#15803d;font-weight:600">E-mail enviado!</p>
+          <p style="color:#166534;font-size:14px">Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.</p>
+          <button class="btn-login" (click)="telaAtiva = 'login'" style="margin-top:12px">Voltar ao login</button>
+        </div>
+
+        <form [formGroup]="formRecuperar" (ngSubmit)="recuperarSenha()" *ngIf="!recuperacaoEnviada">
+          <div class="form-group">
+            <label>E-mail cadastrado</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-envelope"></i>
+              <input type="email" formControlName="email" placeholder="seu@email.com" autocomplete="email" />
+            </div>
+            <div class="erro-campo" *ngIf="formRecuperar.get('email')?.invalid && formRecuperar.get('email')?.touched">
+              <span *ngIf="formRecuperar.get('email')?.errors?.['required']">E-mail é obrigatório.</span>
+              <span *ngIf="formRecuperar.get('email')?.errors?.['email']">E-mail inválido.</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-login" [disabled]="enviandoRecuperacao">
+            <span *ngIf="enviandoRecuperacao"><i class="fas fa-spinner fa-spin"></i> Enviando...</span>
+            <span *ngIf="!enviandoRecuperacao"><i class="fas fa-paper-plane"></i> Enviar instruções</span>
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>

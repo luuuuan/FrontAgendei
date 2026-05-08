@@ -1,0 +1,71 @@
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.loading-value {
+  color: var(--gray);
+  font-size: 20px;
+}
+
+/* Calendário */
+.mes-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mes-label {
+  font-weight: 500;
+  font-size: 14px;
+  text-transform: capitalize;
+  min-width: 130px;
+  text-align: center;
+}
+
+.calendario {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.dia-semana {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray);
+  padding: 6px 0;
+}
+
+.dia-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: default;
+  transition: var(--transition);
+}
+
+.dia-cell:not(.vazio):hover {
+  background-color: var(--light);
+}
+
+.dia-cell.hoje {
+  background-color: var(--primary);
+  color: white;
+  font-weight: 700;
+}
+
+.dia-cell.vazio {
+  cursor: default;
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}

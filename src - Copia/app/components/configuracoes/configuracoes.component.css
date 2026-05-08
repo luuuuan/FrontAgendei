@@ -1,0 +1,242 @@
+.config-abas {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.aba-btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--light-gray);
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aba-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.aba-btn.ativa {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.config-card {
+  max-width: 800px;
+}
+
+.config-form {
+  margin-top: 16px;
+}
+
+.secao-titulo {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 20px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+.form-actions {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--light-gray);
+}
+
+/* Toggle switch */
+.toggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.toggle-titulo {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.toggle-desc {
+  font-size: 13px;
+  color: var(--gray);
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  inset: 0;
+  background-color: var(--light-gray);
+  border-radius: 24px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.slider::before {
+  content: '';
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+.switch input:checked + .slider {
+  background-color: var(--primary);
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(20px);
+}
+
+/* Endpoints */
+.api-url {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--gray);
+}
+
+.api-url code {
+  background: var(--light);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--primary);
+}
+
+.api-desc {
+  font-size: 14px;
+  color: var(--gray);
+  margin-bottom: 12px;
+}
+
+.endpoints-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.endpoint-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--light);
+  border-radius: 6px;
+  flex-wrap: wrap;
+}
+
+.endpoint-item.faltando {
+  background: #fff8f0;
+  opacity: 0.9;
+}
+
+.metodo-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  min-width: 52px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.metodo-get    { background: #d1fae5; color: #065f46; }
+.metodo-post   { background: #dbeafe; color: #1e40af; }
+.metodo-put    { background: #fef3c7; color: #92400e; }
+.metodo-patch  { background: #ede9fe; color: #5b21b6; }
+.metodo-delete { background: #fee2e2; color: #991b1b; }
+
+.endpoint-rota {
+  font-size: 13px;
+  color: var(--dark);
+  flex-shrink: 0;
+}
+
+.endpoint-desc {
+  font-size: 13px;
+  color: var(--gray);
+  flex: 1;
+}
+
+.endpoints-faltando {
+  border-top: 1px solid var(--light-gray);
+  padding-top: 20px;
+}
+
+.faltando-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--warning);
+  margin-bottom: 12px;
+}
+
+.info-aviso {
+  background: #eff6ff;
+  border: 1px solid var(--primary);
+  border-radius: var(--border-radius);
+  padding: 12px 16px;
+  color: var(--primary);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 600px) {
+  .form-row-2,
+  .form-row-3 {
+    grid-template-columns: 1fr;
+  }
+}

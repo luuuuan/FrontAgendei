@@ -1,0 +1,188 @@
+<div class="page-title">Profissionais</div>
+
+<!-- Skeleton inicial -->
+<div *ngIf="carregando" style="margin-top:16px">
+  <app-skeleton tipo="cards" [count]="5"></app-skeleton>
+</div>
+
+<!-- Conteúdo -->
+<div *ngIf="!carregando">
+
+<!-- Filtro -->
+<div class="filter-bar">
+  <div class="search-box">
+    <i class="fas fa-search"></i>
+    <input
+      type="text"
+      placeholder="Buscar profissional..."
+      [(ngModel)]="termoBusca"
+      (input)="filtrar()"
+    />
+  </div>
+  <div class="actions">
+    <button class="btn btn-primary" (click)="abrirModal()">
+      <i class="fas fa-link"></i> Vincular Profissional
+    </button>
+  </div>
+</div>
+
+<!-- Loading -->
+<div class="loading-box" *ngIf="carregando">
+  <i class="fas fa-spinner fa-spin fa-2x"></i>
+  <p>Carregando profissionais...</p>
+</div>
+
+<!-- Erro -->
+<div class="erro-aviso" *ngIf="erro && !carregando">
+  <i class="fas fa-exclamation-circle"></i>
+  {{ erro }}
+  <button class="btn btn-sm btn-outline" (click)="carregarProfissionais()" style="margin-left:auto">
+    Tentar novamente
+  </button>
+</div>
+
+
+<!-- Cards -->
+<div class="prof-grid" *ngIf="!carregando && !erro">
+
+  <div class="empty-state" *ngIf="profissionaisFiltrados.length === 0">
+    <i class="fas fa-user-md"></i>
+    <p *ngIf="termoBusca">Nenhum profissional encontrado para "{{ termoBusca }}"</p>
+    <p *ngIf="!termoBusca">Nenhum profissional vinculado à empresa.</p>
+    <button class="btn btn-primary btn-sm" (click)="abrirModal()" *ngIf="!termoBusca">
+      <i class="fas fa-link"></i> Vincular primeiro profissional
+    </button>
+  </div>
+
+  <div class="prof-card card" *ngFor="let p of profissionaisFiltrados">
+    <div class="prof-card-top">
+      <div class="avatar avatar-lg">{{ iniciais(p.nome) }}</div>
+      <div class="prof-info">
+        <div class="prof-nome">{{ p.nome || 'Profissional #' + p.id }}</div>
+        <div class="prof-desc" *ngIf="p.descricao">{{ p.descricao }}</div>
+        <span class="badge" [class]="classeStatus(p.statusProfissional)">
+          {{ p.statusProfissional || 'ATIVO' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="prof-servicos" *ngIf="p.servico && p.servico.length > 0">
+      <div class="prof-servicos-label">Serviços:</div>
+      <div class="servicos-tags">
+        <span class="badge badge-primary" *ngFor="let s of p.servico">{{ s.nome }}</span>
+      </div>
+    </div>
+
+    <div class="prof-sem-servicos" *ngIf="!p.servico || p.servico.length === 0">
+      <i class="fas fa-info-circle"></i> Nenhum serviço vinculado
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== MODAL ===== -->
+<div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div class="modal-title">
+        <i class="fas fa-link"></i>
+        {{ etapaModal === 'busca' ? 'Buscar Profissional' : 'Confirmar Vinculação' }}
+      </div>
+      <button class="modal-close" (click)="fecharModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- ===== ETAPA 1: BUSCA ===== -->
+      <div *ngIf="etapaModal === 'busca'">
+
+        <p class="modal-desc">
+          <i class="fas fa-info-circle"></i>
+          Informe o CPF ou e-mail do profissional que deseja vincular à sua empresa.
+          O profissional precisa ter uma conta cadastrada no sistema com perfil de <strong>Profissional</strong>.
+        </p>
+
+        <div class="form-group">
+          <label>CPF ou E-mail *</label>
+          <div style="display:flex;gap:8px">
+            <input
+              type="text"
+              [(ngModel)]="buscaUsuario"
+              placeholder="000.000.000-00 ou email@exemplo.com"
+              (input)="aplicarMascaraCpf($event)"
+              (keyup.enter)="buscarUsuario()"
+              style="flex:1"
+            />
+            <button
+              type="button"
+              class="btn btn-outline btn-sm"
+              (click)="buscarUsuario()"
+              [disabled]="buscandoUsuario">
+              <i class="fas fa-spinner fa-spin" *ngIf="buscandoUsuario"></i>
+              <i class="fas fa-search" *ngIf="!buscandoUsuario"></i>
+              Buscar
+            </button>
+          </div>
+          <div class="erro-campo" *ngIf="erroBuscaUsuario">
+            <i class="fas fa-exclamation-circle"></i> {{ erroBuscaUsuario }}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===== ETAPA 2: CONFIRMAR ===== -->
+      <div *ngIf="etapaModal === 'confirmar'">
+
+        <div class="prof-encontrado-card">
+          <div class="prof-encontrado-avatar">
+            {{ iniciais(profissionalEncontrado?.nome) }}
+          </div>
+          <div class="prof-encontrado-info">
+            <div class="prof-encontrado-nome">{{ profissionalEncontrado?.nome }}</div>
+            <div class="prof-encontrado-detalhe">
+              <i class="fas fa-envelope"></i> {{ usuarioEncontrado?.email }}
+            </div>
+            <div class="prof-encontrado-detalhe" *ngIf="usuarioEncontrado?.telefone">
+              <i class="fas fa-phone"></i> {{ usuarioEncontrado?.telefone }}
+            </div>
+            <div class="prof-encontrado-detalhe" *ngIf="profissionalEncontrado?.descricao">
+              <i class="fas fa-star"></i> {{ profissionalEncontrado?.descricao }}
+            </div>
+          </div>
+        </div>
+
+        <div class="vinculacao-aviso">
+          <i class="fas fa-building"></i>
+          Este profissional será vinculado à sua empresa e passará a aparecer
+          na lista de profissionais disponíveis para agendamento.
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="fecharModal()">Cancelar</button>
+
+      <!-- Footer etapa busca -->
+      <div *ngIf="etapaModal === 'busca'">
+        <!-- sem botão extra, busca é pelo botão inline -->
+      </div>
+
+      <!-- Footer etapa confirmar -->
+      <div *ngIf="etapaModal === 'confirmar'" style="display:flex;gap:8px">
+        <button class="btn btn-outline" (click)="voltarBusca()">
+          <i class="fas fa-arrow-left"></i> Voltar
+        </button>
+        <button class="btn btn-primary" (click)="vincular()" [disabled]="salvando">
+          <span *ngIf="salvando"><i class="fas fa-spinner fa-spin"></i> Vinculando...</span>
+          <span *ngIf="!salvando"><i class="fas fa-link"></i> Confirmar Vinculação</span>
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+</div>

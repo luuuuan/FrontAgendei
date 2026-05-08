@@ -1,0 +1,60 @@
+/* Reutiliza estilos do login — layout idêntico */
+.login-wrapper { min-height: 100vh; display: flex; align-items: stretch; background: var(--bg, #f8fafc); }
+.auth-container { display: flex; width: 100%; max-width: 1100px; margin: auto; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.1); }
+.auth-hero { flex: 1; background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%); color: #fff; padding: 48px 40px; display: flex; align-items: center; }
+.auth-hero-content h1 { font-size: 28px; font-weight: 700; margin-bottom: 12px; }
+.auth-hero-content p { opacity: .85; line-height: 1.6; margin-bottom: 24px; }
+.features-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.features-list li { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.features-list i { color: #a5f3fc; }
+.auth-forms { flex: 0 0 460px; background: #fff; padding: 48px 40px; display: flex; flex-direction: column; justify-content: center; }
+.logo { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 700; color: #4361ee; margin-bottom: 32px; }
+.logo i { font-size: 24px; }
+.auth-forms h2 { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 6px; }
+.auth-sub { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+.input-icon-wrapper { position: relative; display: flex; align-items: center; }
+.input-icon-wrapper > i { position: absolute; left: 14px; color: #9ca3af; font-size: 14px; }
+.input-icon-wrapper input { width: 100%; padding: 11px 40px 11px 38px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; outline: none; transition: border .2s; box-sizing: border-box; }
+.input-icon-wrapper input:focus { border-color: #4361ee; }
+.btn-olho { position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: #9ca3af; padding: 4px; }
+.erro-campo { font-size: 12px; color: #ef4444; margin-top: 4px; }
+.btn-login { width: 100%; padding: 13px; background: #4361ee; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s; }
+.btn-login:hover:not(:disabled) { background: #3451cc; }
+.btn-login:disabled { opacity: .6; cursor: not-allowed; }
+.auth-footer { text-align: center; margin-top: 20px; font-size: 13px; color: #6b7280; }
+.auth-footer a { color: #4361ee; text-decoration: none; }
+
+/* Token info */
+.token-info { display: flex; align-items: center; gap: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #166534; margin-bottom: 20px; }
+.token-info i { color: #22c55e; }
+
+/* Força da senha */
+.forca-senha { margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+.forca-barra { flex: 1; height: 4px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+.forca-fill { height: 100%; border-radius: 4px; transition: width .3s, background .3s; }
+.forca-label { font-size: 11px; font-weight: 600; min-width: 40px; }
+
+/* Senhas coincidem */
+.senhas-ok { font-size: 12px; color: #22c55e; margin-top: 4px; }
+.senhas-ok i { margin-right: 4px; }
+
+/* Estados */
+.estado-erro, .estado-sucesso { text-align: center; }
+.estado-icone { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 32px; }
+.estado-icone.erro { background: #fef2f2; color: #ef4444; }
+.estado-icone.sucesso { background: #f0fdf4; color: #22c55e; }
+.lista-motivos { text-align: left; list-style: none; padding: 0; margin: 12px 0; display: flex; flex-direction: column; gap: 8px; }
+.lista-motivos li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6b7280; }
+.lista-motivos i { color: #4361ee; font-size: 10px; }
+
+/* Redirect bar */
+.redirect-bar { height: 4px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 16px; }
+.redirect-progresso { height: 100%; background: #22c55e; border-radius: 4px; animation: progresso 3s linear forwards; }
+@keyframes progresso { from { width: 0 } to { width: 100% } }
+
+@media (max-width: 768px) {
+  .auth-hero { display: none; }
+  .auth-forms { flex: 1; padding: 32px 24px; }
+}

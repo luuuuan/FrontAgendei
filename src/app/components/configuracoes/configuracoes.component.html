@@ -1,0 +1,200 @@
+<div class="page-title">Configurações</div>
+
+<!-- Abas -->
+<div class="config-abas">
+  <button class="aba-btn" [class.ativa]="abaAtiva === 'empresa'"       (click)="abaAtiva = 'empresa'">
+    <i class="fas fa-building"></i> Empresa
+  </button>
+  <button class="aba-btn" [class.ativa]="abaAtiva === 'notificacoes'"  (click)="abaAtiva = 'notificacoes'">
+    <i class="fas fa-bell"></i> Notificações
+  </button>
+  <button class="aba-btn" [class.ativa]="abaAtiva === 'api'"           (click)="abaAtiva = 'api'">
+    <i class="fas fa-plug"></i> API / Endpoints
+  </button>
+</div>
+
+<!-- ABA: Empresa -->
+<div class="card config-card" *ngIf="abaAtiva === 'empresa'">
+  <div class="card-header">
+    <div class="card-title">Dados da Empresa</div>
+  </div>
+
+  <div class="info-aviso">
+    <i class="fas fa-info-circle"></i>
+    Estas configurações são locais. Para persistir no servidor, é necessário implementar um endpoint de configuração no backend.
+  </div>
+
+  <form [formGroup]="formEmpresa" class="config-form">
+
+    <div class="form-group">
+      <label>Nome da Empresa *</label>
+      <input type="text" formControlName="nomeEmpresa" placeholder="Ex: Salão da Maria" />
+      <div class="erro-campo" *ngIf="formEmpresa.get('nomeEmpresa')?.invalid && formEmpresa.get('nomeEmpresa')?.touched">
+        Nome é obrigatório.
+      </div>
+    </div>
+
+    <div class="form-row-2">
+      <div class="form-group">
+        <label>E-mail de contato *</label>
+        <input type="email" formControlName="email" placeholder="contato@empresa.com" />
+        <div class="erro-campo" *ngIf="formEmpresa.get('email')?.invalid && formEmpresa.get('email')?.touched">
+          E-mail inválido.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Telefone</label>
+        <input type="tel" formControlName="telefone" placeholder="(00) 00000-0000" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Endereço</label>
+      <input type="text" formControlName="endereco" placeholder="Rua, número, bairro, cidade" />
+    </div>
+
+    <div class="secao-titulo">Horário de Funcionamento</div>
+
+    <div class="form-row-3">
+      <div class="form-group">
+        <label>Abertura</label>
+        <input type="time" formControlName="horarioAbertura" />
+      </div>
+
+      <div class="form-group">
+        <label>Fechamento</label>
+        <input type="time" formControlName="horarioFechamento" />
+      </div>
+
+      <div class="form-group">
+        <label>Dias de funcionamento</label>
+        <select formControlName="diasFuncionamento">
+          <option>Segunda a Sexta</option>
+          <option>Segunda a Sábado</option>
+          <option>Segunda a Domingo</option>
+          <option>Terça a Sábado</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" (click)="salvarEmpresa()" [disabled]="salvando">
+        <span *ngIf="salvando"><i class="fas fa-spinner fa-spin"></i> Salvando...</span>
+        <span *ngIf="!salvando"><i class="fas fa-save"></i> Salvar Configurações</span>
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<!-- ABA: Notificações -->
+<div class="card config-card" *ngIf="abaAtiva === 'notificacoes'">
+  <div class="card-header">
+    <div class="card-title">Preferências de Notificação</div>
+  </div>
+
+  <div class="info-aviso">
+    <i class="fas fa-info-circle"></i>
+    Sistema de notificações por e-mail precisa ser implementado no backend (ex: serviço de envio de e-mail com templates).
+  </div>
+
+  <form [formGroup]="formNotificacoes" class="config-form">
+
+    <div class="toggle-item">
+      <div class="toggle-info">
+        <div class="toggle-titulo">E-mail de confirmação</div>
+        <div class="toggle-desc">Enviar e-mail ao cliente quando o agendamento for confirmado</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" formControlName="emailConfirmacao" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-item">
+      <div class="toggle-info">
+        <div class="toggle-titulo">E-mail de lembrete</div>
+        <div class="toggle-desc">Enviar lembrete antes do agendamento</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" formControlName="emailLembrete" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-item" style="border-bottom: none;">
+      <div class="toggle-info">
+        <div class="toggle-titulo">E-mail de cancelamento</div>
+        <div class="toggle-desc">Notificar cliente em caso de cancelamento</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" formControlName="emailCancelamento" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="form-group" style="margin-top: 24px;">
+      <label>Antecedência do lembrete</label>
+      <select formControlName="antecedenciaLembrete">
+        <option value="1">1 hora antes</option>
+        <option value="2">2 horas antes</option>
+        <option value="24">24 horas antes</option>
+        <option value="48">48 horas antes</option>
+      </select>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" (click)="salvarNotificacoes()" [disabled]="salvando">
+        <span *ngIf="salvando"><i class="fas fa-spinner fa-spin"></i> Salvando...</span>
+        <span *ngIf="!salvando"><i class="fas fa-save"></i> Salvar Preferências</span>
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<!-- ABA: API / Endpoints -->
+<div class="card config-card" *ngIf="abaAtiva === 'api'">
+  <div class="card-header">
+    <div class="card-title">Endpoints do Backend</div>
+    <div class="api-url">
+      <i class="fas fa-server"></i>
+      <code>{{ urlApi }}</code>
+    </div>
+  </div>
+
+  <p class="api-desc">Lista de endpoints disponíveis no backend atual:</p>
+
+  <div class="endpoints-lista">
+    <div class="endpoint-item" *ngFor="let ep of endpointsDisponiveis">
+      <span class="metodo-badge" [class]="corMetodo(ep.metodo)">{{ ep.metodo }}</span>
+      <code class="endpoint-rota">{{ ep.rota }}</code>
+      <span class="endpoint-desc">{{ ep.descricao }}</span>
+    </div>
+  </div>
+
+  <div class="endpoints-faltando">
+    <div class="faltando-titulo">
+      <i class="fas fa-exclamation-triangle"></i>
+      Endpoints ainda não implementados no backend:
+    </div>
+    <div class="endpoint-item faltando" *ngFor="let ep of [
+      { metodo: 'GET',   rota: '/agendamento/todos',           descricao: 'Listar todos os agendamentos'      },
+      { metodo: 'PUT',   rota: '/agendamento/{id}',            descricao: 'Editar agendamento'                },
+      { metodo: 'PATCH', rota: '/agendamento/{id}/cancelar',   descricao: 'Cancelar agendamento'              },
+      { metodo: 'PUT',   rota: '/servico/{id}',                descricao: 'Editar serviço'                    },
+      { metodo: 'DELETE',rota: '/servico/{id}',                descricao: 'Remover serviço'                   },
+      { metodo: 'PUT',   rota: '/profissional/{id}',           descricao: 'Editar profissional'               },
+      { metodo: 'DELETE',rota: '/profissional/{id}',           descricao: 'Remover profissional'              },
+      { metodo: 'GET',   rota: '/horario/disponiveis',         descricao: 'Horários disponíveis por prof/data'},
+      { metodo: 'GET',   rota: '/financeiro/transacoes',       descricao: 'Módulo financeiro completo'        },
+      { metodo: 'GET',   rota: '/configuracoes',               descricao: 'Configurações da empresa'          }
+    ]">
+      <span class="metodo-badge" [class]="corMetodo(ep.metodo)">{{ ep.metodo }}</span>
+      <code class="endpoint-rota">{{ ep.rota }}</code>
+      <span class="endpoint-desc">{{ ep.descricao }}</span>
+    </div>
+  </div>
+
+</div>

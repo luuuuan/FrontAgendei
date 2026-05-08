@@ -1,0 +1,105 @@
+<div class="page-title">Financeiro</div>
+
+<!-- Aviso de endpoint -->
+<div class="info-aviso">
+  <i class="fas fa-info-circle"></i>
+  O módulo financeiro exibe os agendamentos e seus valores. Um endpoint dedicado de transações financeiras precisa ser implementado no backend.
+</div>
+
+<!-- Filtro por data -->
+<div class="filter-bar">
+  <div class="search-box">
+    <i class="fas fa-calendar"></i>
+    <input
+      type="date"
+      [(ngModel)]="dataBusca"
+      (change)="buscar()"
+    />
+  </div>
+</div>
+
+<!-- Cards de totais -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">
+      <i class="fas fa-check-circle"></i>
+      <span>Confirmados</span>
+    </div>
+    <div class="stat-value">R$ {{ totalGeral | number:'1.2-2' }}</div>
+  </div>
+
+  <div class="stat-card stat-card--warning">
+    <div class="stat-label">
+      <i class="fas fa-clock"></i>
+      <span>Pendentes</span>
+    </div>
+    <div class="stat-value warning">R$ {{ totalPendente | number:'1.2-2' }}</div>
+  </div>
+
+  <div class="stat-card stat-card--danger">
+    <div class="stat-label">
+      <i class="fas fa-times-circle"></i>
+      <span>Cancelados</span>
+    </div>
+    <div class="stat-value danger">R$ {{ totalCancelado | number:'1.2-2' }}</div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div class="loading-box" *ngIf="carregando">
+  <i class="fas fa-spinner fa-spin fa-2x"></i>
+  <p>Carregando dados...</p>
+</div>
+
+<!-- Erro -->
+<div class="erro-aviso" *ngIf="erro && !carregando">
+  <i class="fas fa-exclamation-circle"></i>
+  {{ erro }}
+  <button class="btn btn-sm btn-outline" (click)="buscar()" style="margin-left:auto">
+    Tentar novamente
+  </button>
+</div>
+
+<!-- Tabela -->
+<div class="table-container" *ngIf="!carregando && !erro">
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Profissional</th>
+        <th>Usuário</th>
+        <th>Serviços</th>
+        <th>Valor Total</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let ag of agendamentos">
+        <td>{{ formatarData(ag.dataAgendamento) }}</td>
+        <td>Profissional #{{ ag.profissionalId }}</td>
+        <td>Usuário #{{ ag.usuarioId }}</td>
+        <td>
+          <span *ngFor="let s of ag.servicoId" class="badge badge-primary" style="margin-right:4px">
+            #{{ s }}
+          </span>
+        </td>
+        <td>
+          <strong *ngIf="ag.valorTotal">R$ {{ ag.valorTotal | number:'1.2-2' }}</strong>
+          <span *ngIf="!ag.valorTotal" class="sem-valor">—</span>
+        </td>
+        <td>
+          <span class="badge" [class]="classeStatus(ag.statusAgendamento)">
+            {{ labelStatus(ag.statusAgendamento) }}
+          </span>
+        </td>
+      </tr>
+
+      <tr *ngIf="agendamentos.length === 0">
+        <td colspan="6" class="sem-dados">
+          <i class="fas fa-dollar-sign"></i>
+          Nenhum registro encontrado para esta data.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

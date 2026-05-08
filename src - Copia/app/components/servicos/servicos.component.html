@@ -1,0 +1,161 @@
+<div class="page-title">Serviços</div>
+
+<!-- Barra de filtro -->
+<div class="filter-bar">
+  <div class="search-box">
+    <i class="fas fa-search"></i>
+    <input
+      type="text"
+      placeholder="Buscar serviço..."
+      [(ngModel)]="termoBusca"
+      (input)="filtrar()"
+    />
+  </div>
+  <div class="actions">
+    <button class="btn btn-primary" (click)="abrirModal()">
+      <i class="fas fa-plus"></i>
+      Novo Serviço
+    </button>
+  </div>
+</div>
+
+<!-- Loading -->
+<div class="loading-box" *ngIf="carregando">
+  <i class="fas fa-spinner fa-spin fa-2x"></i>
+  <p>Carregando serviços...</p>
+</div>
+
+<!-- Erro -->
+<div class="erro-aviso" *ngIf="erro && !carregando">
+  <i class="fas fa-exclamation-circle"></i>
+  {{ erro }}
+  <button class="btn btn-sm btn-outline" (click)="carregarServicos()" style="margin-left:auto">
+    Tentar novamente
+  </button>
+</div>
+
+<!-- Tabela de serviços -->
+<div class="table-container" *ngIf="!carregando && !erro">
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Descrição</th>
+        <th>Duração</th>
+        <th>Buffer</th>
+        <th>Valor</th>
+        <th>Profissional</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let s of servicosFiltrados">
+        <td><strong>{{ s.nome }}</strong></td>
+        <td class="descricao-td">{{ s.descricao }}</td>
+        <td>{{ s.duracaoMinutos }} min</td>
+        <td>{{ s.tempoBuffer || 0 }} min</td>
+        <td>R$ {{ s.valor | number:'1.2-2' }}</td>
+        <td>{{ nomeProfissional(s.profissionalId) }}</td>
+        <td>
+          <span class="badge" [class]="classeStatus(s.statusServico || '')">
+            {{ s.statusServico || 'ATIVO' }}
+          </span>
+        </td>
+      </tr>
+
+      <tr *ngIf="servicosFiltrados.length === 0">
+        <td colspan="7" class="sem-dados">
+          <i class="fas fa-concierge-bell"></i>
+          <span *ngIf="termoBusca">Nenhum serviço encontrado para "{{ termoBusca }}"</span>
+          <span *ngIf="!termoBusca">Nenhum serviço cadastrado.</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal novo serviço -->
+<div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div class="modal-title">Novo Serviço</div>
+      <button class="modal-close" (click)="fecharModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <form [formGroup]="form">
+
+        <div class="form-group">
+          <label>Nome do Serviço *</label>
+          <input type="text" formControlName="nome" placeholder="Ex: Corte de cabelo" />
+          <div class="erro-campo" *ngIf="form.get('nome')?.invalid && form.get('nome')?.touched">
+            Nome é obrigatório.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Descrição *</label>
+          <textarea formControlName="descricao" rows="3" placeholder="Descreva o serviço..."></textarea>
+          <div class="erro-campo" *ngIf="form.get('descricao')?.invalid && form.get('descricao')?.touched">
+            Descrição é obrigatória.
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Duração (minutos) *</label>
+            <input type="number" formControlName="duracaoMinutos" placeholder="30" min="1" />
+            <div class="erro-campo" *ngIf="form.get('duracaoMinutos')?.invalid && form.get('duracaoMinutos')?.touched">
+              Duração inválida.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Buffer (minutos)</label>
+            <input type="number" formControlName="tempoBuffer" placeholder="0" min="0" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Valor (R$) *</label>
+          <input type="number" formControlName="valor" placeholder="0.00" min="0" step="0.01" />
+          <div class="erro-campo" *ngIf="form.get('valor')?.invalid && form.get('valor')?.touched">
+            Valor inválido.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Profissional *</label>
+          <select formControlName="profissionalId">
+            <option value="">Selecione um profissional</option>
+            <option *ngFor="let p of profissionais" [value]="p.id">
+              {{ p.nome || 'Profissional #' + p.id }}
+            </option>
+          </select>
+          <div class="erro-campo" *ngIf="form.get('profissionalId')?.invalid && form.get('profissionalId')?.touched">
+            Profissional é obrigatório.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Status</label>
+          <select formControlName="statusServico">
+            <option value="ATIVO">Ativo</option>
+            <option value="INATIVO">Inativo</option>
+          </select>
+        </div>
+
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" (click)="salvar()" [disabled]="salvando">
+        <span *ngIf="salvando"><i class="fas fa-spinner fa-spin"></i> Salvando...</span>
+        <span *ngIf="!salvando">Cadastrar Serviço</span>
+      </button>
+    </div>
+
+  </div>
+</div>

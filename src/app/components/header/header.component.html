@@ -1,0 +1,32 @@
+<header class="header">
+  <div class="header-logo">
+    <i class="fas fa-calendar-check"></i>
+    <span>Agendei</span>
+  </div>
+
+  <div class="header-actions">
+
+    <!-- Menu do perfil -->
+    <div class="perfil-wrapper" (clickOutside)="fecharMenuPerfil()">
+
+      <div class="header-perfil" (click)="toggleMenuPerfil()">
+        <div class="header-avatar">{{ iniciais }}</div>
+        <div class="header-user-info">
+          <span class="header-user-name">{{ nomeUsuario }}</span>
+          <span class="header-user-type">{{ tipoUsuario }}</span>
+        </div>
+        <i class="fas fa-chevron-down chevron" [class.aberto]="menuPerfilAberto"></i>
+      </div>
+
+      <!-- Dropdown -->
+      <div class="perfil-dropdown" *ngIf="menuPerfilAberto">
+        <div class="dropdown-item" (click)="sair()">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Sair</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</header>

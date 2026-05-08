@@ -1,0 +1,40 @@
+.descricao-td {
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--gray);
+  font-size: 13px;
+}
+
+.sem-dados {
+  text-align: center;
+  padding: 40px;
+  color: var(--gray);
+}
+
+.sem-dados i {
+  display: block;
+  font-size: 36px;
+  margin-bottom: 10px;
+  color: var(--light-gray);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.erro-aviso {
+  background: #fff5f5;
+  border: 1px solid var(--danger);
+  border-radius: var(--border-radius);
+  padding: 14px 18px;
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}

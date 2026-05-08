@@ -1,0 +1,145 @@
+<div class="cadastro-wrapper">
+  <div class="auth-container">
+
+    <!-- Hero -->
+    <div class="auth-hero">
+      <div class="auth-hero-content">
+        <h1>Crie sua conta grátis</h1>
+        <p>Cadastre-se e comece a agendar serviços de forma prática e rápida.</p>
+        <ul class="features-list">
+          <li><i class="fas fa-check-circle"></i><span>Agende 24 horas por dia</span></li>
+          <li><i class="fas fa-check-circle"></i><span>Gerencie seus agendamentos</span></li>
+          <li><i class="fas fa-check-circle"></i><span>Receba lembretes automáticos</span></li>
+          <li><i class="fas fa-check-circle"></i><span>Histórico completo de serviços</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Formulário -->
+    <div class="auth-forms">
+      <div class="logo">
+        <i class="fas fa-calendar-check"></i>
+        <span>Agendei</span>
+      </div>
+
+      <h2>Crie sua conta</h2>
+      <p class="auth-sub">Cadastre-se para agendar serviços</p>
+
+      <form [formGroup]="form" (ngSubmit)="salvar()">
+
+        <!-- Nome e Sobrenome -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nome *</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-user"></i>
+              <input type="text" formControlName="nome" placeholder="Seu nome" />
+            </div>
+            <div class="erro-campo" *ngIf="invalido('nome')">Nome é obrigatório.</div>
+          </div>
+
+          <div class="form-group">
+            <label>Sobrenome *</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-user"></i>
+              <input type="text" formControlName="sobrenome" placeholder="Seu sobrenome" />
+            </div>
+            <div class="erro-campo" *ngIf="invalido('sobrenome')">Sobrenome é obrigatório.</div>
+          </div>
+        </div>
+
+        <!-- E-mail -->
+        <div class="form-group">
+          <label>E-mail *</label>
+          <div class="input-icon-wrapper">
+            <i class="fas fa-envelope"></i>
+            <input type="email" formControlName="email" placeholder="seu@email.com" />
+          </div>
+          <div class="erro-campo" *ngIf="invalido('email')">E-mail inválido.</div>
+        </div>
+
+        <!-- Telefone -->
+        <div class="form-group">
+          <label>Telefone *</label>
+          <div class="input-icon-wrapper">
+            <i class="fas fa-phone"></i>
+            <input type="tel" formControlName="telefone" placeholder="(00) 00000-0000" maxlength="15" (input)="aplicarMascaraTelefone($event)" />
+          </div>
+          <div class="erro-campo" *ngIf="invalido('telefone')">Telefone inválido.</div>
+        </div>
+
+        <!-- Data de Nascimento e CPF -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data de Nascimento *</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-calendar"></i>
+              <input type="date" formControlName="dataNascimento" />
+            </div>
+            <div class="erro-campo" *ngIf="invalido('dataNascimento')">Data obrigatória.</div>
+          </div>
+
+          <div class="form-group">
+            <label>CPF *</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-id-card"></i>
+              <input type="text" formControlName="cpf" placeholder="000.000.000-00" maxlength="14" (input)="aplicarMascaraCpf($event)" />
+            </div>
+            <div class="erro-campo" *ngIf="invalido('cpf')">CPF inválido.</div>
+          </div>
+        </div>
+
+        <!-- Senha e Confirmar -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Senha *</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-lock"></i>
+              <input [type]="mostrarSenha ? 'text' : 'password'" formControlName="senha" placeholder="Mínimo 8 caracteres" />
+              <button type="button" class="btn-olho" (click)="toggleSenha('senha')">
+                <i [class]="mostrarSenha ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
+              </button>
+            </div>
+            <div class="erro-campo" *ngIf="invalido('senha')">Mínimo 8 caracteres.</div>
+          </div>
+
+          <div class="form-group">
+            <label>Confirmar Senha *</label>
+            <div class="input-icon-wrapper">
+              <i class="fas fa-lock"></i>
+              <input [type]="mostrarConfirmar ? 'text' : 'password'" formControlName="confirmarSenha" placeholder="Confirme a senha" />
+              <button type="button" class="btn-olho" (click)="toggleSenha('confirmar')">
+                <i [class]="mostrarConfirmar ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'"></i>
+              </button>
+            </div>
+            <div class="erro-campo" *ngIf="campo('confirmarSenha')?.errors?.['senhasDiferentes']">
+              As senhas não coincidem.
+            </div>
+          </div>
+        </div>
+
+        <!-- Termos -->
+        <div class="termos-check">
+          <input type="checkbox" id="termos" formControlName="termos" />
+          <label for="termos">
+            Concordo com os <a href="#">Termos de Uso</a> e <a href="#">Política de Privacidade</a>
+          </label>
+        </div>
+        <div class="erro-campo" *ngIf="campo('termos')?.invalid && campo('termos')?.touched">
+          Você precisa aceitar os termos para continuar.
+        </div>
+
+        <button type="submit" class="btn-cadastrar" [disabled]="salvando">
+          <span *ngIf="salvando"><i class="fas fa-spinner fa-spin"></i> Cadastrando...</span>
+          <span *ngIf="!salvando"><i class="fas fa-user-plus"></i> Criar Conta</span>
+        </button>
+
+      </form>
+
+      <div class="auth-footer">
+        Já tem conta? <a routerLink="/login">Fazer login</a>
+      </div>
+    </div>
+
+  </div>
+</div>

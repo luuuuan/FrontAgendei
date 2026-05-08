@@ -1,0 +1,27 @@
+<!-- Botão hamburger (só aparece em mobile) -->
+<button class="hamburger-btn" (click)="toggleMenu()" [class.ativo]="menuAberto">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+
+<!-- Overlay escuro (só em mobile quando menu aberto) -->
+<div class="sidebar-overlay" *ngIf="menuAberto" (click)="menuAberto = false"></div>
+
+<!-- Sidebar -->
+<nav class="sidebar" [class.aberto]="menuAberto">
+  <div class="sidebar-logo">
+    <i class="fas fa-calendar-check"></i>
+    <span>Agendei</span>
+  </div>
+
+  <div
+    *ngFor="let item of menuItems"
+    class="nav-item"
+    [class.active]="rotaAtiva === item.rota"
+    (click)="navegar(item.rota)"
+  >
+    <i [class]="item.icon"></i>
+    <span>{{ item.label }}</span>
+  </div>
+</nav>

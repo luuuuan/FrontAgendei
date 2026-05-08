@@ -1,0 +1,237 @@
+<div class="page-title">Agenda</div>
+
+<!-- Filtro por data -->
+<div class="filter-bar">
+  <div class="search-box">
+    <i class="fas fa-calendar"></i>
+    <input
+      type="date"
+      [(ngModel)]="dataBusca"
+      (change)="buscarAgendamentos()"
+    />
+  </div>
+  <div class="actions">
+    <button class="btn btn-primary" (click)="abrirModal()">
+      <i class="fas fa-plus"></i>
+      Novo Agendamento
+    </button>
+  </div>
+</div>
+
+<!-- Loading -->
+<div class="loading-box" *ngIf="carregando">
+  <i class="fas fa-spinner fa-spin fa-2x"></i>
+  <p>Carregando agendamentos...</p>
+</div>
+
+<!-- Erro -->
+<div class="erro-aviso" *ngIf="erro && !carregando">
+  <i class="fas fa-exclamation-circle"></i>
+  {{ erro }}
+</div>
+
+<!-- Tabela -->
+<div class="table-container" *ngIf="!carregando && !erro">
+  <table>
+    <thead>
+      <tr>
+        <th>Data / Hora</th>
+        <th>Profissional</th>
+        <th>Usuário</th>
+        <th>Serviços</th>
+        <th>Valor Total</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let ag of agendamentos">
+        <td>{{ formatarDataHora(ag.dataAgendamento) }}</td>
+        <td>{{ nomeProfissional(ag.profissionalId) }}</td>
+        <td>{{ nomeUsuario(ag.usuarioId) }}</td>
+        <td>
+          <span *ngFor="let s of ag.servicoId" class="badge badge-primary" style="margin-right:4px">
+            {{ nomeServico(s) }}
+          </span>
+        </td>
+        <td>
+          <span *ngIf="ag.valorTotal">R$ {{ ag.valorTotal | number:'1.2-2' }}</span>
+          <span *ngIf="!ag.valorTotal">-</span>
+        </td>
+        <td>
+          <span class="badge" [class]="classeStatus(ag.statusAgendamento)">
+            {{ labelStatus(ag.statusAgendamento) }}
+          </span>
+        </td>
+        <td>
+          <button class="btn btn-outline btn-sm" (click)="verDetalhes(ag)" title="Ver detalhes">
+            <i class="fas fa-eye"></i>
+          </button>
+        </td>
+      </tr>
+
+      <tr *ngIf="agendamentos.length === 0">
+        <td colspan="6" class="sem-dados">
+          <i class="fas fa-calendar-times"></i>
+          Nenhum agendamento encontrado para esta data.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal detalhes do agendamento -->
+<div class="modal-overlay" *ngIf="modalDetalhesAberto" (click)="fecharDetalhes()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div class="modal-title">Detalhes do Agendamento</div>
+      <button class="modal-close" (click)="fecharDetalhes()">×</button>
+    </div>
+
+    <div class="modal-body" *ngIf="agendamentoDetalhes">
+
+      <div class="detalhe-status">
+        <span class="badge" [class]="classeStatus(agendamentoDetalhes.statusAgendamento)">
+          {{ labelStatus(agendamentoDetalhes.statusAgendamento) }}
+        </span>
+      </div>
+
+      <div class="detalhe-grid">
+
+        <div class="detalhe-bloco">
+          <div class="detalhe-label"><i class="fas fa-calendar"></i> Data e Hora</div>
+          <div class="detalhe-valor">{{ formatarDataHora(agendamentoDetalhes.dataAgendamento) }}</div>
+        </div>
+
+        <div class="detalhe-bloco" *ngIf="agendamentoDetalhes.horaInicio">
+          <div class="detalhe-label"><i class="fas fa-clock"></i> Início</div>
+          <div class="detalhe-valor">{{ formatarDataHora(agendamentoDetalhes.horaInicio) }}</div>
+        </div>
+
+        <div class="detalhe-bloco">
+          <div class="detalhe-label"><i class="fas fa-user"></i> Cliente</div>
+          <div class="detalhe-valor">{{ nomeUsuario(agendamentoDetalhes.usuarioId) }}</div>
+        </div>
+
+        <div class="detalhe-bloco">
+          <div class="detalhe-label"><i class="fas fa-user-md"></i> Profissional</div>
+          <div class="detalhe-valor">{{ nomeProfissional(agendamentoDetalhes.profissionalId) }}</div>
+        </div>
+
+        <div class="detalhe-bloco detalhe-full">
+          <div class="detalhe-label"><i class="fas fa-concierge-bell"></i> Serviços</div>
+          <div class="detalhe-tags">
+            <span class="badge badge-primary" *ngFor="let s of agendamentoDetalhes.servicoId">
+              {{ nomeServico(s) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="detalhe-bloco" *ngIf="agendamentoDetalhes.valorTotal">
+          <div class="detalhe-label"><i class="fas fa-dollar-sign"></i> Valor Total</div>
+          <div class="detalhe-valor destaque">R$ {{ agendamentoDetalhes.valorTotal | number:'1.2-2' }}</div>
+        </div>
+
+        <div class="detalhe-bloco detalhe-full" *ngIf="agendamentoDetalhes.observacoes">
+          <div class="detalhe-label"><i class="fas fa-comment"></i> Observações</div>
+          <div class="detalhe-valor">{{ agendamentoDetalhes.observacoes }}</div>
+        </div>
+
+      </div>
+
+
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="fecharDetalhes()">Fechar</button>
+    </div>
+
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div class="modal-title">Novo Agendamento</div>
+      <button class="modal-close" (click)="fecharModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <form [formGroup]="form">
+
+        <div class="form-group">
+          <label>Data do Agendamento *</label>
+          <input type="date" formControlName="dataAgendamento" [min]="dataMinima" />
+          <div class="erro-campo" *ngIf="form.get('dataAgendamento')?.invalid && form.get('dataAgendamento')?.touched">
+            Data é obrigatória.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Hora de Início *</label>
+          <input type="time" formControlName="horaInicio" />
+          <div class="erro-campo" *ngIf="form.get('horaInicio')?.invalid && form.get('horaInicio')?.touched">
+            Hora é obrigatória.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Cliente (Usuário) *</label>
+          <select formControlName="usuarioId">
+            <option value="">Selecione um cliente</option>
+            <option *ngFor="let u of usuarios" [value]="u.id">
+              {{ u.nome }} — {{ u.email }}
+            </option>
+          </select>
+          <div class="erro-campo" *ngIf="form.get('usuarioId')?.invalid && form.get('usuarioId')?.touched">
+            Cliente é obrigatório.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Profissional *</label>
+          <select formControlName="profissionalId">
+            <option value="">Selecione um profissional</option>
+            <option *ngFor="let p of profissionais" [value]="p.id">
+              {{ p.nome || 'Profissional #' + p.id }}
+            </option>
+          </select>
+          <div class="erro-campo" *ngIf="form.get('profissionalId')?.invalid && form.get('profissionalId')?.touched">
+            Profissional é obrigatório.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Serviço *</label>
+          <select formControlName="servicos">
+            <option value="">Selecione um serviço</option>
+            <option *ngFor="let s of servicos" [value]="s.id">
+              {{ s.nome }} — R$ {{ s.valor | number:'1.2-2' }}
+            </option>
+          </select>
+          <div class="erro-campo" *ngIf="form.get('servicos')?.invalid && form.get('servicos')?.touched">
+            Serviço é obrigatório.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Observações</label>
+          <textarea formControlName="observacoes" rows="3" placeholder="Alguma observação..."></textarea>
+        </div>
+
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" (click)="salvar()" [disabled]="salvando">
+        <span *ngIf="salvando"><i class="fas fa-spinner fa-spin"></i> Salvando...</span>
+        <span *ngIf="!salvando">Criar Agendamento</span>
+      </button>
+    </div>
+
+  </div>
+</div>
