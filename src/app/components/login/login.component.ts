@@ -29,6 +29,16 @@ export class LoginComponent {
     private toast: ToastService,
     private router: Router
   ) {
+    // Fix 7: se já está logado, redireciona para a área correta
+    if (this.authService.estaLogado()) {
+      const tipo = this.authService.getTipoUsuario();
+      if (tipo === 'CLIENTE') {
+        this.router.navigate(['/area-cliente']);
+      } else {
+        this.router.navigate(['/dashboard']);
+      }
+    }
+
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       senha: ['', [Validators.required, Validators.minLength(6)]]

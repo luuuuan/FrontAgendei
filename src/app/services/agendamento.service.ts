@@ -41,4 +41,8 @@ export class AgendamentoService {
         .set('dataAgendamento', data)
     });
   }
+
+  atualizarStatus(id: number, status: string): Observable<AgendamentoResponse> {
+    return this.http.patch<AgendamentoResponse>(`${this.apiUrl}/atualizar-status/${id}`, { status });
+  }
 }

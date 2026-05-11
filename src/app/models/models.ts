@@ -32,6 +32,7 @@ export interface Servico {
   valor: number;
   profissionalId: number;
   statusServico?: string;
+  statusExecucaoServico?: string;
 }
 
 export interface Profissional {
@@ -44,6 +45,17 @@ export interface Profissional {
   servicosIds?: number[];
   usuario?: Usuario;
   servico?: Servico[];
+  atendeADomicilio?: boolean;
+}
+
+export interface EnderecoAgendamento {
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento?: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
 }
 
 export interface Agendamento {

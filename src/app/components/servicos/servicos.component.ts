@@ -24,6 +24,9 @@ export class ServicosComponent implements OnInit {
   modalAberto = false;
   salvando = false;
   termoBusca = '';
+  // Fix 2: controle de edição
+  modoEdicao = false;
+  servicoEditandoId: number | null = null;
   form: FormGroup;
 
   constructor(
@@ -47,7 +50,11 @@ export class ServicosComponent implements OnInit {
 
   ngOnInit() {
     this.carregarServicos();
-    const sessao = this.authService.getSessao();
+    // Fix 3: carrega profissionais para resolver nomes na tabela
+    this.carregarProfissionais();
+  }
+
+  carregarProfissionais() {
     this.profissionalService.listar().subscribe({
       next: l => this.profissionais = l,
       error: () => {}
@@ -58,7 +65,6 @@ export class ServicosComponent implements OnInit {
     this.carregando = true;
     this.erro = '';
     const sessao = this.authService.getSessao();
-    // Filtra serviços pelo prestador logado
     this.servicoService.listarPorPrestador(sessao?.prestadorId).subscribe({
       next: l => { this.servicos = l; this.servicosFiltrados = l; this.carregando = false; },
       error: (err: any) => { this.erro = err.mensagemAmigavel || 'Erro ao carregar.'; this.carregando = false; }
@@ -72,8 +78,11 @@ export class ServicosComponent implements OnInit {
       : this.servicos;
   }
 
+  // Fix 3: resolve nome do profissional pelo id
   nomeProfissional(id: number) {
-    return this.profissionais.find(p => p.id === id)?.nome || `#${id}`;
+    if (!id) return '-';
+    const p = this.profissionais.find(p => p.id === id);
+    return p?.nome || `Profissional #${id}`;
   }
 
   classeStatus(s: string) {
@@ -81,7 +90,26 @@ export class ServicosComponent implements OnInit {
   }
 
   abrirModal() {
+    this.modoEdicao = false;
+    this.servicoEditandoId = null;
     this.form.reset({ statusServico: 'ATIVO', statusExecucaoServico: 'PENDENTE', tempoBuffer: 0 });
+    this.modalAberto = true;
+  }
+
+  // Fix 2: abrir modal em modo edição
+  abrirModalEdicao(s: Servico) {
+    this.modoEdicao = true;
+    this.servicoEditandoId = s.id ?? null;
+    this.form.patchValue({
+      nome:                  s.nome,
+      descricao:             s.descricao,
+      duracaoMinutos:        s.duracaoMinutos,
+      tempoBuffer:           s.tempoBuffer ?? 0,
+      valor:                 s.valor,
+      profissionalId:        s.profissionalId,
+      statusServico:         s.statusServico || 'ATIVO',
+      statusExecucaoServico: s.statusExecucaoServico || 'PENDENTE'
+    });
     this.modalAberto = true;
   }
 
@@ -96,9 +124,17 @@ export class ServicosComponent implements OnInit {
       valor:          Number(this.form.value.valor),
       profissionalId: Number(this.form.value.profissionalId)
     };
-    this.servicoService.cadastrar(payload).subscribe({
-      next: () => { this.toast.sucesso('Serviço cadastrado!'); this.fecharModal(); this.carregarServicos(); this.salvando = false; },
-      error: (err: any) => { this.toast.erro(err.mensagemAmigavel || 'Erro ao cadastrar.'); this.salvando = false; }
+
+    // Fix 2: se modo edição, chama atualizar; senão, cadastrar
+    const operacao = this.modoEdicao && this.servicoEditandoId
+      ? this.servicoService.atualizar(this.servicoEditandoId, payload)
+      : this.servicoService.cadastrar(payload);
+
+    const mensagem = this.modoEdicao ? 'Serviço atualizado!' : 'Serviço cadastrado!';
+
+    operacao.subscribe({
+      next: () => { this.toast.sucesso(mensagem); this.fecharModal(); this.carregarServicos(); this.salvando = false; },
+      error: (err: any) => { this.toast.erro(err.mensagemAmigavel || 'Erro ao salvar.'); this.salvando = false; }
     });
   }
 }

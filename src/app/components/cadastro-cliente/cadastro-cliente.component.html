@@ -79,8 +79,15 @@
             <label>E-mail *</label>
             <div class="input-icon-wrapper">
               <i class="fas fa-envelope"></i>
-              <input type="email" formControlName="email" placeholder="seu@email.com" />
+              <input type="email" formControlName="email" autocomplete="email" list="email-suggestions-cliente" placeholder="seu@email.com" />
             </div>
+        <datalist id="email-suggestions-cliente">
+          <option value="@gmail.com">
+          <option value="@hotmail.com">
+          <option value="@outlook.com">
+          <option value="@yahoo.com">
+          <option value="@icloud.com">
+        </datalist>
             <div class="erro-campo" *ngIf="invalido(formStep1, 'email')">E-mail inválido.</div>
           </div>
 

@@ -65,7 +65,7 @@
             <label>E-mail *</label>
             <div class="input-icon-wrapper">
               <i class="fas fa-envelope"></i>
-              <input type="email" formControlName="email" placeholder="contato@empresa.com" />
+              <input type="email" formControlName="email" placeholder="contato@empresa.com" autocomplete="email" list="email-suggestions-prestador" />
             </div>
             <div class="erro-campo" *ngIf="invalido(formStep1, 'email')">E-mail inválido.</div>
           </div>
@@ -74,7 +74,7 @@
             <label>Telefone *</label>
             <div class="input-icon-wrapper">
               <i class="fas fa-phone"></i>
-              <input type="tel" formControlName="telefone" placeholder="(00) 00000-0000" />
+              <input type="tel" formControlName="telefone" placeholder="(00) 00000-0000" (input)="aplicarMascaraTelefone($event)" maxlength="15" />
             </div>
             <div class="erro-campo" *ngIf="invalido(formStep1, 'telefone')">Telefone inválido.</div>
           </div>
@@ -148,7 +148,7 @@
               <label>CPF *</label>
               <div class="input-icon-wrapper">
                 <i class="fas fa-id-card"></i>
-                <input type="text" formControlName="cpf" placeholder="000.000.000-00" />
+                <input type="text" formControlName="cpf" placeholder="000.000.000-00" (input)="aplicarMascaraCpf($event)" maxlength="14" />
               </div>
             </div>
             <div class="form-group">
@@ -158,6 +158,17 @@
                 <input type="text" formControlName="nomeDisplay" placeholder="Como quer aparecer para os clientes" />
               </div>
             </div>
+
+            <!-- Atende a domicílio -->
+            <div class="form-group">
+              <label class="checkbox-label" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                <input type="checkbox" formControlName="atendeADomicilio" style="width:18px;height:18px;cursor:pointer" />
+                <span>
+                  <strong>Atendo a domicílio</strong>
+                  <small style="display:block;color:#6b7280;font-size:12px">Vou até o cliente — não tenho local fixo de atendimento</small>
+                </span>
+              </label>
+            </div>
           </div>
 
           <!-- Empresa -->
@@ -166,7 +177,7 @@
               <label>CNPJ *</label>
               <div class="input-icon-wrapper">
                 <i class="fas fa-building"></i>
-                <input type="text" formControlName="cnpj" placeholder="00.000.000/0000-00" />
+                <input type="text" formControlName="cnpj" placeholder="00.000.000/0000-00" (input)="aplicarMascaraCnpj($event)" maxlength="18" />
               </div>
             </div>
             <div class="form-group">
@@ -195,7 +206,7 @@
               <label>CEP *</label>
               <div class="input-icon-wrapper">
                 <i class="fas fa-map-marker-alt"></i>
-                <input type="text" formControlName="cep" placeholder="00000-000" maxlength="9" />
+                <input type="text" formControlName="cep" placeholder="00000-000" (input)="aplicarMascaraCep($event)" maxlength="9" />
               </div>
               <div class="erro-campo" *ngIf="invalido(formStep3, 'cep')">CEP inválido.</div>
             </div>

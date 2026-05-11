@@ -7,7 +7,7 @@ import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { ToastComponent } from './components/toast/toast.component';
 
 // Rotas que usam layout próprio (sem header/sidebar do prestador)
-const ROTAS_SEM_LAYOUT = ['/login', '/cadastro-cliente', '/cadastro-prestador', '/area-cliente'];
+const ROTAS_SEM_LAYOUT = ['/login', '/cadastro-cliente', '/cadastro-prestador', '/area-cliente', '/redefinir-senha'];
 
 @Component({
   selector: 'app-root',

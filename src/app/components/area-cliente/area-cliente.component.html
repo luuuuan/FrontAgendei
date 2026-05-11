@@ -67,12 +67,12 @@
           <div class="stat-value">{{ totalPendentes }}</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label"><i class="fas fa-concierge-bell"></i> Serviços disponíveis</div>
-          <div class="stat-value">{{ servicos.length }}</div>
+          <div class="stat-label"><i class="fas fa-concierge-bell"></i> Serviços Contratados</div>
+          <div class="stat-value">{{ servicosContratados.length }}</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label"><i class="fas fa-user-md"></i> Profissionais</div>
-          <div class="stat-value">{{ profissionais.length }}</div>
+          <div class="stat-label"><i class="fas fa-user-md"></i> Profissionais Contratados</div>
+          <div class="stat-value">{{ profissionaisContratados.length }}</div>
         </div>
       </div>
 
@@ -296,6 +296,82 @@
             <div class="resumo-item destaque">
               <span class="resumo-label"><i class="fas fa-dollar-sign"></i> Valor</span>
               <span class="resumo-valor">R$ {{ servicoSelecionado?.valor | number:'1.2-2' }}</span>
+            </div>
+
+            <!-- Local do atendimento (só aparece se profissional atende a domicílio) -->
+            <div class="resumo-item" *ngIf="profissionalAtendeADomicilio" style="flex-direction:column;align-items:flex-start;gap:6px">
+              <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
+                <span class="resumo-label"><i class="fas fa-map-marker-alt"></i> Local do Atendimento</span>
+                <button class="btn btn-sm btn-outline" (click)="abrirModalEndereco()" style="font-size:12px;padding:4px 10px">
+                  <i class="fas fa-edit"></i> Alterar Endereço
+                </button>
+              </div>
+              <span class="resumo-valor" style="font-size:13px;color:#6b7280">{{ enderecoExibicao }}</span>
+            </div>
+          </div>
+
+          <!-- Modal Alterar Endereço -->
+          <div class="modal-overlay" *ngIf="modalEnderecoAberto" (click)="fecharModalEndereco()">
+            <div class="modal" (click)="$event.stopPropagation()" style="max-width:480px">
+              <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-map-marker-alt"></i> Endereço do Atendimento</div>
+                <button class="modal-close" (click)="fecharModalEndereco()">×</button>
+              </div>
+              <div class="modal-body">
+                <p style="font-size:13px;color:#6b7280;margin-bottom:16px">
+                  Este endereço será usado <strong>apenas para este agendamento</strong>. Seu endereço cadastrado não será alterado.
+                </p>
+
+                <div class="form-group" style="display:flex;gap:8px;align-items:flex-end">
+                  <div style="flex:1">
+                    <label>CEP *</label>
+                    <input type="text" [value]="enderecoTemp.cep" (input)="aplicarMascaraCepAgendamento($event)" placeholder="00000-000" maxlength="9" />
+                  </div>
+                  <button class="btn btn-outline btn-sm" (click)="buscarCepAgendamento()" [disabled]="buscandoCep" style="white-space:nowrap">
+                    <i class="fas fa-search" *ngIf="!buscandoCep"></i>
+                    <i class="fas fa-spinner fa-spin" *ngIf="buscandoCep"></i>
+                    Buscar CEP
+                  </button>
+                </div>
+
+                <div class="form-group">
+                  <label>Logradouro *</label>
+                  <input type="text" [(ngModel)]="enderecoTemp.logradouro" placeholder="Rua, Avenida..." />
+                </div>
+
+                <div style="display:flex;gap:12px">
+                  <div class="form-group" style="flex:0 0 120px">
+                    <label>Número *</label>
+                    <input type="text" [(ngModel)]="enderecoTemp.numero" placeholder="123" />
+                  </div>
+                  <div class="form-group" style="flex:1">
+                    <label>Complemento</label>
+                    <input type="text" [(ngModel)]="enderecoTemp.complemento" placeholder="Apto, bloco..." />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Bairro *</label>
+                  <input type="text" [(ngModel)]="enderecoTemp.bairro" placeholder="Bairro" />
+                </div>
+
+                <div style="display:flex;gap:12px">
+                  <div class="form-group" style="flex:1">
+                    <label>Cidade *</label>
+                    <input type="text" [(ngModel)]="enderecoTemp.cidade" placeholder="Cidade" />
+                  </div>
+                  <div class="form-group" style="flex:0 0 80px">
+                    <label>Estado *</label>
+                    <input type="text" [(ngModel)]="enderecoTemp.estado" placeholder="PR" maxlength="2" style="text-transform:uppercase" />
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-outline" (click)="fecharModalEndereco()">Cancelar</button>
+                <button class="btn btn-primary" (click)="confirmarNovoEndereco()">
+                  <i class="fas fa-check"></i> Confirmar Endereço
+                </button>
+              </div>
             </div>
           </div>
           <div class="form-group" style="margin-top:16px">

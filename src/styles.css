@@ -169,11 +169,11 @@ body {
 }
 
 .erro-campo {
-  position: absolute;
+  display: block;
   color: var(--danger);
   font-size: 12px;
-  margin-top: 0px;
-  min-height: 20px;
+  margin-top: 4px;
+  min-height: 18px;
 }
 
 /* Tabelas */

@@ -8,7 +8,7 @@ import { ServicoService } from '../../services/servico.service';
 import { ProfissionalService } from '../../services/profissional.service';
 import { UsuarioService } from '../../services/usuario.service';
 import { ToastService } from '../../services/toast.service';
-import { AgendamentoResponse, Servico, Profissional, Usuario } from '../../models/models';
+import { AgendamentoResponse, Servico, Profissional, Usuario, EnderecoAgendamento } from '../../models/models';
 import { SkeletonComponent } from '../skeleton/skeleton.component';
 
 @Component({
@@ -40,6 +40,16 @@ export class AreaClienteComponent implements OnInit {
   get totalConfirmados() { return this.agendamentosHoje.filter(a => a.statusAgendamento === 'CONFIRMADO').length; }
   get totalPendentes() { return this.agendamentosHoje.filter(a => a.statusAgendamento === 'PENDENTE').length; }
 
+  // Fix 6: servicos e profissionais CONTRATADOS pelo cliente
+  get servicosContratados(): Servico[] {
+    const ids = new Set(this.todoAgendamentos.flatMap(a => a.servicoId ?? []));
+    return this.servicos.filter(s => s.id && ids.has(s.id));
+  }
+  get profissionaisContratados(): Profissional[] {
+    const ids = new Set(this.todoAgendamentos.map(a => a.profissionalId).filter(Boolean));
+    return this.profissionais.filter(p => p.id && ids.has(p.id));
+  }
+
   stepAgendamento = 1;
   servicoSelecionado: Servico | null = null;
   profissionalSelecionado: Profissional | null = null;
@@ -52,10 +62,29 @@ export class AreaClienteComponent implements OnInit {
   carregandoHorarios = false;
   mensagemDisponibilidade = '';
 
+  // Domicilio
+  enderecoAgendamento: EnderecoAgendamento | null = null;
+  modalEnderecoAberto = false;
+  buscandoCep = false;
+  enderecoTemp: EnderecoAgendamento = { cep: '', logradouro: '', numero: '', bairro: '', cidade: '', estado: '' };
+
+  get profissionalAtendeADomicilio(): boolean {
+    return this.profissionalSelecionado?.atendeADomicilio === true;
+  }
+
+  get enderecoExibicao(): string {
+    const e = this.enderecoAgendamento;
+    if (e && e.logradouro) {
+      return e.logradouro + ', ' + e.numero + ' - ' + e.bairro + ', ' + e.cidade + '/' + e.estado;
+    }
+    const u = this.usuarioLogado;
+    return u?.enderecoId ? 'Endereco cadastrado (ID: ' + u.enderecoId + ')' : 'Endereco do cliente';
+  }
+
   dataAtual = new Date();
   diasDoMes: (number | null)[] = [];
   mesLabel = '';
-  diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
 
   // Detalhe agendamento
   agendamentoDetalhes: AgendamentoResponse | null = null;
@@ -68,7 +97,7 @@ export class AreaClienteComponent implements OnInit {
   salvandoSenha = false;
   abaPerfilAtiva: 'dados' | 'senha' = 'dados';
 
-  // Filtro histórico
+  // Filtro historico
   filtroHistorico: 'todos' | 'CONFIRMADO' | 'PENDENTE' | 'CANCELADO' = 'todos';
 
   constructor(
@@ -105,30 +134,28 @@ export class AreaClienteComponent implements OnInit {
   }
 
   carregarDadosUsuario() {
-  const sessao = this.authService.getSessao();
-  if (!sessao) return;
-
-  this.usuarioService.buscarPorId(sessao.usuarioId).subscribe({
-    next: (usuario) => {
-      this.usuarioLogado = usuario;
-      this.iniciais = this.gerarIniciais(usuario.nome);
-      this.formPerfil.patchValue({
-        nome: usuario.nome,
-        email: usuario.email,
-        telefone: usuario.telefone,
-        cpf: usuario.cpf,
-        dataNascimento: usuario.dataNascimento || ''
-      });
-    },
-    error: () => {}
-  });
-}
+    const sessao = this.authService.getSessao();
+    if (!sessao) return;
+    this.usuarioService.buscarPorId(sessao.usuarioId).subscribe({
+      next: (usuario) => {
+        this.usuarioLogado = usuario;
+        this.iniciais = this.gerarIniciais(usuario.nome);
+        this.formPerfil.patchValue({
+          nome: usuario.nome,
+          email: usuario.email,
+          telefone: usuario.telefone,
+          cpf: usuario.cpf,
+          dataNascimento: usuario.dataNascimento || ''
+        });
+      },
+      error: () => {}
+    });
+  }
 
   carregarAgendamentosHoje() {
     this.carregandoAgendamentos = true;
     const sessao = this.authService.getSessao();
     if (!sessao) { this.carregandoAgendamentos = false; return; }
-
     this.agendamentoService.buscarPorUsuario(sessao.usuarioId).subscribe({
       next: (lista) => {
         const hoje = new Date().toISOString().split('T')[0];
@@ -138,7 +165,6 @@ export class AreaClienteComponent implements OnInit {
         this.verificarInicial();
       },
       error: () => {
-        // Fallback: busca por data
         const hoje = new Date().toISOString().split('T')[0];
         this.agendamentoService.buscarPorData(hoje).subscribe({
           next: (lista) => {
@@ -155,12 +181,8 @@ export class AreaClienteComponent implements OnInit {
     this.carregandoHistorico = true;
     const sessao = this.authService.getSessao();
     if (!sessao) { this.carregandoHistorico = false; return; }
-
     this.agendamentoService.buscarPorUsuario(sessao.usuarioId).subscribe({
-      next: (lista) => {
-        this.todoAgendamentos = lista;
-        this.carregandoHistorico = false;
-      },
+      next: (lista) => { this.todoAgendamentos = lista; this.carregandoHistorico = false; },
       error: () => {
         this.agendamentoService.buscarTodos().subscribe({
           next: (lista) => {
@@ -200,7 +222,6 @@ export class AreaClienteComponent implements OnInit {
     }
   }
 
-  // Calendário
   gerarCalendario() {
     const ano = this.dataAtual.getFullYear(), mes = this.dataAtual.getMonth();
     this.mesLabel = this.dataAtual.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
@@ -214,7 +235,7 @@ export class AreaClienteComponent implements OnInit {
   mesAnterior() {
     const novaData = new Date(this.dataAtual.getFullYear(), this.dataAtual.getMonth() - 1, 1);
     const hoje = new Date(); hoje.setDate(1); hoje.setHours(0, 0, 0, 0);
-    if (novaData < hoje) return; // não navega para meses passados
+    if (novaData < hoje) return;
     this.dataAtual = novaData;
     this.gerarCalendario();
   }
@@ -227,43 +248,35 @@ export class AreaClienteComponent implements OnInit {
   selecionarDia(dia: number | null) {
     if (!dia) return;
     const ano = this.dataAtual.getFullYear(), mes = this.dataAtual.getMonth() + 1;
-    const data = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+    const data = ano + '-' + String(mes).padStart(2, '0') + '-' + String(dia).padStart(2, '0');
     const hoje = new Date().toISOString().split('T')[0];
-    if (data < hoje) {
-      this.toast.aviso('Não é possível agendar para datas passadas.');
-      return;
-    }
+    if (data < hoje) { this.toast.aviso('Nao e possivel agendar para datas passadas.'); return; }
     this.dataSelecionada = data;
     this.horaSelecionada = '';
     this.horariosDisponiveis = [];
     this.mensagemDisponibilidade = '';
-
-    if (this.profissionalSelecionado?.id) {
-      this.carregarHorariosDisponiveis();
-    }
+    if (this.profissionalSelecionado?.id) { this.carregarHorariosDisponiveis(); }
   }
-  carregarHorariosDisponiveis() {
-  if (!this.profissionalSelecionado?.id || !this.dataSelecionada) return;
-  this.carregandoHorarios = true;
-  this.horariosDisponiveis = [];
-  this.mensagemDisponibilidade = '';
 
-  this.agendamentoService.buscarHorariosDisponiveis(
-    this.profissionalSelecionado.id,
-    this.dataSelecionada,
-  ).subscribe({
-    next: (horarios) => {
-      this.horariosDisponiveis = horarios;
-      this.carregandoHorarios = false;
-      if (horarios.length === 0) {
-        this.mensagemDisponibilidade = 'Nenhum horário disponível nessa data.';
-      } else {
-        this.mensagemDisponibilidade = `${horarios.length} horário(s) disponível(is)`;
-      }
-    },
-    error: () => { this.carregandoHorarios = false; }
-  });
-}
+  carregarHorariosDisponiveis() {
+    if (!this.profissionalSelecionado?.id || !this.dataSelecionada) return;
+    this.carregandoHorarios = true;
+    this.horariosDisponiveis = [];
+    this.mensagemDisponibilidade = '';
+    this.agendamentoService.buscarHorariosDisponiveis(
+      this.profissionalSelecionado.id,
+      this.dataSelecionada,
+    ).subscribe({
+      next: (horarios) => {
+        this.horariosDisponiveis = horarios;
+        this.carregandoHorarios = false;
+        this.mensagemDisponibilidade = horarios.length === 0
+          ? 'Nenhum horario disponivel nessa data.'
+          : horarios.length + ' horario(s) disponivel(is)';
+      },
+      error: () => { this.carregandoHorarios = false; }
+    });
+  }
 
   ehHoje(dia: number | null): boolean {
     if (!dia) return false;
@@ -273,7 +286,6 @@ export class AreaClienteComponent implements OnInit {
 
   ehPassado(dia: number | null): boolean {
     if (!dia) return false;
-    const hoje = new Date();
     const dataCell = new Date(this.dataAtual.getFullYear(), this.dataAtual.getMonth(), dia);
     dataCell.setHours(0, 0, 0, 0);
     const hojeZero = new Date(); hojeZero.setHours(0, 0, 0, 0);
@@ -283,11 +295,10 @@ export class AreaClienteComponent implements OnInit {
   ehSelecionado(dia: number | null): boolean {
     if (!dia || !this.dataSelecionada) return false;
     const ano = this.dataAtual.getFullYear(), mes = this.dataAtual.getMonth() + 1;
-    const data = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+    const data = ano + '-' + String(mes).padStart(2, '0') + '-' + String(dia).padStart(2, '0');
     return data === this.dataSelecionada;
   }
 
-  // Wizard agendamento
   iniciarAgendamento() {
     this.stepAgendamento = 1;
     this.servicoSelecionado = null;
@@ -295,36 +306,32 @@ export class AreaClienteComponent implements OnInit {
     this.dataSelecionada = '';
     this.horaSelecionada = '';
     this.observacoes = '';
+    this.enderecoAgendamento = null;
     this.dataAtual = new Date();
     this.gerarCalendario();
     this.telaAtiva = 'novo-agendamento';
   }
 
   selecionarServico(s: Servico) {
-  this.servicoSelecionado = s;
-  this.profissionais = []; 
-  this.profissionalService.listarPorServico(s.id!).subscribe({
-    next: (lista) => this.profissionais = lista,
-    error: () => {}
-  });
-  this.stepAgendamento = 2;
-}
+    this.servicoSelecionado = s;
+    this.profissionais = [];
+    this.profissionalService.listarPorServico(s.id!).subscribe({
+      next: (lista) => this.profissionais = lista,
+      error: () => {}
+    });
+    this.stepAgendamento = 2;
+  }
 
   selecionarProfissional(p: Profissional) {
     this.profissionalSelecionado = p;
+    if (!p.atendeADomicilio) { this.enderecoAgendamento = null; }
     this.stepAgendamento = 3;
   }
 
   confirmarDataHora() {
-    if (!this.dataSelecionada || !this.horaSelecionada) {
-      this.toast.aviso('Selecione a data e o horário.');
-      return;
-    }
+    if (!this.dataSelecionada || !this.horaSelecionada) { this.toast.aviso('Selecione a data e o horario.'); return; }
     const hoje = new Date().toISOString().split('T')[0];
-    if (this.dataSelecionada < hoje) {
-      this.toast.erro('Não é possível agendar para datas passadas.');
-      return;
-    }
+    if (this.dataSelecionada < hoje) { this.toast.erro('Nao e possivel agendar para datas passadas.'); return; }
     this.stepAgendamento = 4;
   }
 
@@ -335,10 +342,7 @@ export class AreaClienteComponent implements OnInit {
       return;
     }
     const hoje = new Date().toISOString().split('T')[0];
-    if (this.dataSelecionada < hoje) {
-      this.toast.erro('Não é possível agendar para datas passadas.');
-      return;
-    }
+    if (this.dataSelecionada < hoje) { this.toast.erro('Nao e possivel agendar para datas passadas.'); return; }
 
     this.salvandoAgendamento = true;
     this.agendamentoService.criar({
@@ -360,7 +364,6 @@ export class AreaClienteComponent implements OnInit {
         this.carregarHistorico();
         this.carregarAgendamentosHoje();
         this.salvandoAgendamento = false;
-        // Exibe detalhes do agendamento criado
         this.agendamentoDetalhes = ag;
         this.modalDetalhesAberto = true;
       },
@@ -371,26 +374,63 @@ export class AreaClienteComponent implements OnInit {
     });
   }
 
-  verDetalhes(ag: AgendamentoResponse) {
-    this.agendamentoDetalhes = ag;
-    this.modalDetalhesAberto = true;
+  verDetalhes(ag: AgendamentoResponse) { this.agendamentoDetalhes = ag; this.modalDetalhesAberto = true; }
+  fecharDetalhes() { this.modalDetalhesAberto = false; this.agendamentoDetalhes = null; }
+  mudarTelaHistorico() { this.telaAtiva = 'historico'; if (this.todoAgendamentos.length === 0) this.carregarHistorico(); }
+
+  // Modal endereco agendamento (domicilio)
+  abrirModalEndereco() {
+    const e = this.enderecoAgendamento;
+    this.enderecoTemp = e ? { ...e } : { cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '' };
+    this.modalEnderecoAberto = true;
   }
 
-  fecharDetalhes() {
-    this.modalDetalhesAberto = false;
-    this.agendamentoDetalhes = null;
+  fecharModalEndereco() { this.modalEnderecoAberto = false; }
+
+  confirmarNovoEndereco() {
+    const e = this.enderecoTemp;
+    if (!e.cep || !e.logradouro || !e.numero || !e.bairro || !e.cidade || !e.estado) {
+      this.toast.aviso('Preencha todos os campos do endereco.');
+      return;
+    }
+    this.enderecoAgendamento = { ...e };
+    this.modalEnderecoAberto = false;
+    this.toast.sucesso('Endereco atualizado para este agendamento.');
   }
 
-  mudarTelaHistorico() {
-    this.telaAtiva = 'historico';
-    if (this.todoAgendamentos.length === 0) this.carregarHistorico();
+  buscarCepAgendamento() {
+    const cep = this.enderecoTemp.cep.replace(/\D/g, '');
+    if (cep.length !== 8) { this.toast.erro('CEP invalido.'); return; }
+    this.buscandoCep = true;
+    fetch('https://viacep.com.br/ws/' + cep + '/json/')
+      .then(r => r.json())
+      .then((data: any) => {
+        if (data.erro) {
+          this.toast.erro('CEP nao encontrado.');
+        } else {
+          this.enderecoTemp.logradouro = data.logradouro;
+          this.enderecoTemp.bairro     = data.bairro;
+          this.enderecoTemp.cidade     = data.localidade;
+          this.enderecoTemp.estado     = data.uf;
+          this.toast.sucesso('Endereco preenchido!');
+        }
+        this.buscandoCep = false;
+      })
+      .catch(() => { this.toast.erro('Erro ao buscar CEP.'); this.buscandoCep = false; });
+  }
+
+  aplicarMascaraCepAgendamento(event: any) {
+    let v = event.target.value.replace(/\D/g, '').slice(0, 8);
+    v = v.replace(/(\d{5})(\d{0,3})/, '$1-$2');
+    event.target.value = v;
+    this.enderecoTemp.cep = v;
   }
 
   // Perfil
   salvarPerfil() {
     if (this.formPerfil.invalid) { this.formPerfil.markAllAsTouched(); return; }
     const sessao = this.authService.getSessao();
-    if (!sessao || !this.usuarioLogado?.id) { this.toast.erro('Sessão inválida.'); return; }
+    if (!sessao || !this.usuarioLogado?.id) { this.toast.erro('Sessao invalida.'); return; }
     this.salvandoPerfil = true;
     const v = this.formPerfil.value;
     this.usuarioService.atualizar(this.usuarioLogado.id, {
@@ -416,34 +456,34 @@ export class AreaClienteComponent implements OnInit {
   salvarSenha() {
     const v = this.formSenha.value;
     if (this.formSenha.invalid) { this.formSenha.markAllAsTouched(); return; }
-    if (v.novaSenha !== v.confirmarSenha) { this.toast.erro('As senhas não coincidem.'); return; }
+    if (v.novaSenha !== v.confirmarSenha) { this.toast.erro('As senhas nao coincidem.'); return; }
     const sessao = this.authService.getSessao();
-    if (!sessao || !this.usuarioLogado?.id) { this.toast.erro('Sessão inválida.'); return; }
+    if (!sessao || !this.usuarioLogado?.id) { this.toast.erro('Sessao invalida.'); return; }
     this.salvandoSenha = true;
     this.usuarioService.trocarSenha(this.usuarioLogado.id, v.senhaAtual, v.novaSenha).subscribe({
-      next: () => {
-        this.toast.sucesso('Senha alterada com sucesso!');
-        this.formSenha.reset();
-        this.salvandoSenha = false;
-      },
-      error: (err: any) => {
-        this.toast.erro(err.mensagemAmigavel || 'Senha atual incorreta.');
-        this.salvandoSenha = false;
-      }
+      next: () => { this.toast.sucesso('Senha alterada com sucesso!'); this.formSenha.reset(); this.salvandoSenha = false; },
+      error: (err: any) => { this.toast.erro(err.mensagemAmigavel || 'Senha atual incorreta.'); this.salvandoSenha = false; }
     });
   }
 
   sair() { this.authService.logout(); this.router.navigate(['/login']); }
 
-  // Helpers
   gerarIniciais(nome: string): string {
     if (!nome) return 'CL';
     const p = nome.trim().split(' ');
     return p.length === 1 ? p[0][0].toUpperCase() : (p[0][0] + p[p.length - 1][0]).toUpperCase();
   }
 
-  nomeProfissional(id: number) { const p = this.profissionais.find(p => p.id === id); return p?.nome || `Profissional #${id}`; }
-  nomeServico(id: number) { const s = this.servicos.find(s => s.id === id); return s?.nome || `Serviço #${id}`; }
+  nomeProfissional(id: number): string {
+    const p = this.profissionais.find(p => p.id === id);
+    return p?.nome || 'Profissional #' + id;
+  }
+
+  nomeServico(id: number): string {
+    const s = this.servicos.find(s => s.id === id);
+    return s?.nome || 'Servico #' + id;
+  }
+
   labelStatus(s: string) { return ({ CONFIRMADO: 'Confirmado', PENDENTE: 'Pendente', CANCELADO: 'Cancelado' } as any)[s] || s; }
   classeStatus(s: string) { return ({ CONFIRMADO: 'badge-success', PENDENTE: 'badge-warning', CANCELADO: 'badge-danger' } as any)[s] || 'badge-gray'; }
   formatarDataHora(v: string) { return v ? new Date(v).toLocaleString('pt-BR') : '-'; }
@@ -451,7 +491,8 @@ export class AreaClienteComponent implements OnInit {
     if (!v) return '-';
     const data = v.includes('T') ? new Date(v) : new Date(v + 'T00:00:00');
     return data.toLocaleDateString('pt-BR');
-  } primeiroNome(nome: string | undefined) { return nome?.split(' ')[0] || 'Cliente'; }
+  }
+  primeiroNome(nome: string | undefined) { return nome?.split(' ')[0] || 'Cliente'; }
 
   aplicarMascaraTelefone(event: any) {
     let v = event.target.value.replace(/\D/g, '').slice(0, 11);

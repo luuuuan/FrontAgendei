@@ -4,9 +4,8 @@ import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } 
 import { AgendamentoService } from '../../services/agendamento.service';
 import { ProfissionalService } from '../../services/profissional.service';
 import { ServicoService } from '../../services/servico.service';
-import { UsuarioService } from '../../services/usuario.service';
 import { ToastService } from '../../services/toast.service';
-import { AgendamentoResponse, Profissional, Servico, Usuario } from '../../models/models';
+import { AgendamentoResponse, Profissional, Servico } from '../../models/models';
 
 @Component({
   selector: 'app-agenda',
@@ -17,34 +16,58 @@ import { AgendamentoResponse, Profissional, Servico, Usuario } from '../../model
 })
 export class AgendaComponent implements OnInit {
   agendamentos: AgendamentoResponse[] = [];
-  profissionais: Profissional[] = []; servicos: Servico[] = []; usuarios: Usuario[] = [];
-  carregando = false; erro = ''; modalAberto = false; salvando = false;
-  modalDetalhesAberto = false; agendamentoDetalhes: AgendamentoResponse | null = null;
+  profissionais: Profissional[] = [];
+  servicos: Servico[] = [];
+  carregando = false;
+  erro = '';
+  modalAberto = false;
+  salvando = false;
+  modalDetalhesAberto = false;
+  agendamentoDetalhes: AgendamentoResponse | null = null;
+  atualizandoStatus = false;
+
   dataBusca = new Date().toISOString().split('T')[0];
   dataMinima = new Date().toISOString().split('T')[0];
+
+  // Status disponíveis para o prestador atualizar
+  statusDisponiveis = [
+    { valor: 'PENDENTE',    label: 'Pendente',    classe: 'badge-warning' },
+    { valor: 'CONFIRMADO',  label: 'Confirmado',  classe: 'badge-success' },
+    { valor: 'REALIZADO',   label: 'Realizado',   classe: 'badge-info'    },
+    { valor: 'CANCELADO',   label: 'Cancelado',   classe: 'badge-danger'  },
+    { valor: 'AUSENTE',     label: 'Ausente',     classe: 'badge-gray'    },
+  ];
+
   form: FormGroup;
 
   constructor(
-    private fb: FormBuilder, private agendamentoService: AgendamentoService,
-    private profissionalService: ProfissionalService, private servicoService: ServicoService,
-    private usuarioService: UsuarioService, private toast: ToastService
+    private fb: FormBuilder,
+    private agendamentoService: AgendamentoService,
+    private profissionalService: ProfissionalService,
+    private servicoService: ServicoService,
+    private toast: ToastService
   ) {
     this.form = this.fb.group({
-      dataAgendamento: ['', Validators.required], horaInicio: ['', Validators.required],
-      usuarioId: ['', Validators.required], profissionalId: ['', Validators.required],
-      servicos: ['', Validators.required], observacoes: ['']
+      dataAgendamento: ['', Validators.required],
+      horaInicio:      ['', Validators.required],
+      // Cliente manual: só nome e telefone (sem necessidade de cadastro)
+      nomeCliente:     ['', Validators.required],
+      telefoneCliente: [''],
+      profissionalId:  ['', Validators.required],
+      servicos:        ['', Validators.required],
+      observacoes:     ['']
     });
   }
 
   ngOnInit() {
     this.buscarAgendamentos();
-    this.profissionalService.listar().subscribe({ next: l => this.profissionais = l, error: () => { } });
-    this.servicoService.listar().subscribe({ next: l => this.servicos = l, error: () => { } });
-    this.usuarioService.listar().subscribe({ next: l => this.usuarios = l, error: () => { } });
+    this.profissionalService.listar().subscribe({ next: l => this.profissionais = l, error: () => {} });
+    this.servicoService.listar().subscribe({ next: l => this.servicos = l, error: () => {} });
   }
 
   buscarAgendamentos() {
-    this.carregando = true; this.erro = '';
+    this.carregando = true;
+    this.erro = '';
     this.agendamentoService.buscarPorData(this.dataBusca).subscribe({
       next: l => { this.agendamentos = l; this.carregando = false; },
       error: (err: any) => { this.erro = err.mensagemAmigavel || 'Erro ao carregar.'; this.carregando = false; }
@@ -53,6 +76,7 @@ export class AgendaComponent implements OnInit {
 
   abrirModal() { this.form.reset(); this.modalAberto = true; }
   fecharModal() { this.modalAberto = false; }
+
   verDetalhes(ag: AgendamentoResponse) { this.agendamentoDetalhes = ag; this.modalDetalhesAberto = true; }
   fecharDetalhes() { this.modalDetalhesAberto = false; this.agendamentoDetalhes = null; }
 
@@ -60,22 +84,66 @@ export class AgendaComponent implements OnInit {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     const v = this.form.value;
     const hoje = new Date().toISOString().split('T')[0];
-    if (v.dataAgendamento < hoje) {
-      this.toast.erro('Não é possível agendar para datas passadas.');
-      return;
-    }
+    if (v.dataAgendamento < hoje) { this.toast.erro('Nao e possivel agendar para datas passadas.'); return; }
+
     this.salvando = true;
-    const dataHora = `${v.dataAgendamento}T${v.horaInicio}:00`;
-    this.agendamentoService.criar({ dataAgendamento: dataHora, horaInicio: dataHora, usuarioId: Number(v.usuarioId), profissionalId: Number(v.profissionalId), servicos: [Number(v.servicos)], observacoes: v.observacoes || '', taxaPlataforma: 0, statusAgendamento: 'PENDENTE' } as any).subscribe({
+    // Passa nome e telefone do cliente nas observacoes quando nao tem cadastro
+    const obsCliente = 'Cliente: ' + v.nomeCliente + (v.telefoneCliente ? ' | Tel: ' + v.telefoneCliente : '');
+    const obsCompleta = obsCliente + (v.observacoes ? ' | ' + v.observacoes : '');
+
+    this.agendamentoService.criar({
+      dataAgendamento: v.dataAgendamento,
+      horaInicio: v.horaInicio + ':00',
+      // usuarioId nulo/0 indica cliente sem cadastro — back precisa aceitar opcional
+      usuarioId: 0,
+      profissionalId: Number(v.profissionalId),
+      servicos: [Number(v.servicos)],
+      observacoes: obsCompleta,
+      taxaPlataforma: 0,
+      statusAgendamento: 'PENDENTE'
+    } as any).subscribe({
       next: () => { this.toast.sucesso('Agendamento criado!'); this.fecharModal(); this.buscarAgendamentos(); this.salvando = false; },
       error: (err: any) => { this.toast.erro(err.mensagemAmigavel || 'Erro ao criar.'); this.salvando = false; }
     });
   }
 
-  nomeProfissional(id: number) { const p = this.profissionais.find(p => p.id === id); return p?.nome || `Profissional #${id}`; }
-  nomeUsuario(id: number) { const u = this.usuarios.find(u => u.id === id); return u?.nome || `Usuário #${id}`; }
-  nomeServico(id: number) { const s = this.servicos.find(s => s.id === id); return s?.nome || `Serviço #${id}`; }
-  labelStatus(s: string) { return ({ CONFIRMADO: 'Confirmado', PENDENTE: 'Pendente', CANCELADO: 'Cancelado' } as any)[s] || s; }
-  classeStatus(s: string) { return ({ CONFIRMADO: 'badge-success', PENDENTE: 'badge-warning', CANCELADO: 'badge-danger' } as any)[s] || 'badge-gray'; }
+  // Atualizar status do agendamento
+  atualizarStatus(ag: AgendamentoResponse, novoStatus: string) {
+    this.atualizandoStatus = true;
+    this.agendamentoService.atualizarStatus(ag.id!, novoStatus).subscribe({
+      next: () => {
+        ag.statusAgendamento = novoStatus;
+        if (this.agendamentoDetalhes?.id === ag.id) {
+          if (this.agendamentoDetalhes) { this.agendamentoDetalhes.statusAgendamento = novoStatus; }
+        }
+        this.toast.sucesso('Status atualizado!');
+        this.atualizandoStatus = false;
+      },
+      error: (err: any) => {
+        this.toast.erro(err.mensagemAmigavel || 'Erro ao atualizar status.');
+        this.atualizandoStatus = false;
+      }
+    });
+  }
+
+  aplicarMascaraTelefone(event: any) {
+    let v = event.target.value.replace(/\D/g, '').slice(0, 11);
+    if (v.length <= 10) v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+    else v = v.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+    event.target.value = v;
+    this.form.get('telefoneCliente')?.setValue(v, { emitEvent: false });
+  }
+
+  nomeProfissional(id: number) { const p = this.profissionais.find(p => p.id === id); return p?.nome || 'Profissional #' + id; }
+  nomeServico(id: number) { const s = this.servicos.find(s => s.id === id); return s?.nome || 'Servico #' + id; }
+  labelStatus(s: string) { return ({ CONFIRMADO: 'Confirmado', PENDENTE: 'Pendente', CANCELADO: 'Cancelado', REALIZADO: 'Realizado', AUSENTE: 'Ausente' } as any)[s] || s; }
+  classeStatus(s: string) { return ({ CONFIRMADO: 'badge-success', PENDENTE: 'badge-warning', CANCELADO: 'badge-danger', REALIZADO: 'badge-info', AUSENTE: 'badge-gray' } as any)[s] || 'badge-gray'; }
   formatarDataHora(v: string) { return v ? new Date(v).toLocaleString('pt-BR') : '-'; }
+
+  // Extrai nome do cliente das observacoes (para agendamentos sem cadastro)
+  nomeClienteObs(obs: string | undefined): string {
+    if (!obs) return '-';
+    const match = obs.match(/Cliente:\s*([^|]+)/);
+    return match ? match[1].trim() : '-';
+  }
 }

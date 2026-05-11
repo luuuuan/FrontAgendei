@@ -28,4 +28,9 @@ export class ServicoService {
   cadastrar(servico: any): Observable<Servico> {
     return this.http.post<Servico>(`${this.apiUrl}/cadastroServicos`, servico);
   }
+
+  // Fix 2: método de atualização de serviço
+  atualizar(id: number, servico: any): Observable<Servico> {
+    return this.http.patch<Servico>(`${this.apiUrl}/atualizar/${id}`, servico);
+  }
 }
