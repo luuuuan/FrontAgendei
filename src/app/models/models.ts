@@ -101,7 +101,7 @@ export interface HorarioDisponivel {
   data: string;
   horaInicio: string;
   horaFim: string;
-  status: boolean;
+  statusHorario: string;
   profissionalId?: number;
   profissional?: { id: number; nome?: string };
   servicoId?: number;

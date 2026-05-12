@@ -64,7 +64,7 @@ export class HorariosComponent implements OnInit {
       horaInicio:     ['', Validators.required],
       horaFim:        ['', Validators.required],
       servicoId:      [''],
-      status:         [true]
+      statusHorario:         [true]
     });
   }
 
@@ -112,8 +112,7 @@ export class HorariosComponent implements OnInit {
   }
 
   get horariosAtivos(): number {
-    return this.horarios.filter(h => h.status).length;
-  }
+    return this.horarios.filter(h => h.statusHorario === 'DISPONIVEL').length;  }
 
   get servicoSelecionado(): Servico | undefined {
     if (!this.servicoSelecionadoId) return undefined;
@@ -252,7 +251,6 @@ export class HorariosComponent implements OnInit {
         horaInicio: slot.horaInicio + ':00',
         horaFim: slot.horaFim + ':00',
         servicoId: this.servicoSelecionadoId || undefined,
-        status: true
       }).subscribe({
         next: () => {
           salvos++;

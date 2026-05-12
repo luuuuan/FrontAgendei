@@ -63,11 +63,11 @@
       <thead>
         <tr>
           <th>Data</th>
-          <th>Hora Inicio</th>
+          <th>Hora Início</th>
           <th>Hora Fim</th>
-          <th>Servico</th>
+          <th>Serviço</th>
           <th>Status</th>
-          <th>Acoes</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -77,8 +77,8 @@
           <td>{{ h.horaFim }}</td>
           <td>{{ nomeServico(h.servicoId) }}</td>
           <td>
-            <span class="badge" [class]="h.status ? 'badge-success' : 'badge-gray'">
-              {{ h.status ? 'Ativo' : 'Inativo' }}
+            <span class="badge" [class]="h.statusHorario ? 'badge-success' : 'badge-gray'">
+              {{ h.statusHorario ? 'Ativo' : 'Inativo' }}
             </span>
           </td>
           <td>
