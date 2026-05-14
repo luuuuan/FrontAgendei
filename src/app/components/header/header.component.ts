@@ -31,15 +31,13 @@ export class HeaderComponent implements OnInit {
     const sessao = this.authService.getSessao();
     if (!sessao) return;
     this.tipoUsuario = sessao.tipoUsuario || '';
-    this.usuarioService.listar().subscribe({
-      next: (lista) => {
-        const usuario = lista.find(u => u.email === sessao.email);
-        if (usuario) {
-          this.nomeUsuario = usuario.nome;
-          this.iniciais = this.gerarIniciais(usuario.nome);
-        } else {
-          this.nomeUsuario = sessao.email || 'Usuário';
-        }
+
+    this.usuarioService.buscarPorId(sessao.usuarioId).subscribe({
+      next: (usuario) => {
+        // Se for prestador e tiver nomeFantasia no usuario
+        const nome = (usuario as any).nomeFantasia || (usuario as any).razaoSocial || usuario.nome;
+        this.nomeUsuario = nome;
+        this.iniciais = this.gerarIniciais(nome);
       },
       error: () => { this.nomeUsuario = sessao.email || 'Usuário'; }
     });

@@ -13,6 +13,58 @@
       </div>
     </div>
   </div>
+  <!-- Modal Avaliacao UC017 -->
+  <div class="modal-overlay" *ngIf="modalAvaliacaoAberto" (click)="fecharModalAvaliacao()">
+    <div class="modal" (click)="$event.stopPropagation()" style="max-width:440px">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fas fa-star" style="color:#f59e0b"></i> Avaliar Servico</div>
+        <button class="modal-close" (click)="fecharModalAvaliacao()">x</button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="agendamentoParaAvaliar" style="margin-bottom:16px;font-size:13px;color:#374151">
+          Avaliando <strong>{{ nomeProfissional(agendamentoParaAvaliar.profissionalId) }}</strong>
+          — {{ formatarData(agendamentoParaAvaliar.dataAgendamento) }}
+        </div>
+
+        <div class="form-group">
+          <label>Sua nota *</label>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button *ngFor="let n of [1,2,3,4,5]"
+              (click)="definirNota(n)"
+              style="font-size:28px;background:none;border:none;cursor:pointer;padding:4px;transition:transform .1s"
+              [style.transform]="notaAvaliacao >= n ? 'scale(1.2)' : 'scale(1)'"
+              [title]="n + ' estrela(s)'">
+              <i class="fas fa-star" [style.color]="notaAvaliacao >= n ? '#f59e0b' : '#d1d5db'"></i>
+            </button>
+          </div>
+          <div style="font-size:12px;color:#6b7280;margin-top:6px" *ngIf="notaAvaliacao > 0">
+            {{ ['', 'Pessimo', 'Ruim', 'Regular', 'Bom', 'Excelente'][notaAvaliacao] }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Comentario <span style="color:#9ca3af;font-size:12px">(opcional)</span></label>
+          <textarea [(ngModel)]="comentarioAvaliacao" rows="4"
+            placeholder="Conte sua experiencia com o profissional..."
+            maxlength="500"></textarea>
+          <div style="font-size:11px;color:#9ca3af;text-align:right">
+            {{ comentarioAvaliacao.length }}/500
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" (click)="fecharModalAvaliacao()">Cancelar</button>
+        <button class="btn btn-primary" (click)="enviarAvaliacao()"
+          [disabled]="enviandoAvaliacao || notaAvaliacao === 0"
+          style="background:#f59e0b;border-color:#f59e0b">
+          <i class="fas fa-spinner fa-spin" *ngIf="enviandoAvaliacao"></i>
+          <i class="fas fa-paper-plane" *ngIf="!enviandoAvaliacao"></i>
+          {{ enviandoAvaliacao ? 'Enviando...' : 'Enviar Avaliacao' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="cliente-wrapper">
@@ -604,8 +656,124 @@
           </div>
         </div>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" style="flex-wrap:wrap;gap:8px">
         <button class="btn btn-outline" (click)="fecharDetalhes()">Fechar</button>
+        <button class="btn btn-primary"
+          *ngIf="agendamentoDetalhes && podeAvaliar(agendamentoDetalhes)"
+          (click)="abrirModalAvaliacao(agendamentoDetalhes!)"
+          style="background:#f59e0b;border-color:#f59e0b">
+          <i class="fas fa-star"></i> Avaliar Servico
+        </button>
+        <button class="btn btn-outline"
+          *ngIf="agendamentoDetalhes && podeCancelar(agendamentoDetalhes)"
+          (click)="abrirModalReagendar(agendamentoDetalhes!)"
+          style="color:#f59e0b;border-color:#f59e0b">
+          <i class="fas fa-calendar-alt"></i> Reagendar
+        </button>
+        <button class="btn btn-danger-outline"
+          *ngIf="agendamentoDetalhes && podeCancelar(agendamentoDetalhes)"
+          (click)="abrirModalCancelar(agendamentoDetalhes!)">
+          <i class="fas fa-times"></i> Cancelar Agendamento
+        </button>
+        <div *ngIf="agendamentoDetalhes && !podeCancelar(agendamentoDetalhes) &&
+          !['CANCELADO','REALIZADO','AUSENTE'].includes(agendamentoDetalhes.statusAgendamento)"
+          style="font-size:12px;color:#dc2626;width:100%;text-align:center">
+          <i class="fas fa-info-circle"></i>
+          Cancelamento nao permitido com menos de 2 horas de antecedencia.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Cancelar Agendamento -->
+  <div class="modal-overlay" *ngIf="modalCancelarAberto" (click)="fecharModalCancelar()">
+    <div class="modal" (click)="$event.stopPropagation()" style="max-width:420px">
+      <div class="modal-header">
+        <div class="modal-title" style="color:#dc2626">
+          <i class="fas fa-exclamation-triangle"></i> Cancelar Agendamento
+        </div>
+        <button class="modal-close" (click)="fecharModalCancelar()">x</button>
+      </div>
+      <div class="modal-body">
+        <div style="background:#fff5f5;border:1px solid #fca5a5;border-radius:8px;padding:14px;margin-bottom:16px">
+          <p style="font-size:13px;color:#7f1d1d;margin:0">
+            <i class="fas fa-info-circle"></i>
+            Esta acao nao pode ser desfeita. O agendamento sera cancelado permanentemente.
+          </p>
+        </div>
+        <div *ngIf="agendamentoDetalhes" style="margin-bottom:16px;font-size:14px">
+          <div><strong>Profissional:</strong> {{ nomeProfissional(agendamentoDetalhes.profissionalId) }}</div>
+          <div><strong>Data:</strong> {{ formatarData(agendamentoDetalhes.dataAgendamento) }}
+            <span *ngIf="agendamentoDetalhes.horaInicio"> as {{ agendamentoDetalhes.horaInicio }}</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Motivo do cancelamento <span style="color:#9ca3af;font-size:12px">(opcional)</span></label>
+          <textarea [(ngModel)]="motivoCancelamento" rows="3"
+            placeholder="Descreva o motivo..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" (click)="fecharModalCancelar()">Voltar</button>
+        <button class="btn btn-danger-outline" (click)="confirmarCancelamento()" [disabled]="cancelando">
+          <i class="fas fa-spinner fa-spin" *ngIf="cancelando"></i>
+          <i class="fas fa-times" *ngIf="!cancelando"></i>
+          {{ cancelando ? 'Cancelando...' : 'Confirmar Cancelamento' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Reagendar -->
+  <div class="modal-overlay" *ngIf="modalReagendar" (click)="fecharModalReagendar()">
+    <div class="modal" (click)="$event.stopPropagation()" style="max-width:460px">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fas fa-calendar-alt"></i> Reagendar
+        </div>
+        <button class="modal-close" (click)="fecharModalReagendar()">x</button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="agendamentoDetalhes" style="margin-bottom:16px;font-size:13px;color:#6b7280">
+          Reagendando com <strong>{{ nomeProfissional(agendamentoDetalhes.profissionalId) }}</strong>.
+          O agendamento atual sera cancelado e um novo sera criado.
+        </div>
+
+        <div class="form-group">
+          <label>Nova Data *</label>
+          <input type="date" [(ngModel)]="dataSelecionadaReagendamento"
+            [min]="dataMinima" (change)="buscarHorariosReagendamento()" />
+        </div>
+
+        <div class="form-group" *ngIf="dataSelecionadaReagendamento">
+          <label>Horario Disponivel *</label>
+          <div *ngIf="carregandoHorariosReagendamento" style="color:#6b7280;font-size:13px">
+            <i class="fas fa-spinner fa-spin"></i> Buscando horarios...
+          </div>
+          <div *ngIf="!carregandoHorariosReagendamento && horariosReagendamento.length === 0"
+            style="color:#dc2626;font-size:13px">
+            <i class="fas fa-times-circle"></i> Nenhum horario disponivel para esta data.
+          </div>
+          <div *ngIf="!carregandoHorariosReagendamento && horariosReagendamento.length > 0"
+            style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+            <button *ngFor="let h of horariosReagendamento"
+              class="btn btn-sm"
+              [class]="horaSelecionadaReagendamento === h ? 'btn-primary' : 'btn-outline'"
+              (click)="horaSelecionadaReagendamento = h"
+              style="font-size:13px">
+              {{ h }}
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" (click)="fecharModalReagendar()">Cancelar</button>
+        <button class="btn btn-primary" (click)="confirmarReagendamento()"
+          [disabled]="reagendando || !dataSelecionadaReagendamento || !horaSelecionadaReagendamento">
+          <i class="fas fa-spinner fa-spin" *ngIf="reagendando"></i>
+          <i class="fas fa-calendar-check" *ngIf="!reagendando"></i>
+          {{ reagendando ? 'Reagendando...' : 'Confirmar Reagendamento' }}
+        </button>
       </div>
     </div>
   </div>

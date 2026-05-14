@@ -29,8 +29,8 @@ export class UsuarioService {
     return this.http.post<Usuario>(`${this.apiUrl}/cadastro`, usuario);
   }
 
-  atualizar(id: number, dados: Partial<Usuario>): Observable<Usuario> {
-    return this.http.patch<Usuario>(`${this.apiUrl}/atualizar-cliente/${id}`, dados);
+  atualizar(usuarioId: number, dados: Partial<Usuario>): Observable<Usuario> {
+    return this.http.patch<Usuario>(`${this.apiUrl}/atualizar-cliente/${usuarioId}`, dados);
   }
 
   trocarSenha(id: number, senhaAtual: string, novaSenha: string): Observable<any> {

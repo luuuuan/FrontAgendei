@@ -32,7 +32,6 @@ export interface Servico {
   valor: number;
   profissionalId: number;
   statusServico?: string;
-  statusExecucaoServico?: string;
 }
 
 export interface Profissional {
@@ -46,16 +45,6 @@ export interface Profissional {
   usuario?: Usuario;
   servico?: Servico[];
   atendeADomicilio?: boolean;
-}
-
-export interface EnderecoAgendamento {
-  cep: string;
-  logradouro: string;
-  numero: string;
-  complemento?: string;
-  bairro: string;
-  cidade: string;
-  estado: string;
 }
 
 export interface Agendamento {
@@ -101,9 +90,19 @@ export interface HorarioDisponivel {
   data: string;
   horaInicio: string;
   horaFim: string;
-  statusHorario: string;
+  status: boolean;
   profissionalId?: number;
   profissional?: { id: number; nome?: string };
   servicoId?: number;
   servico?: { id: number; nome?: string };
+}
+
+export interface EnderecoAgendamento {
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento?: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
 }

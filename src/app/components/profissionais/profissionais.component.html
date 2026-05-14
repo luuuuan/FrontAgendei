@@ -110,7 +110,7 @@
               type="text"
               [(ngModel)]="buscaUsuario"
               placeholder="000.000.000-00 ou email@exemplo.com"
-              (input)="aplicarMascaraCpf($event)"
+              (input)="aplicarMascaraOuEmail($event)"
               (keyup.enter)="buscarUsuario()"
               style="flex:1"
             />

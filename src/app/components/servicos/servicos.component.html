@@ -27,6 +27,12 @@
   </div>
 </div>
 
+<!-- Loading -->
+<div class="loading-box" *ngIf="carregando">
+  <i class="fas fa-spinner fa-spin fa-2x"></i>
+  <p>Carregando serviços...</p>
+</div>
+
 <!-- Erro -->
 <div class="erro-aviso" *ngIf="erro && !carregando">
   <i class="fas fa-exclamation-circle"></i>
@@ -48,7 +54,6 @@
         <th>Valor</th>
         <th>Profissional</th>
         <th>Status</th>
-        <th>Ações</th>
       </tr>
     </thead>
     <tbody>
@@ -58,23 +63,16 @@
         <td>{{ s.duracaoMinutos }} min</td>
         <td>{{ s.tempoBuffer || 0 }} min</td>
         <td>R$ {{ s.valor | number:'1.2-2' }}</td>
-        <!-- Fix 3: nome do profissional em vez de #id -->
         <td>{{ nomeProfissional(s.profissionalId) }}</td>
         <td>
           <span class="badge" [class]="classeStatus(s.statusServico || '')">
             {{ s.statusServico || 'ATIVO' }}
           </span>
         </td>
-        <!-- Fix 2: botão editar -->
-        <td>
-          <button class="btn btn-sm btn-outline" (click)="abrirModalEdicao(s)" title="Editar serviço">
-            <i class="fas fa-edit"></i>
-          </button>
-        </td>
       </tr>
 
       <tr *ngIf="servicosFiltrados.length === 0">
-        <td colspan="8" class="sem-dados">
+        <td colspan="7" class="sem-dados">
           <i class="fas fa-concierge-bell"></i>
           <span *ngIf="termoBusca">Nenhum serviço encontrado para "{{ termoBusca }}"</span>
           <span *ngIf="!termoBusca">Nenhum serviço cadastrado.</span>
@@ -84,13 +82,12 @@
   </table>
 </div>
 
-<!-- Modal novo/editar serviço -->
+<!-- Modal novo serviço -->
 <div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
   <div class="modal" (click)="$event.stopPropagation()">
 
     <div class="modal-header">
-      <!-- Fix 2: título dinâmico conforme modo -->
-      <div class="modal-title">{{ modoEdicao ? 'Editar Serviço' : 'Novo Serviço' }}</div>
+      <div class="modal-title">Novo Serviço</div>
       <button class="modal-close" (click)="fecharModal()">×</button>
     </div>
 
@@ -164,8 +161,7 @@
       <button class="btn btn-outline" (click)="fecharModal()">Cancelar</button>
       <button class="btn btn-primary" (click)="salvar()" [disabled]="salvando">
         <span *ngIf="salvando"><i class="fas fa-spinner fa-spin"></i> Salvando...</span>
-        <!-- Fix 2: label dinâmico -->
-        <span *ngIf="!salvando">{{ modoEdicao ? 'Salvar Alterações' : 'Cadastrar Serviço' }}</span>
+        <span *ngIf="!salvando">Cadastrar Serviço</span>
       </button>
     </div>
 

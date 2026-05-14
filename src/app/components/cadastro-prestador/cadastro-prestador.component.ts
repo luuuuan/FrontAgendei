@@ -71,8 +71,7 @@ export class CadastroPrestadorComponent implements OnInit {
       nomeDisplay:   [''],
       cnpj:          [''],
       razaoSocial:   [''],
-      bio:           [''],
-      atendeADomicilio: [false]
+      bio:           ['']
     });
 
     this.formStep3 = this.fb.group({
@@ -236,35 +235,4 @@ export class CadastroPrestadorComponent implements OnInit {
   invalido(form: FormGroup, nome: string) {
     return form.get(nome)?.invalid && form.get(nome)?.touched;
   }
-
-  // Fix 8: máscaras de CPF/CNPJ e telefone
-  aplicarMascaraTelefone(event: any) {
-    let v = event.target.value.replace(/\D/g, '').slice(0, 11);
-    if (v.length <= 10) v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
-    else v = v.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
-    event.target.value = v;
-    this.formStep1.get('telefone')?.setValue(v, { emitEvent: false });
-  }
-
-  aplicarMascaraCpf(event: any) {
-    let v = event.target.value.replace(/\D/g, '').slice(0, 11);
-    v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
-    event.target.value = v;
-    this.formStep2.get('cpf')?.setValue(v, { emitEvent: false });
-  }
-
-  aplicarMascaraCnpj(event: any) {
-    let v = event.target.value.replace(/\D/g, '').slice(0, 14);
-    v = v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, '$1.$2.$3/$4-$5');
-    event.target.value = v;
-    this.formStep2.get('cnpj')?.setValue(v, { emitEvent: false });
-  }
-
-  aplicarMascaraCep(event: any) {
-    let v = event.target.value.replace(/\D/g, '').slice(0, 8);
-    v = v.replace(/(\d{5})(\d{0,3})/, '$1-$2');
-    event.target.value = v;
-    this.formStep3.get('cep')?.setValue(v, { emitEvent: false });
-  }
-
 }

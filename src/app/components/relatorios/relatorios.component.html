@@ -1,6 +1,36 @@
-<div class="page-title">Relatórios</div>
+<div class="page-title">Relatorios</div>
 
-<!-- Loading -->
+<!-- Seletor de tipo -->
+<div class="relatorio-tabs">
+  <button class="tab-btn" [class.ativo]="tipoRelatorio === 'agendamentos'" (click)="tipoRelatorio = 'agendamentos'">
+    <i class="fas fa-calendar-alt"></i> Agendamentos
+  </button>
+  <button class="tab-btn" [class.ativo]="tipoRelatorio === 'financeiro'" (click)="tipoRelatorio = 'financeiro'">
+    <i class="fas fa-dollar-sign"></i> Financeiro
+  </button>
+  <button class="tab-btn" [class.ativo]="tipoRelatorio === 'servicos'" (click)="tipoRelatorio = 'servicos'">
+    <i class="fas fa-concierge-bell"></i> Servicos
+  </button>
+  <button class="tab-btn" [class.ativo]="tipoRelatorio === 'clientes'" (click)="tipoRelatorio = 'clientes'">
+    <i class="fas fa-users"></i> Clientes
+  </button>
+</div>
+
+<!-- Filtros de período -->
+<div class="filtro-periodo">
+  <div class="filtro-grupo">
+    <label><i class="fas fa-calendar"></i> De</label>
+    <input type="date" [(ngModel)]="dataInicio" [max]="dataFim || dataMaxima" (change)="aplicarFiltros()" />
+  </div>
+  <div class="filtro-grupo">
+    <label><i class="fas fa-calendar"></i> Ate</label>
+    <input type="date" [(ngModel)]="dataFim" [min]="dataInicio" [max]="dataMaxima" (change)="aplicarFiltros()" />
+  </div>
+  <button class="btn btn-outline btn-sm" (click)="exportarCSV()">
+    <i class="fas fa-download"></i> Exportar CSV
+  </button>
+</div>
+
 <div class="loading-box" *ngIf="carregando">
   <i class="fas fa-spinner fa-spin fa-2x"></i>
   <p>Carregando dados...</p>
@@ -8,129 +38,206 @@
 
 <div *ngIf="!carregando">
 
-  <!-- Cards de resumo geral -->
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-label">
-        <i class="fas fa-users"></i>
-        <span>Total de Clientes</span>
-      </div>
-      <div class="stat-value">{{ totalUsuarios }}</div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-label">
-        <i class="fas fa-concierge-bell"></i>
-        <span>Total de Serviços</span>
-      </div>
-      <div class="stat-value">{{ totalServicos }}</div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-label">
-        <i class="fas fa-user-md"></i>
-        <span>Profissionais</span>
-      </div>
-      <div class="stat-value">{{ totalProfissionais }}</div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-label">
+  <!-- Cards de resumo -->
+  <div class="resumo-cards">
+    <div class="resumo-card">
+      <div class="resumo-card-icone" style="background:#eff6ff;color:#4361ee">
         <i class="fas fa-calendar-check"></i>
-        <span>Agendamentos (hoje)</span>
       </div>
-      <div class="stat-value">{{ totalAgendamentos }}</div>
+      <div>
+        <div class="resumo-card-valor">{{ totalAgendamentos }}</div>
+        <div class="resumo-card-label">Total no Periodo</div>
+      </div>
+    </div>
+    <div class="resumo-card">
+      <div class="resumo-card-icone" style="background:#f0fdf4;color:#16a34a">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div>
+        <div class="resumo-card-valor">{{ totalConfirmados }}</div>
+        <div class="resumo-card-label">Realizados</div>
+      </div>
+    </div>
+    <div class="resumo-card">
+      <div class="resumo-card-icone" style="background:#fff7ed;color:#ea580c">
+        <i class="fas fa-clock"></i>
+      </div>
+      <div>
+        <div class="resumo-card-valor">{{ totalPendentes }}</div>
+        <div class="resumo-card-label">Pendentes</div>
+      </div>
+    </div>
+    <div class="resumo-card">
+      <div class="resumo-card-icone" style="background:#fef2f2;color:#dc2626">
+        <i class="fas fa-times-circle"></i>
+      </div>
+      <div>
+        <div class="resumo-card-valor">{{ totalCancelados }}</div>
+        <div class="resumo-card-label">Cancelados ({{ taxaCancelamento }}%)</div>
+      </div>
+    </div>
+    <div class="resumo-card" *ngIf="tipoRelatorio === 'financeiro'">
+      <div class="resumo-card-icone" style="background:#f5f3ff;color:#7c3aed">
+        <i class="fas fa-coins"></i>
+      </div>
+      <div>
+        <div class="resumo-card-valor">R$ {{ totalReceita | number:'1.2-2' }}</div>
+        <div class="resumo-card-label">Receita Total</div>
+      </div>
+    </div>
+    <div class="resumo-card" *ngIf="tipoRelatorio === 'financeiro'">
+      <div class="resumo-card-icone" style="background:#fdf4ff;color:#a21caf">
+        <i class="fas fa-receipt"></i>
+      </div>
+      <div>
+        <div class="resumo-card-valor">R$ {{ ticketMedio | number:'1.2-2' }}</div>
+        <div class="resumo-card-label">Ticket Medio</div>
+      </div>
     </div>
   </div>
 
-  <!-- Abas de ranking -->
-  <div class="card">
+  <!-- Relatorio de Agendamentos -->
+  <div *ngIf="tipoRelatorio === 'agendamentos'" class="card" style="margin-top:16px">
     <div class="card-header">
-      <div class="card-title">Rankings</div>
-      <div class="abas">
-        <button
-          class="aba-btn"
-          [class.ativa]="abaAtiva === 'servicos'"
-          (click)="abaAtiva = 'servicos'"
-        >
-          <i class="fas fa-concierge-bell"></i> Serviços
-        </button>
-        <button
-          class="aba-btn"
-          [class.ativa]="abaAtiva === 'profissionais'"
-          (click)="abaAtiva = 'profissionais'"
-        >
-          <i class="fas fa-user-md"></i> Profissionais
-        </button>
-      </div>
+      <div class="card-title">Agendamentos por Dia</div>
     </div>
+    <div class="empty-state" *ngIf="agendamentosPorDia.length === 0">
+      <i class="fas fa-calendar-times"></i>
+      <p>Nenhum agendamento no periodo selecionado.</p>
+    </div>
+    <table *ngIf="agendamentosPorDia.length > 0">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Qtd Agendamentos</th>
+          <th>Receita do Dia</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let dia of agendamentosPorDia">
+          <td>{{ formatarData(dia.data) }}</td>
+          <td>{{ dia.quantidade }}</td>
+          <td>R$ {{ dia.receita | number:'1.2-2' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-    <!-- Ranking de Serviços -->
-    <div *ngIf="abaAtiva === 'servicos'">
-      <div class="ranking-subtitulo">Serviços mais agendados</div>
+  <!-- Relatorio Financeiro -->
+  <div *ngIf="tipoRelatorio === 'financeiro'" class="card" style="margin-top:16px">
+    <div class="card-header">
+      <div class="card-title">Detalhamento por Agendamento</div>
+    </div>
+    <div class="empty-state" *ngIf="agendamentosFiltrados.length === 0">
+      <i class="fas fa-dollar-sign"></i>
+      <p>Nenhum dado financeiro no periodo.</p>
+    </div>
+    <table *ngIf="agendamentosFiltrados.length > 0">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Profissional</th>
+          <th>Status</th>
+          <th>Valor</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let ag of agendamentosFiltrados">
+          <td>{{ formatarData(ag.dataAgendamento) }}</td>
+          <td>{{ nomeProfissional(ag.profissionalId) }}</td>
+          <td>
+            <span class="badge"
+              [style.background]="ag.statusAgendamento === 'CANCELADO' ? '#fef2f2' : '#f0fdf4'"
+              [style.color]="ag.statusAgendamento === 'CANCELADO' ? '#dc2626' : '#16a34a'"
+              style="font-size:11px">
+              {{ ag.statusAgendamento }}
+            </span>
+          </td>
+          <td>
+            <span [style.color]="ag.statusAgendamento === 'CANCELADO' ? '#dc2626' : '#374151'"
+              [style.text-decoration]="ag.statusAgendamento === 'CANCELADO' ? 'line-through' : 'none'">
+              R$ {{ ag.valorTotal | number:'1.2-2' }}
+            </span>
+          </td>
+        </tr>
+        <tr style="font-weight:bold;border-top:2px solid #e5e7eb">
+          <td colspan="3">Total</td>
+          <td>R$ {{ totalReceita | number:'1.2-2' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-      <div class="empty-state" *ngIf="servicosRanking.length === 0">
-        <i class="fas fa-concierge-bell"></i>
-        <p>Nenhum serviço cadastrado.</p>
-      </div>
-
-      <div class="ranking-lista" *ngIf="servicosRanking.length > 0">
-        <div class="ranking-item" *ngFor="let item of servicosRanking; let i = index">
-          <div class="ranking-pos">{{ i + 1 }}</div>
-          <div class="ranking-info">
-            <div class="ranking-nome">{{ item.nome }}</div>
-            <div class="barra-container">
-              <div
-                class="barra-fill"
-                [style.width.%]="item.percentual"
-                [style.background]="corBarra(i)"
-              ></div>
-            </div>
-          </div>
-          <div class="ranking-qtd">
-            {{ item.quantidade }}
-            <span class="ranking-label">agend.</span>
+  <!-- Relatorio Servicos -->
+  <div *ngIf="tipoRelatorio === 'servicos'" class="card" style="margin-top:16px">
+    <div class="card-header">
+      <div class="card-title">Servicos mais Agendados</div>
+    </div>
+    <div class="empty-state" *ngIf="servicosRanking.length === 0">
+      <i class="fas fa-concierge-bell"></i>
+      <p>Nenhum dado de servicos no periodo.</p>
+    </div>
+    <div class="ranking-lista" *ngIf="servicosRanking.length > 0">
+      <div *ngFor="let item of servicosRanking; let i = index" class="ranking-item">
+        <div class="ranking-posicao">{{ i + 1 }}</div>
+        <div class="ranking-info">
+          <div class="ranking-nome">{{ item.nome }}</div>
+          <div class="ranking-barra-container">
+            <div class="ranking-barra" [style.width]="item.percentual + '%'"
+              [style.background]="corBarra(i)"></div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Ranking de Profissionais -->
-    <div *ngIf="abaAtiva === 'profissionais'">
-      <div class="ranking-subtitulo">Profissionais com mais agendamentos</div>
-
-      <div class="empty-state" *ngIf="profissionaisRanking.length === 0">
-        <i class="fas fa-user-md"></i>
-        <p>Nenhum profissional cadastrado.</p>
-      </div>
-
-      <div class="ranking-lista" *ngIf="profissionaisRanking.length > 0">
-        <div class="ranking-item" *ngFor="let item of profissionaisRanking; let i = index">
-          <div class="ranking-pos">{{ i + 1 }}</div>
-          <div class="ranking-info">
-            <div class="ranking-nome">{{ item.nome }}</div>
-            <div class="barra-container">
-              <div
-                class="barra-fill"
-                [style.width.%]="item.percentual"
-                [style.background]="corBarra(i)"
-              ></div>
-            </div>
-          </div>
-          <div class="ranking-qtd">
-            {{ item.quantidade }}
-            <span class="ranking-label">agend.</span>
-          </div>
+        <div class="ranking-qtd">
+          <span class="ranking-num">{{ item.quantidade }}</span>
+          <span class="ranking-sub">agend.</span>
+        </div>
+        <div class="ranking-qtd" *ngIf="item.valor">
+          <span class="ranking-num">R$ {{ item.valor | number:'1.2-2' }}</span>
+          <span class="ranking-sub">receita</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Aviso sobre dados limitados -->
-  <div class="info-aviso" style="margin-top: 20px;">
-    <i class="fas fa-info-circle"></i>
-    Os rankings são calculados com base nos agendamentos do dia atual. Para relatórios por período, é necessário implementar um endpoint
-    <code>GET /agendamento/todos</code> ou filtros por intervalo de datas no backend.
+  <!-- Relatorio Clientes / Profissionais -->
+  <div *ngIf="tipoRelatorio === 'clientes'" class="card" style="margin-top:16px">
+    <div class="card-header">
+      <div class="card-title">Profissionais com mais Agendamentos</div>
+    </div>
+    <div class="resumo-geral" style="display:flex;gap:24px;padding:16px 20px;border-bottom:1px solid #f3f4f6">
+      <div>
+        <div style="font-size:24px;font-weight:700;color:#4361ee">{{ totalUsuarios }}</div>
+        <div style="font-size:12px;color:#6b7280">Usuarios cadastrados</div>
+      </div>
+      <div>
+        <div style="font-size:24px;font-weight:700;color:#16a34a">{{ totalProfissionais }}</div>
+        <div style="font-size:12px;color:#6b7280">Profissionais ativos</div>
+      </div>
+      <div>
+        <div style="font-size:24px;font-weight:700;color:#ea580c">{{ totalServicos }}</div>
+        <div style="font-size:12px;color:#6b7280">Servicos cadastrados</div>
+      </div>
+    </div>
+    <div class="ranking-lista" *ngIf="profissionaisRanking.length > 0">
+      <div *ngFor="let item of profissionaisRanking; let i = index" class="ranking-item">
+        <div class="ranking-posicao">{{ i + 1 }}</div>
+        <div class="ranking-info">
+          <div class="ranking-nome">{{ item.nome }}</div>
+          <div class="ranking-barra-container">
+            <div class="ranking-barra" [style.width]="item.percentual + '%'"
+              [style.background]="corBarra(i)"></div>
+          </div>
+        </div>
+        <div class="ranking-qtd">
+          <span class="ranking-num">{{ item.quantidade }}</span>
+          <span class="ranking-sub">agend.</span>
+        </div>
+      </div>
+    </div>
+    <div class="empty-state" *ngIf="profissionaisRanking.length === 0">
+      <i class="fas fa-users"></i>
+      <p>Nenhum dado no periodo selecionado.</p>
+    </div>
   </div>
 
 </div>

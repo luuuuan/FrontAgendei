@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { SkeletonComponent } from '../skeleton/skeleton.component';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProfissionalService } from '../../services/profissional.service';
+import { ProfissionalPerfilService } from '../../services/profissional-perfil.service';
 import { UsuarioService } from '../../services/usuario.service';
 import { ServicoService } from '../../services/servico.service';
 import { AuthService } from '../../services/auth.service';
@@ -43,6 +44,7 @@ export class ProfissionaisComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private profissionalService: ProfissionalService,
+    private profissionalPerfilService: ProfissionalPerfilService,
     private usuarioService: UsuarioService,
     private servicoService: ServicoService,
     private authService: AuthService,
@@ -106,7 +108,7 @@ export class ProfissionaisComponent implements OnInit {
         this.usuarioEncontrado = usuario;
 
         // Passo 2: busca o profissional vinculado a esse usuário
-        this.profissionalService.buscarPorUsuarioId(usuario.id!).subscribe({
+        this.profissionalPerfilService.buscarPorUsuarioId(usuario.id!).subscribe({
           next: (profissional) => {
             this.profissionalEncontrado = profissional;
             this.buscandoUsuario = false;
@@ -186,5 +188,17 @@ export class ProfissionaisComponent implements OnInit {
     v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
     event.target.value = v;
     this.buscaUsuario = v;
+  }
+
+  // Fix: detecta se é email ou CPF e aplica máscara apenas no CPF
+  aplicarMascaraOuEmail(event: any) {
+    const valor = event.target.value;
+    // Se contém letra ou @ é email — não aplica máscara
+    if (/[a-zA-Z@]/.test(valor)) {
+      this.buscaUsuario = valor;
+      return;
+    }
+    // Só números — aplica máscara de CPF
+    this.aplicarMascaraCpf(event);
   }
 }

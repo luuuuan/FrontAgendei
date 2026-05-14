@@ -4,11 +4,16 @@
 <div class="filter-bar">
   <div class="search-box">
     <i class="fas fa-calendar"></i>
-    <input type="date" [(ngModel)]="dataBusca" (change)="buscarAgendamentos()" />
+    <input
+      type="date"
+      [(ngModel)]="dataBusca"
+      (change)="buscarAgendamentos()"
+    />
   </div>
   <div class="actions">
     <button class="btn btn-primary" (click)="abrirModal()">
-      <i class="fas fa-plus"></i> Novo Agendamento
+      <i class="fas fa-plus"></i>
+      Novo Agendamento
     </button>
   </div>
 </div>
@@ -21,7 +26,8 @@
 
 <!-- Erro -->
 <div class="erro-aviso" *ngIf="erro && !carregando">
-  <i class="fas fa-exclamation-circle"></i> {{ erro }}
+  <i class="fas fa-exclamation-circle"></i>
+  {{ erro }}
 </div>
 
 <!-- Tabela -->
@@ -31,11 +37,11 @@
       <tr>
         <th>Data / Hora</th>
         <th>Profissional</th>
-        <th>Cliente</th>
-        <th>Servicos</th>
-        <th>Valor</th>
+        <th>Usuário</th>
+        <th>Serviços</th>
+        <th>Valor Total</th>
         <th>Status</th>
-        <th>Acoes</th>
+        <th>Ações</th>
       </tr>
     </thead>
     <tbody>
@@ -57,14 +63,15 @@
             {{ labelStatus(ag.statusAgendamento) }}
           </span>
         </td>
-        <td style="display:flex;gap:6px">
+        <td>
           <button class="btn btn-outline btn-sm" (click)="verDetalhes(ag)" title="Ver detalhes">
             <i class="fas fa-eye"></i>
           </button>
         </td>
       </tr>
+
       <tr *ngIf="agendamentos.length === 0">
-        <td colspan="7" class="sem-dados">
+        <td colspan="6" class="sem-dados">
           <i class="fas fa-calendar-times"></i>
           Nenhum agendamento encontrado para esta data.
         </td>
@@ -73,131 +80,131 @@
   </table>
 </div>
 
-<!-- Modal detalhes + atualizar status -->
+<!-- Modal detalhes do agendamento -->
 <div class="modal-overlay" *ngIf="modalDetalhesAberto" (click)="fecharDetalhes()">
-  <div class="modal" (click)="$event.stopPropagation()" style="max-width:520px">
+  <div class="modal" (click)="$event.stopPropagation()">
 
     <div class="modal-header">
       <div class="modal-title">Detalhes do Agendamento</div>
-      <button class="modal-close" (click)="fecharDetalhes()">x</button>
+      <button class="modal-close" (click)="fecharDetalhes()">×</button>
     </div>
 
     <div class="modal-body" *ngIf="agendamentoDetalhes">
 
-      <div class="detalhe-status" style="margin-bottom:16px">
+      <div class="detalhe-status">
         <span class="badge" [class]="classeStatus(agendamentoDetalhes.statusAgendamento)">
           {{ labelStatus(agendamentoDetalhes.statusAgendamento) }}
         </span>
       </div>
 
       <div class="detalhe-grid">
+
         <div class="detalhe-bloco">
           <div class="detalhe-label"><i class="fas fa-calendar"></i> Data e Hora</div>
           <div class="detalhe-valor">{{ formatarDataHora(agendamentoDetalhes.dataAgendamento) }}</div>
         </div>
+
+        <div class="detalhe-bloco" *ngIf="agendamentoDetalhes.horaInicio">
+          <div class="detalhe-label"><i class="fas fa-clock"></i> Início</div>
+          <div class="detalhe-valor">{{ formatarDataHora(agendamentoDetalhes.horaInicio) }}</div>
+        </div>
+
         <div class="detalhe-bloco">
           <div class="detalhe-label"><i class="fas fa-user"></i> Cliente</div>
           <div class="detalhe-valor">{{ nomeClienteObs(agendamentoDetalhes.observacoes) }}</div>
         </div>
+
         <div class="detalhe-bloco">
           <div class="detalhe-label"><i class="fas fa-user-md"></i> Profissional</div>
           <div class="detalhe-valor">{{ nomeProfissional(agendamentoDetalhes.profissionalId) }}</div>
         </div>
+
         <div class="detalhe-bloco detalhe-full">
-          <div class="detalhe-label"><i class="fas fa-concierge-bell"></i> Servicos</div>
+          <div class="detalhe-label"><i class="fas fa-concierge-bell"></i> Serviços</div>
           <div class="detalhe-tags">
             <span class="badge badge-primary" *ngFor="let s of agendamentoDetalhes.servicoId">
               {{ nomeServico(s) }}
             </span>
           </div>
         </div>
+
         <div class="detalhe-bloco" *ngIf="agendamentoDetalhes.valorTotal">
           <div class="detalhe-label"><i class="fas fa-dollar-sign"></i> Valor Total</div>
           <div class="detalhe-valor destaque">R$ {{ agendamentoDetalhes.valorTotal | number:'1.2-2' }}</div>
         </div>
+
         <div class="detalhe-bloco detalhe-full" *ngIf="agendamentoDetalhes.observacoes">
-          <div class="detalhe-label"><i class="fas fa-comment"></i> Observacoes</div>
+          <div class="detalhe-label"><i class="fas fa-comment"></i> Observações</div>
           <div class="detalhe-valor">{{ agendamentoDetalhes.observacoes }}</div>
         </div>
+
       </div>
 
-      <!-- Atualizar status -->
-      <div style="margin-top:20px;border-top:1px solid #e5e7eb;padding-top:16px">
-        <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:10px">
-          <i class="fas fa-exchange-alt"></i> Atualizar Status
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px">
-          <button
-            *ngFor="let st of statusDisponiveis"
-            class="btn btn-sm"
-            [class]="agendamentoDetalhes.statusAgendamento === st.valor ? st.classe : 'btn-outline'"
-            [disabled]="atualizandoStatus || agendamentoDetalhes.statusAgendamento === st.valor"
-            (click)="atualizarStatus(agendamentoDetalhes, st.valor)"
-            style="font-size:12px">
-            <i class="fas fa-spinner fa-spin" *ngIf="atualizandoStatus"></i>
-            {{ st.label }}
-          </button>
-        </div>
-      </div>
 
+
+    </div>
+
+    <!-- Atualizar status -->
+    <div style="margin-top:20px;border-top:1px solid #e5e7eb;padding-top:16px">
+      <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:10px">
+        <i class="fas fa-exchange-alt"></i> Atualizar Status
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <button
+          *ngFor="let st of statusDisponiveis"
+          class="btn btn-sm"
+          [class]="agendamentoDetalhes?.statusAgendamento === st.valor ? st.classe : 'btn-outline'"
+          [disabled]="atualizandoStatus || agendamentoDetalhes?.statusAgendamento === st.valor"
+          (click)="atualizarStatus(agendamentoDetalhes!, st.valor)"
+          style="font-size:12px">
+          <i class="fas fa-spinner fa-spin" *ngIf="atualizandoStatus"></i>
+          {{ st.label }}
+        </button>
+      </div>
     </div>
 
     <div class="modal-footer">
       <button class="btn btn-outline" (click)="fecharDetalhes()">Fechar</button>
     </div>
+
   </div>
 </div>
 
-<!-- Modal novo agendamento -->
 <div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
   <div class="modal" (click)="$event.stopPropagation()">
 
     <div class="modal-header">
       <div class="modal-title">Novo Agendamento</div>
-      <button class="modal-close" (click)="fecharModal()">x</button>
+      <button class="modal-close" (click)="fecharModal()">×</button>
     </div>
 
     <div class="modal-body">
       <form [formGroup]="form">
 
-        <div class="form-row">
-          <div class="form-group">
-            <label>Data *</label>
-            <input type="date" formControlName="dataAgendamento" [min]="dataMinima" />
-            <span class="erro-campo" *ngIf="form.get('dataAgendamento')?.invalid && form.get('dataAgendamento')?.touched">
-              Data e obrigatoria.
-            </span>
-          </div>
-          <div class="form-group">
-            <label>Hora de Inicio *</label>
-            <input type="time" formControlName="horaInicio" />
-            <span class="erro-campo" *ngIf="form.get('horaInicio')?.invalid && form.get('horaInicio')?.touched">
-              Hora e obrigatoria.
-            </span>
+        <div class="form-group">
+          <label>Data do Agendamento *</label>
+          <input type="date" formControlName="dataAgendamento" [min]="dataMinima" />
+          <div class="erro-campo" *ngIf="form.get('dataAgendamento')?.invalid && form.get('dataAgendamento')?.touched">
+            Data é obrigatória.
           </div>
         </div>
 
-        <!-- Cliente manual - sem precisar de cadastro -->
-        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:16px">
-          <div style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">
-            <i class="fas fa-user"></i> Dados do Cliente
+        <div class="form-group">
+          <label>Hora de Início *</label>
+          <input type="time" formControlName="horaInicio" />
+          <div class="erro-campo" *ngIf="form.get('horaInicio')?.invalid && form.get('horaInicio')?.touched">
+            Hora é obrigatória
           </div>
-          <p style="font-size:12px;color:#9ca3af;margin-bottom:12px">
-            Informe o nome e telefone. Nao e necessario que o cliente tenha cadastro no sistema.
-          </p>
-          <div class="form-group">
-            <label>Nome do Cliente *</label>
-            <input type="text" formControlName="nomeCliente" placeholder="Ex: Joao Silva" />
-            <span class="erro-campo" *ngIf="form.get('nomeCliente')?.invalid && form.get('nomeCliente')?.touched">
-              Nome do cliente e obrigatorio.
-            </span>
-          </div>
-          <div class="form-group">
-            <label>Telefone <span style="color:#9ca3af;font-size:12px">(opcional)</span></label>
-            <input type="tel" formControlName="telefoneCliente"
-              placeholder="(00) 00000-0000"
-              (input)="aplicarMascaraTelefone($event)"
-              maxlength="15" />
+        </div>
+
+        <div class="form-group">
+          <label>Cliente (Usuário) *</label>
+          <select formControlName="usuarioId">
+            <option value="">Selecione um cliente</option>
+           
+          </select>
+          <div class="erro-campo" *ngIf="form.get('usuarioId')?.invalid && form.get('usuarioId')?.touched">
+            Cliente é obrigatório.
           </div>
         </div>
 
@@ -209,27 +216,27 @@
               {{ p.nome || 'Profissional #' + p.id }}
             </option>
           </select>
-          <span class="erro-campo" *ngIf="form.get('profissionalId')?.invalid && form.get('profissionalId')?.touched">
-            Profissional e obrigatorio.
-          </span>
+          <div class="erro-campo" *ngIf="form.get('profissionalId')?.invalid && form.get('profissionalId')?.touched">
+            Profissional é obrigatório.
+          </div>
         </div>
 
         <div class="form-group">
-          <label>Servico *</label>
+          <label>Serviço *</label>
           <select formControlName="servicos">
-            <option value="">Selecione um servico</option>
+            <option value="">Selecione um serviço</option>
             <option *ngFor="let s of servicos" [value]="s.id">
-              {{ s.nome }} - R$ {{ s.valor | number:'1.2-2' }} ({{ s.duracaoMinutos }} min)
+              {{ s.nome }} — R$ {{ s.valor | number:'1.2-2' }}
             </option>
           </select>
-          <span class="erro-campo" *ngIf="form.get('servicos')?.invalid && form.get('servicos')?.touched">
-            Servico e obrigatorio.
-          </span>
+          <div class="erro-campo" *ngIf="form.get('servicos')?.invalid && form.get('servicos')?.touched">
+            Serviço é obrigatório.
+          </div>
         </div>
 
         <div class="form-group">
-          <label>Observacoes</label>
-          <textarea formControlName="observacoes" rows="3" placeholder="Alguma observacao..."></textarea>
+          <label>Observações</label>
+          <textarea formControlName="observacoes" rows="3" placeholder="Alguma observação..."></textarea>
         </div>
 
       </form>

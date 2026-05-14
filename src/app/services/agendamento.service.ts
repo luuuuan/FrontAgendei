@@ -45,4 +45,14 @@ export class AgendamentoService {
   atualizarStatus(id: number, status: string): Observable<AgendamentoResponse> {
     return this.http.patch<AgendamentoResponse>(`${this.apiUrl}/atualizar-status/${id}`, { status });
   }
+
+  avaliar(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/avaliacao`, payload);
+  }
+
+  buscarPorPrestador(prestadorId: number): Observable<AgendamentoResponse[]> {
+    return this.http.get<AgendamentoResponse[]>(`${this.apiUrl}/todos`, {
+      params: { prestadorId }
+    });
+  }
 }

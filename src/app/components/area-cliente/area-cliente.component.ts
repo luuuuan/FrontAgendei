@@ -90,6 +90,25 @@ export class AreaClienteComponent implements OnInit {
   agendamentoDetalhes: AgendamentoResponse | null = null;
   modalDetalhesAberto = false;
 
+  // UC017 — Avaliacao
+  modalAvaliacaoAberto = false;
+  agendamentoParaAvaliar: AgendamentoResponse | null = null;
+  notaAvaliacao = 0;
+  comentarioAvaliacao = '';
+  enviandoAvaliacao = false;
+
+  // UC003 — Cancelar/Reagendar
+  modalCancelarAberto = false;
+  modalReagendar = false;
+  cancelando = false;
+  reagendando = false;
+  motivoCancelamento = '';
+  // horarios disponiveis para reagendamento
+  horariosReagendamento: string[] = [];
+  carregandoHorariosReagendamento = false;
+  dataSelecionadaReagendamento = '';
+  horaSelecionadaReagendamento = '';
+
   // Perfil
   formPerfil: FormGroup;
   formSenha: FormGroup;
@@ -463,6 +482,157 @@ export class AreaClienteComponent implements OnInit {
     this.usuarioService.trocarSenha(this.usuarioLogado.id, v.senhaAtual, v.novaSenha).subscribe({
       next: () => { this.toast.sucesso('Senha alterada com sucesso!'); this.formSenha.reset(); this.salvandoSenha = false; },
       error: (err: any) => { this.toast.erro(err.mensagemAmigavel || 'Senha atual incorreta.'); this.salvandoSenha = false; }
+    });
+  }
+
+  // UC003 — Cancelar agendamento
+  podeCancelar(ag: AgendamentoResponse): boolean {
+    if (!ag.dataAgendamento || !ag.horaInicio) return false;
+    if (['CANCELADO', 'REALIZADO', 'AUSENTE'].includes(ag.statusAgendamento)) return false;
+    const dataHora = new Date(ag.dataAgendamento + 'T' + ag.horaInicio);
+    const agora = new Date();
+    const diffMs = dataHora.getTime() - agora.getTime();
+    const diffHoras = diffMs / (1000 * 60 * 60);
+    return diffHoras >= 2; // RN-07: pode cancelar até 2h antes
+  }
+
+  abrirModalCancelar(ag: AgendamentoResponse) {
+    this.agendamentoDetalhes = ag;
+    this.motivoCancelamento = '';
+    this.modalCancelarAberto = true;
+    this.modalDetalhesAberto = false;
+  }
+
+  fecharModalCancelar() { this.modalCancelarAberto = false; }
+
+  confirmarCancelamento() {
+    if (!this.agendamentoDetalhes) return;
+    this.cancelando = true;
+    this.agendamentoService.atualizarStatus(this.agendamentoDetalhes.id!, 'CANCELADO').subscribe({
+      next: () => {
+        this.toast.sucesso('Agendamento cancelado com sucesso.');
+        this.fecharModalCancelar();
+        this.carregarHistorico();
+        this.carregarAgendamentosHoje();
+        this.cancelando = false;
+      },
+      error: (err: any) => {
+        this.toast.erro(err.mensagemAmigavel || 'Erro ao cancelar agendamento.');
+        this.cancelando = false;
+      }
+    });
+  }
+
+  // UC003 — Reagendar
+  abrirModalReagendar(ag: AgendamentoResponse) {
+    this.agendamentoDetalhes = ag;
+    this.dataSelecionadaReagendamento = '';
+    this.horaSelecionadaReagendamento = '';
+    this.horariosReagendamento = [];
+    this.modalReagendar = true;
+    this.modalDetalhesAberto = false;
+  }
+
+  fecharModalReagendar() { this.modalReagendar = false; }
+
+  buscarHorariosReagendamento() {
+    if (!this.dataSelecionadaReagendamento || !this.agendamentoDetalhes?.profissionalId) return;
+    const hoje = new Date().toISOString().split('T')[0];
+    if (this.dataSelecionadaReagendamento < hoje) {
+      this.toast.aviso('Selecione uma data futura.');
+      return;
+    }
+    this.carregandoHorariosReagendamento = true;
+    this.horaSelecionadaReagendamento = '';
+    this.agendamentoService.buscarHorariosDisponiveis(
+      this.agendamentoDetalhes.profissionalId,
+      this.dataSelecionadaReagendamento
+    ).subscribe({
+      next: h => { this.horariosReagendamento = h; this.carregandoHorariosReagendamento = false; },
+      error: () => { this.horariosReagendamento = []; this.carregandoHorariosReagendamento = false; }
+    });
+  }
+
+  confirmarReagendamento() {
+    if (!this.agendamentoDetalhes || !this.dataSelecionadaReagendamento || !this.horaSelecionadaReagendamento) {
+      this.toast.aviso('Selecione a data e o horario.');
+      return;
+    }
+    this.reagendando = true;
+    const sessao = this.authService.getSessao();
+    // 1. Cancela o agendamento original
+    this.agendamentoService.atualizarStatus(this.agendamentoDetalhes.id!, 'CANCELADO').subscribe({
+      next: () => {
+        // 2. Cria novo agendamento com nova data/hora
+        this.agendamentoService.criar({
+          dataAgendamento: this.dataSelecionadaReagendamento,
+          horaInicio: this.horaSelecionadaReagendamento,
+          statusAgendamento: 'PENDENTE',
+          usuarioId: sessao?.usuarioId,
+          profissionalId: this.agendamentoDetalhes!.profissionalId,
+          servicos: this.agendamentoDetalhes!.servicoId,
+          valorTotal: this.agendamentoDetalhes!.valorTotal,
+          taxaPlataforma: 0,
+          observacoes: 'Reagendado de ' + this.formatarData(this.agendamentoDetalhes!.dataAgendamento)
+        } as any).subscribe({
+          next: () => {
+            this.toast.sucesso('Reagendamento realizado com sucesso!');
+            this.fecharModalReagendar();
+            this.carregarHistorico();
+            this.carregarAgendamentosHoje();
+            this.reagendando = false;
+          },
+          error: (err: any) => {
+            this.toast.erro(err.mensagemAmigavel || 'Erro ao criar novo agendamento.');
+            this.reagendando = false;
+          }
+        });
+      },
+      error: (err: any) => {
+        this.toast.erro(err.mensagemAmigavel || 'Erro ao cancelar agendamento original.');
+        this.reagendando = false;
+      }
+    });
+  }
+
+  // UC017 — Avaliar prestador
+  podeAvaliar(ag: AgendamentoResponse): boolean {
+    return ag.statusAgendamento === 'REALIZADO';
+  }
+
+  abrirModalAvaliacao(ag: AgendamentoResponse) {
+    this.agendamentoParaAvaliar = ag;
+    this.notaAvaliacao = 0;
+    this.comentarioAvaliacao = '';
+    this.modalAvaliacaoAberto = true;
+    this.modalDetalhesAberto = false;
+  }
+
+  fecharModalAvaliacao() { this.modalAvaliacaoAberto = false; this.agendamentoParaAvaliar = null; }
+
+  definirNota(n: number) { this.notaAvaliacao = n; }
+
+  enviarAvaliacao() {
+    if (this.notaAvaliacao === 0) { this.toast.aviso('Selecione uma nota de 1 a 5 estrelas.'); return; }
+    if (!this.agendamentoParaAvaliar) return;
+    const sessao = this.authService.getSessao();
+    this.enviandoAvaliacao = true;
+    this.agendamentoService.avaliar({
+      nota: this.notaAvaliacao,
+      comentario: this.comentarioAvaliacao,
+      agendamentoId: this.agendamentoParaAvaliar.id,
+      profissionalId: this.agendamentoParaAvaliar.profissionalId,
+      usuarioId: sessao?.usuarioId
+    }).subscribe({
+      next: () => {
+        this.toast.sucesso('Avaliacao enviada com sucesso!');
+        this.fecharModalAvaliacao();
+        this.enviandoAvaliacao = false;
+      },
+      error: (err: any) => {
+        this.toast.erro(err.mensagemAmigavel || 'Erro ao enviar avaliacao.');
+        this.enviandoAvaliacao = false;
+      }
     });
   }
 

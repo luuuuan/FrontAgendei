@@ -125,3 +125,29 @@
   border-radius: 4px;
   font-size: 12px;
 }
+
+.relatorio-tabs { display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap; }
+.tab-btn { padding:8px 16px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:#6b7280;transition:all .2s; }
+.tab-btn.ativo { background:#4361ee;color:#fff;border-color:#4361ee; }
+.filtro-periodo { display:flex;gap:12px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap; }
+.filtro-grupo { display:flex;flex-direction:column;gap:4px; }
+.filtro-grupo label { font-size:12px;color:#6b7280; }
+.filtro-grupo input { padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px; }
+.resumo-cards { display:flex;gap:12px;flex-wrap:wrap;margin-top:8px; }
+.resumo-card { display:flex;align-items:center;gap:12px;background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.08);flex:1;min-width:160px; }
+.resumo-card-icone { width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0; }
+.resumo-card-valor { font-size:22px;font-weight:700;color:#1e293b; }
+.resumo-card-label { font-size:11px;color:#6b7280; }
+.ranking-lista { padding:16px 20px;display:flex;flex-direction:column;gap:14px; }
+.ranking-item { display:flex;align-items:center;gap:12px; }
+.ranking-posicao { width:28px;height:28px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#64748b;flex-shrink:0; }
+.ranking-info { flex:1; }
+.ranking-nome { font-size:13px;font-weight:500;color:#374151;margin-bottom:4px; }
+.ranking-barra-container { height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden; }
+.ranking-barra { height:100%;border-radius:3px;transition:width .5s; }
+.ranking-qtd { text-align:right;min-width:70px; }
+.ranking-num { display:block;font-size:14px;font-weight:700;color:#374151; }
+.ranking-sub { font-size:11px;color:#9ca3af; }
+table { width:100%;border-collapse:collapse; }
+th { padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:#6b7280;background:#f9fafb;border-bottom:1px solid #e5e7eb; }
+td { padding:12px 16px;font-size:13px;color:#374151;border-bottom:1px solid #f3f4f6; }

@@ -31,11 +31,11 @@ export class AgendaComponent implements OnInit {
 
   // Status disponíveis para o prestador atualizar
   statusDisponiveis = [
-    { valor: 'PENDENTE',    label: 'Pendente',    classe: 'badge-warning' },
-    { valor: 'CONFIRMADO',  label: 'Confirmado',  classe: 'badge-success' },
-    { valor: 'REALIZADO',   label: 'Realizado',   classe: 'badge-info'    },
-    { valor: 'CANCELADO',   label: 'Cancelado',   classe: 'badge-danger'  },
-    { valor: 'AUSENTE',     label: 'Ausente',     classe: 'badge-gray'    },
+    { valor: 'PENDENTE',   label: 'Pendente',   classe: 'badge-warning' },
+    { valor: 'CONFIRMADO', label: 'Confirmado', classe: 'badge-success' },
+    { valor: 'REALIZADO',  label: 'Realizado',  classe: 'badge-info'    },
+    { valor: 'CANCELADO',  label: 'Cancelado',  classe: 'badge-danger'  },
+    { valor: 'AUSENTE',    label: 'Ausente',    classe: 'badge-gray'    },
   ];
 
   form: FormGroup;
@@ -50,7 +50,6 @@ export class AgendaComponent implements OnInit {
     this.form = this.fb.group({
       dataAgendamento: ['', Validators.required],
       horaInicio:      ['', Validators.required],
-      // Cliente manual: só nome e telefone (sem necessidade de cadastro)
       nomeCliente:     ['', Validators.required],
       telefoneCliente: [''],
       profissionalId:  ['', Validators.required],
@@ -76,7 +75,6 @@ export class AgendaComponent implements OnInit {
 
   abrirModal() { this.form.reset(); this.modalAberto = true; }
   fecharModal() { this.modalAberto = false; }
-
   verDetalhes(ag: AgendamentoResponse) { this.agendamentoDetalhes = ag; this.modalDetalhesAberto = true; }
   fecharDetalhes() { this.modalDetalhesAberto = false; this.agendamentoDetalhes = null; }
 
@@ -84,17 +82,15 @@ export class AgendaComponent implements OnInit {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     const v = this.form.value;
     const hoje = new Date().toISOString().split('T')[0];
-    if (v.dataAgendamento < hoje) { this.toast.erro('Nao e possivel agendar para datas passadas.'); return; }
+    if (v.dataAgendamento < hoje) { this.toast.erro('Não é possível agendar para datas passadas.'); return; }
 
     this.salvando = true;
-    // Passa nome e telefone do cliente nas observacoes quando nao tem cadastro
     const obsCliente = 'Cliente: ' + v.nomeCliente + (v.telefoneCliente ? ' | Tel: ' + v.telefoneCliente : '');
     const obsCompleta = obsCliente + (v.observacoes ? ' | ' + v.observacoes : '');
 
     this.agendamentoService.criar({
       dataAgendamento: v.dataAgendamento,
       horaInicio: v.horaInicio + ':00',
-      // usuarioId nulo/0 indica cliente sem cadastro — back precisa aceitar opcional
       usuarioId: 0,
       profissionalId: Number(v.profissionalId),
       servicos: [Number(v.servicos)],
@@ -107,22 +103,19 @@ export class AgendaComponent implements OnInit {
     });
   }
 
-  // Atualizar status do agendamento
+  // Atualizar status pelo prestador
   atualizarStatus(ag: AgendamentoResponse, novoStatus: string) {
     this.atualizandoStatus = true;
     this.agendamentoService.atualizarStatus(ag.id!, novoStatus).subscribe({
       next: () => {
         ag.statusAgendamento = novoStatus;
         if (this.agendamentoDetalhes?.id === ag.id) {
-          if (this.agendamentoDetalhes) { this.agendamentoDetalhes.statusAgendamento = novoStatus; }
+          this.agendamentoDetalhes!.statusAgendamento = novoStatus;
         }
         this.toast.sucesso('Status atualizado!');
         this.atualizandoStatus = false;
       },
-      error: (err: any) => {
-        this.toast.erro(err.mensagemAmigavel || 'Erro ao atualizar status.');
-        this.atualizandoStatus = false;
-      }
+      error: (err: any) => { this.toast.erro(err.mensagemAmigavel || 'Erro ao atualizar status.'); this.atualizandoStatus = false; }
     });
   }
 
@@ -134,16 +127,16 @@ export class AgendaComponent implements OnInit {
     this.form.get('telefoneCliente')?.setValue(v, { emitEvent: false });
   }
 
-  nomeProfissional(id: number) { const p = this.profissionais.find(p => p.id === id); return p?.nome || 'Profissional #' + id; }
-  nomeServico(id: number) { const s = this.servicos.find(s => s.id === id); return s?.nome || 'Servico #' + id; }
-  labelStatus(s: string) { return ({ CONFIRMADO: 'Confirmado', PENDENTE: 'Pendente', CANCELADO: 'Cancelado', REALIZADO: 'Realizado', AUSENTE: 'Ausente' } as any)[s] || s; }
-  classeStatus(s: string) { return ({ CONFIRMADO: 'badge-success', PENDENTE: 'badge-warning', CANCELADO: 'badge-danger', REALIZADO: 'badge-info', AUSENTE: 'badge-gray' } as any)[s] || 'badge-gray'; }
-  formatarDataHora(v: string) { return v ? new Date(v).toLocaleString('pt-BR') : '-'; }
-
-  // Extrai nome do cliente das observacoes (para agendamentos sem cadastro)
+  // Fix: extrai nome do cliente das observações
   nomeClienteObs(obs: string | undefined): string {
     if (!obs) return '-';
     const match = obs.match(/Cliente:\s*([^|]+)/);
     return match ? match[1].trim() : '-';
   }
+
+  nomeProfissional(id: number) { const p = this.profissionais.find(p => p.id === id); return p?.nome || 'Profissional #' + id; }
+  nomeServico(id: number) { const s = this.servicos.find(s => s.id === id); return s?.nome || 'Serviço #' + id; }
+  labelStatus(s: string) { return ({ CONFIRMADO: 'Confirmado', PENDENTE: 'Pendente', CANCELADO: 'Cancelado', REALIZADO: 'Realizado', AUSENTE: 'Ausente' } as any)[s] || s; }
+  classeStatus(s: string) { return ({ CONFIRMADO: 'badge-success', PENDENTE: 'badge-warning', CANCELADO: 'badge-danger', REALIZADO: 'badge-info', AUSENTE: 'badge-gray' } as any)[s] || 'badge-gray'; }
+  formatarDataHora(v: string) { return v ? new Date(v).toLocaleString('pt-BR') : '-'; }
 }
