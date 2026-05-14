@@ -10,6 +10,7 @@ import { UsuarioService } from '../../services/usuario.service';
 import { ToastService } from '../../services/toast.service';
 import { AgendamentoResponse, Servico, Profissional, Usuario, EnderecoAgendamento } from '../../models/models';
 import { SkeletonComponent } from '../skeleton/skeleton.component';
+import { AvaliacaoService } from '../../services/avaliacao.service';
 
 @Component({
   selector: 'app-area-cliente',
@@ -127,7 +128,8 @@ export class AreaClienteComponent implements OnInit {
     private profissionalService: ProfissionalService,
     private usuarioService: UsuarioService,
     private toast: ToastService,
-    private router: Router
+    private router: Router,
+    private avaliacaoService: AvaliacaoService
   ) {
     this.formPerfil = this.fb.group({
       nome: ['', Validators.required],
@@ -617,7 +619,7 @@ export class AreaClienteComponent implements OnInit {
     if (!this.agendamentoParaAvaliar) return;
     const sessao = this.authService.getSessao();
     this.enviandoAvaliacao = true;
-    this.agendamentoService.avaliar({
+    this.avaliacaoService.cadastrar({
       nota: this.notaAvaliacao,
       comentario: this.comentarioAvaliacao,
       agendamentoId: this.agendamentoParaAvaliar.id,
