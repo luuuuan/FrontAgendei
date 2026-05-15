@@ -197,12 +197,19 @@
 
         <!-- Step 1: Serviços -->
         <div *ngIf="stepAgendamento === 1">
-          <h3 class="step-titulo">Selecione um Serviço</h3>
+          <h3 class="step-titulo">Selecione os Serviços</h3>
+          <p class="step-sub">Você pode selecionar mais de um serviço.</p>
           <div class="loading-box" *ngIf="carregandoServicos">
             <i class="fas fa-spinner fa-spin"></i> Carregando...
           </div>
           <div class="service-grid" *ngIf="!carregandoServicos">
-            <div class="service-card" *ngFor="let s of servicos" (click)="selecionarServico(s)">
+            <div class="service-card"
+              *ngFor="let s of servicos"
+              (click)="toggleServico(s)"
+              [class.service-card-selecionado]="isServicoSelecionado(s)">
+              <div class="service-check" *ngIf="isServicoSelecionado(s)">
+                <i class="fas fa-check-circle"></i>
+              </div>
               <div class="service-nome">{{ s.nome }}</div>
               <div class="service-duracao"><i class="fas fa-clock"></i> {{ s.duracaoMinutos }} min</div>
               <div class="service-preco">R$ {{ s.valor | number:'1.2-2' }}</div>
@@ -212,6 +219,18 @@
               <i class="fas fa-concierge-bell"></i>
               <p>Nenhum serviço disponível no momento.</p>
             </div>
+          </div>
+
+          <!-- Resumo da seleção -->
+          <div class="selecao-resumo" *ngIf="servicosSelecionados.length > 0">
+            <div class="selecao-info">
+              <span><strong>{{ servicosSelecionados.length }}</strong> serviço(s) selecionado(s)</span>
+              <span><i class="fas fa-clock"></i> {{ duracaoTotalServicos }} min</span>
+              <span><strong>R$ {{ valorTotalServicos | number:'1.2-2' }}</strong></span>
+            </div>
+            <button class="btn-primary-sm" (click)="confirmarServicos()">
+              Continuar <i class="fas fa-arrow-right"></i>
+            </button>
           </div>
         </div>
 

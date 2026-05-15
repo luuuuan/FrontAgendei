@@ -52,7 +52,8 @@ export class AreaClienteComponent implements OnInit {
   }
 
   stepAgendamento = 1;
-  servicoSelecionado: Servico | null = null;
+  servicoSelecionado: Servico | null = null; // mantido para compatibilidade
+  servicosSelecionados: Servico[] = [];
   profissionalSelecionado: Profissional | null = null;
   dataSelecionada = '';
   horaSelecionada = '';
@@ -323,6 +324,7 @@ export class AreaClienteComponent implements OnInit {
   iniciarAgendamento() {
     this.stepAgendamento = 1;
     this.servicoSelecionado = null;
+    this.servicosSelecionados = [];
     this.profissionalSelecionado = null;
     this.dataSelecionada = '';
     this.horaSelecionada = '';
@@ -331,6 +333,41 @@ export class AreaClienteComponent implements OnInit {
     this.dataAtual = new Date();
     this.gerarCalendario();
     this.telaAtiva = 'novo-agendamento';
+  }
+
+  // Multi-seleção de serviços
+  toggleServico(s: Servico) {
+    const idx = this.servicosSelecionados.findIndex(x => x.id === s.id);
+    if (idx >= 0) {
+      this.servicosSelecionados.splice(idx, 1);
+    } else {
+      this.servicosSelecionados.push(s);
+    }
+  }
+
+  isServicoSelecionado(s: Servico): boolean {
+    return this.servicosSelecionados.some(x => x.id === s.id);
+  }
+
+  get valorTotalServicos(): number {
+    return this.servicosSelecionados.reduce((acc, s) => acc + s.valor, 0);
+  }
+
+  get duracaoTotalServicos(): number {
+    return this.servicosSelecionados.reduce((acc, s) => acc + s.duracaoMinutos + (s.tempoBuffer || 0), 0);
+  }
+
+  confirmarServicos() {
+    if (this.servicosSelecionados.length === 0) { this.toast.aviso('Selecione ao menos um servico.'); return; }
+    // Para compatibilidade com o resto do fluxo, usa o primeiro como principal
+    this.servicoSelecionado = this.servicosSelecionados[0];
+    this.profissionais = [];
+    // Busca profissionais que atendem todos os serviços selecionados
+    this.profissionalService.listarPorServico(this.servicoSelecionado.id!).subscribe({
+      next: (lista) => this.profissionais = lista,
+      error: () => {}
+    });
+    this.stepAgendamento = 2;
   }
 
   selecionarServico(s: Servico) {
@@ -376,7 +413,7 @@ export class AreaClienteComponent implements OnInit {
       observacoes: this.observacoes,
       usuarioId: sessao.usuarioId,
       profissionalId: this.profissionalSelecionado.id!,
-      servicos: [this.servicoSelecionado.id!],
+      servicos: this.servicosSelecionados.length > 0 ? this.servicosSelecionados.map(s => s.id!) : [this.servicoSelecionado!.id!],
       enderecoId: this.usuarioLogado?.enderecoId
     } as any).subscribe({
       next: (ag) => {

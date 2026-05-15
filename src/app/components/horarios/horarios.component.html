@@ -1,18 +1,15 @@
-<div class="page-title">Horários Disponíveis</div>
+<div class="page-title">Horários — Grade de Trabalho</div>
 
 <!-- Selecionar Profissional -->
 <div class="card profissionais-selector">
   <div class="card-header-inline">
     <div class="card-title-sm">Selecione um Profissional</div>
   </div>
-
   <div class="loading-box" *ngIf="carregando">
     <i class="fas fa-spinner fa-spin"></i> Carregando profissionais...
   </div>
-
   <div class="prof-selector-grid" *ngIf="!carregando">
-    <div
-      *ngFor="let p of profissionais"
+    <div *ngFor="let p of profissionais"
       class="prof-selector-item"
       [class.ativo]="profissionalSelecionadoId === p.id"
       (click)="selecionarProfissional(p.id!)">
@@ -24,7 +21,6 @@
         </span>
       </div>
     </div>
-
     <div class="empty-state" *ngIf="profissionais.length === 0">
       <i class="fas fa-user-md"></i>
       <p>Nenhum profissional cadastrado.</p>
@@ -32,10 +28,9 @@
   </div>
 </div>
 
-<!-- Horários do profissional selecionado -->
+<!-- Grade do profissional selecionado -->
 <div *ngIf="profissionalSelecionadoId">
 
-  <!-- Header com stats e botão -->
   <div class="horarios-header">
     <div class="horarios-info">
       <div class="horarios-prof-nome">
@@ -43,225 +38,170 @@
       </div>
       <div class="horarios-stats">
         <span class="stat-badge">
-          <i class="fas fa-calendar-check"></i> {{ horariosAtivos }} ativo(s)
-        </span>
-        <span class="stat-badge cinza">
-          <i class="fas fa-calendar"></i> {{ horarios.length }} total
+          <i class="fas fa-calendar-check"></i> {{ grades.length }} grade(s) cadastrada(s)
         </span>
       </div>
     </div>
     <button class="btn btn-primary" (click)="abrirModal()">
-      <i class="fas fa-plus"></i> Adicionar Horário
+      <i class="fas fa-plus"></i> Nova Grade de Trabalho
     </button>
   </div>
 
-  <!-- Loading horários -->
-  <div class="loading-box" *ngIf="carregandoHorarios">
-    <i class="fas fa-spinner fa-spin"></i> Carregando horários...
+  <!-- Info box -->
+  <div class="info-box" style="margin-bottom:16px">
+    <i class="fas fa-info-circle"></i>
+    Os horários disponíveis para agendamento serão calculados automaticamente com base
+    na grade de trabalho e na duração do serviço selecionado pelo cliente.
   </div>
 
-  <!-- Tabela de horários -->
-  <div class="card" *ngIf="!carregandoHorarios">
-    <div class="empty-state" *ngIf="horariosOrdenados.length === 0">
-      <i class="fas fa-clock"></i>
-      <p>Nenhum horário cadastrado para este profissional.</p>
+  <div class="loading-box" *ngIf="carregandoGrades">
+    <i class="fas fa-spinner fa-spin"></i> Carregando grades...
+  </div>
+
+  <div class="card" *ngIf="!carregandoGrades">
+    <div class="empty-state" *ngIf="grades.length === 0">
+      <i class="fas fa-calendar-times"></i>
+      <p>Nenhuma grade de trabalho cadastrada para este profissional.</p>
       <button class="btn btn-primary btn-sm" (click)="abrirModal()">
-        <i class="fas fa-plus"></i> Adicionar primeiro horário
+        <i class="fas fa-plus"></i> Cadastrar grade de trabalho
       </button>
     </div>
 
-    <table class="tabela" *ngIf="horariosOrdenados.length > 0">
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Hora Início</th>
-          <th>Hora Fim</th>
-          <th>Serviço vinculado</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let h of horariosOrdenados">
-          <td>{{ formatarData(h.data) }}</td>
-          <td><i class="fas fa-clock" style="color:var(--primary);margin-right:4px"></i>{{ h.horaInicio }}</td>
-          <td>{{ h.horaFim }}</td>
-          <td>{{ nomeServico(h.servicoId) }}</td>
-          <td>
-            <span class="badge" [class]="h.status ? 'badge-success' : 'badge-gray'">
-              {{ h.status ? 'Ativo' : 'Inativo' }}
+    <div class="grades-lista" *ngIf="grades.length > 0">
+      <div *ngFor="let g of grades" class="grade-card" [class.grade-inativa]="!g.ativo">
+
+        <div class="grade-header">
+          <div class="grade-dias">
+            <i class="fas fa-calendar-week"></i>
+            {{ labelDias(g.diasSemana) }}
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="badge" [class]="g.ativo ? 'badge-success' : 'badge-gray'">
+              {{ g.ativo ? 'Ativa' : 'Inativa' }}
             </span>
-          </td>
-          <td>
-            <button
-              class="btn btn-sm btn-danger-outline"
-              (click)="excluir(h.id!)"
-              [disabled]="excluindo === h.id"
-              title="Excluir">
-              <i class="fas fa-spinner fa-spin" *ngIf="excluindo === h.id"></i>
-              <i class="fas fa-trash" *ngIf="excluindo !== h.id"></i>
+            <button class="btn btn-sm btn-outline" (click)="abrirModalEdicao(g)" title="Editar">
+              <i class="fas fa-edit"></i>
             </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            <button class="btn btn-sm btn-danger-outline" (click)="excluir(g.id!)"
+              [disabled]="excluindo === g.id" title="Excluir">
+              <i class="fas fa-spinner fa-spin" *ngIf="excluindo === g.id"></i>
+              <i class="fas fa-trash" *ngIf="excluindo !== g.id"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="grade-body">
+          <div class="grade-info-item">
+            <i class="fas fa-clock" style="color:var(--primary)"></i>
+            <span>Expediente: <strong>{{ g.horaInicio }} às {{ g.horaFim }}</strong></span>
+          </div>
+          <div class="grade-info-item" *ngIf="g.inicioIntervalo && g.fimIntervalo">
+            <i class="fas fa-coffee" style="color:#f59e0b"></i>
+            <span>Intervalo: <strong>{{ g.inicioIntervalo }} às {{ g.fimIntervalo }}</strong></span>
+          </div>
+          <div class="grade-info-item" *ngIf="!g.inicioIntervalo">
+            <i class="fas fa-minus-circle" style="color:#9ca3af"></i>
+            <span style="color:#9ca3af">Sem intervalo definido</span>
+          </div>
+        </div>
+
+        <!-- Exemplo de slots -->
+        <div class="grade-slots-preview">
+          <span style="font-size:11px;color:#6b7280;margin-right:8px">
+            <i class="fas fa-magic"></i> Slots gerados automaticamente conforme duração do serviço
+          </span>
+        </div>
+
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- Placeholder quando nenhum profissional selecionado -->
+<!-- Placeholder -->
 <div class="placeholder-select" *ngIf="!profissionalSelecionadoId && !carregando">
   <i class="fas fa-hand-pointer"></i>
-  <p>Selecione um profissional acima para ver e gerenciar os horários disponíveis.</p>
+  <p>Selecione um profissional acima para gerenciar a grade de trabalho.</p>
 </div>
 
-<!-- ===== MODAL ===== -->
+<!-- Modal grade -->
 <div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
-  <div class="modal modal-lg" (click)="$event.stopPropagation()">
+  <div class="modal" (click)="$event.stopPropagation()" style="max-width:500px">
 
     <div class="modal-header">
       <div class="modal-title">
-        <i class="fas fa-clock"></i> Adicionar Horário — {{ profissionalAtual?.nome }}
+        <i class="fas fa-calendar-week"></i>
+        {{ modoEdicao ? 'Editar Grade' : 'Nova Grade de Trabalho' }} — {{ profissionalAtual?.nome }}
       </div>
       <button class="modal-close" (click)="fecharModal()">×</button>
     </div>
 
-    <!-- Toggle modo -->
-    <div class="modo-toggle">
-      <button class="modo-btn" [class.ativo]="!modoLote" (click)="modoLote = false; lotePrevia = []">
-        <i class="fas fa-clock"></i> Horário Único
-      </button>
-      <button class="modo-btn" [class.ativo]="modoLote" (click)="modoLote = true">
-        <i class="fas fa-layer-group"></i> Gerar em Lote
-      </button>
-    </div>
-
     <div class="modal-body">
+      <form [formGroup]="form">
 
-      <!-- MODO ÚNICO -->
-      <div *ngIf="!modoLote">
-        <form [formGroup]="form">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Data *</label>
-              <input type="date" formControlName="data" [min]="dataMinima" />
-              <div class="erro-campo" *ngIf="form.get('data')?.invalid && form.get('data')?.touched">
-                Data é obrigatória.
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Serviço (opcional)</label>
-              <select formControlName="servicoId">
-                <option value="">Nenhum (disponível para qualquer serviço)</option>
-                <option *ngFor="let s of servicos" [value]="s.id">
-                  {{ s.nome }} — {{ s.duracaoMinutos }} min
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Hora Início *</label>
-              <input type="time" formControlName="horaInicio" />
-              <div class="erro-campo" *ngIf="form.get('horaInicio')?.invalid && form.get('horaInicio')?.touched">
-                Hora início é obrigatória.
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Hora Fim *</label>
-              <input type="time" formControlName="horaFim" />
-              <div class="erro-campo" *ngIf="form.get('horaFim')?.invalid && form.get('horaFim')?.touched">
-                Hora fim é obrigatória.
-              </div>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Status</label>
-            <select formControlName="status">
-              <option [ngValue]="true">Ativo</option>
-              <option [ngValue]="false">Inativo</option>
-            </select>
-          </div>
-        </form>
-      </div>
-
-      <!-- MODO LOTE -->
-      <div *ngIf="modoLote">
-        <p class="lote-desc">
-          <i class="fas fa-info-circle"></i>
-          Defina o período e o intervalo para gerar automaticamente vários horários de uma vez.
-        </p>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Data *</label>
-            <input type="date" [(ngModel)]="loteData" [min]="dataMinima" />
-          </div>
-          <div class="form-group">
-            <label>Intervalo entre horários (minutos) *</label>
-            <select [(ngModel)]="loteIntervalo" (ngModelChange)="gerarPrevia()">
-              <option [ngValue]="15">15 minutos</option>
-              <option [ngValue]="20">20 minutos</option>
-              <option [ngValue]="30">30 minutos</option>
-              <option [ngValue]="40">40 minutos</option>
-              <option [ngValue]="45">45 minutos</option>
-              <option [ngValue]="60">60 minutos</option>
-            </select>
-          </div>
+        <div class="form-group">
+          <label>Dias de Trabalho *</label>
+          <select formControlName="diasSemana">
+            <option *ngFor="let d of diasSemanaOpcoes" [value]="d.valor">{{ d.label }}</option>
+          </select>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>Expediente — Início *</label>
-            <input type="time" [(ngModel)]="loteHoraInicio" (change)="gerarPrevia()" />
+            <label>Início do Expediente *</label>
+            <input type="time" formControlName="horaInicio" />
           </div>
           <div class="form-group">
-            <label>Expediente — Fim *</label>
-            <input type="time" [(ngModel)]="loteHoraFim" (change)="gerarPrevia()" />
+            <label>Fim do Expediente *</label>
+            <input type="time" formControlName="horaFim" />
           </div>
         </div>
 
-        <button class="btn btn-outline btn-sm" (click)="gerarPrevia()" style="margin-bottom:16px">
-          <i class="fas fa-eye"></i> Gerar Prévia
-        </button>
+        <!-- Intervalo -->
+        <div class="form-group">
+          <label class="checkbox-label" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+            <input type="checkbox" formControlName="temIntervalo" style="width:16px;height:16px" />
+            <span>Possui intervalo (almoço/pausa)</span>
+          </label>
+        </div>
 
-        <!-- Prévia dos slots -->
-        <div *ngIf="lotePrevia.length > 0" class="lote-previa">
-          <div class="lote-previa-header">
-            <i class="fas fa-list"></i>
-            {{ lotePrevia.length }} horário(s) serão criados:
+        <div class="form-row" *ngIf="temIntervalo">
+          <div class="form-group">
+            <label>Início do Intervalo</label>
+            <input type="time" formControlName="inicioIntervalo" />
           </div>
-          <div class="lote-slots">
-            <span class="lote-slot" *ngFor="let h of lotePrevia">{{ h }}</span>
+          <div class="form-group">
+            <label>Fim do Intervalo</label>
+            <input type="time" formControlName="fimIntervalo" />
           </div>
         </div>
 
-        <div *ngIf="loteHoraInicio && loteHoraFim && lotePrevia.length === 0" class="lote-vazio">
-          <i class="fas fa-exclamation-triangle"></i>
-          Nenhum slot gerado. Verifique se o intervalo cabe no período informado.
+        <div class="form-group">
+          <label>Status</label>
+          <select formControlName="ativo">
+            <option [ngValue]="true">Ativa</option>
+            <option [ngValue]="false">Inativa</option>
+          </select>
         </div>
-      </div>
 
+        <!-- Preview informativo -->
+        <div class="info-box" style="margin-top:8px;font-size:12px">
+          <i class="fas fa-lightbulb"></i>
+          Os slots de horário serão gerados automaticamente quando o cliente
+          selecionar um serviço e uma data. O intervalo de tempo entre slots
+          será a duração do serviço escolhido.
+        </div>
+
+      </form>
     </div>
 
     <div class="modal-footer">
       <button class="btn btn-outline" (click)="fecharModal()">Cancelar</button>
-      <button
-        *ngIf="!modoLote"
-        class="btn btn-primary"
-        (click)="salvarUnico()"
-        [disabled]="salvando">
+      <button class="btn btn-primary" (click)="salvar()" [disabled]="salvando">
         <span *ngIf="salvando"><i class="fas fa-spinner fa-spin"></i> Salvando...</span>
-        <span *ngIf="!salvando"><i class="fas fa-save"></i> Salvar Horário</span>
-      </button>
-      <button
-        *ngIf="modoLote"
-        class="btn btn-primary"
-        (click)="salvarLote()"
-        [disabled]="salvando || lotePrevia.length === 0">
-        <span *ngIf="salvando"><i class="fas fa-spinner fa-spin"></i> Salvando...</span>
-        <span *ngIf="!salvando"><i class="fas fa-layer-group"></i> Salvar {{ lotePrevia.length }} Horário(s)</span>
+        <span *ngIf="!salvando">
+          <i class="fas fa-save"></i>
+          {{ modoEdicao ? 'Salvar Alterações' : 'Cadastrar Grade' }}
+        </span>
       </button>
     </div>
 

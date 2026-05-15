@@ -1105,3 +1105,10 @@ textarea {
   animation: shimmer 1.4s infinite linear;
   border-radius: 6px;
 }
+
+/* Multi-seleção de serviços */
+.service-card { position: relative; cursor: pointer; transition: all .2s; }
+.service-card-selecionado { border: 2px solid var(--primary) !important; background: #eff2ff !important; }
+.service-check { position: absolute; top: 8px; right: 8px; color: var(--primary); font-size: 20px; }
+.selecao-resumo { margin-top: 16px; background: #fff; border: 1px solid var(--primary); border-radius: 12px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.selecao-info { display: flex; gap: 16px; align-items: center; font-size: 13px; color: #374151; flex-wrap: wrap; }

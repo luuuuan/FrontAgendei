@@ -1,0 +1,129 @@
+<div class="explorar-page">
+
+  <!-- Hero -->
+  <div class="explorar-hero">
+    <div class="hero-content">
+      <div class="hero-logo"><i class="fas fa-calendar-check"></i> Agendei</div>
+      <h1 class="hero-titulo">Encontre o serviço ideal para você</h1>
+      <p class="hero-sub">Explore serviços disponíveis e agende com facilidade</p>
+
+      <div class="hero-busca">
+        <i class="fas fa-search"></i>
+        <input
+          type="text"
+          [(ngModel)]="termoBusca"
+          (input)="aplicarFiltros()"
+          placeholder="Buscar por serviço ou descrição..."
+        />
+      </div>
+
+      <div class="hero-acoes">
+        <a routerLink="/login" class="btn-hero-outline">Entrar</a>
+        <a routerLink="/cadastro-cliente" class="btn-hero">Criar conta grátis</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="explorar-filtros">
+    <div class="filtro-item">
+      <label><i class="fas fa-sort-amount-down"></i> Ordenar por</label>
+      <select [(ngModel)]="filtroOrdem" (change)="aplicarFiltros()">
+        <option value="nome">Nome (A-Z)</option>
+        <option value="valor_asc">Menor preço</option>
+        <option value="valor_desc">Maior preço</option>
+        <option value="duracao">Menor duração</option>
+      </select>
+    </div>
+    <div class="filtro-item">
+      <label><i class="fas fa-dollar-sign"></i> Valor máximo: R$ {{ filtroValorMax }}</label>
+      <input
+        type="range"
+        [(ngModel)]="filtroValorMax"
+        (input)="aplicarFiltros()"
+        [min]="0"
+        [max]="valorMaximo"
+        step="10"
+      />
+    </div>
+    <div class="filtro-resultado">
+      <span>{{ servicosFiltrados.length }} serviço(s) encontrado(s)</span>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="explorar-loading" *ngIf="carregando">
+    <i class="fas fa-spinner fa-spin fa-2x"></i>
+    <p>Carregando serviços...</p>
+  </div>
+
+  <!-- Grid de serviços -->
+  <div class="explorar-grid" *ngIf="!carregando">
+
+    <div class="servico-card" *ngFor="let s of servicosFiltrados">
+      <div class="servico-card-header">
+        <div class="servico-icone"><i class="fas fa-concierge-bell"></i></div>
+        <div class="servico-badge">Disponível</div>
+      </div>
+      <div class="servico-card-body">
+        <h3 class="servico-nome">{{ s.nome }}</h3>
+        <p class="servico-desc">{{ s.descricao }}</p>
+        <div class="servico-infos">
+          <span class="servico-info-item">
+            <i class="fas fa-clock"></i> {{ s.duracaoMinutos }} min
+          </span>
+          <span class="servico-info-item" *ngIf="s.tempoBuffer">
+            <i class="fas fa-hourglass-half"></i> +{{ s.tempoBuffer }} min buffer
+          </span>
+        </div>
+      </div>
+      <div class="servico-card-footer">
+        <div class="servico-preco">R$ {{ s.valor | number:'1.2-2' }}</div>
+        <button class="btn-contratar" (click)="contratarServico(s)">
+          <i class="fas fa-calendar-plus"></i> Agendar
+        </button>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="servicosFiltrados.length === 0 && !carregando">
+      <i class="fas fa-search" style="font-size:48px;color:#d1d5db;display:block;margin-bottom:12px"></i>
+      <p>Nenhum serviço encontrado para os filtros selecionados.</p>
+      <button class="btn-hero-outline" (click)="termoBusca=''; filtroValorMax=valorMaximo; aplicarFiltros()">
+        Limpar filtros
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal pedindo cadastro -->
+  <div class="modal-overlay" *ngIf="modalCadastroAberto" (click)="fecharModal()">
+    <div class="modal-cadastro" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="fecharModal()">×</button>
+
+      <div class="modal-icone"><i class="fas fa-user-plus"></i></div>
+
+      <h2>Quer agendar este serviço?</h2>
+
+      <div class="servico-selecionado" *ngIf="servicoInteresse">
+        <strong>{{ servicoInteresse.nome }}</strong>
+        <span>R$ {{ servicoInteresse.valor | number:'1.2-2' }} · {{ servicoInteresse.duracaoMinutos }} min</span>
+      </div>
+
+      <p>Para agendar, crie sua conta gratuitamente ou entre se já tiver cadastro.</p>
+
+      <div class="modal-btns">
+        <button class="btn-hero" (click)="irParaCadastro()">
+          <i class="fas fa-user-plus"></i> Criar conta grátis
+        </button>
+        <button class="btn-hero-outline" (click)="irParaLogin()">
+          <i class="fas fa-sign-in-alt"></i> Já tenho conta
+        </button>
+      </div>
+
+      <p class="modal-nota">
+        <i class="fas fa-shield-alt"></i>
+        Cadastro rápido, gratuito e seguro.
+      </p>
+    </div>
+  </div>
+
+</div>

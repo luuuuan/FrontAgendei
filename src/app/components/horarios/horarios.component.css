@@ -316,3 +316,15 @@
   .horarios-header { flex-direction: column; align-items: flex-start; gap: 12px; }
   .prof-selector-item { min-width: 140px; }
 }
+
+/* Grade de trabalho */
+.grades-lista { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+.grade-card { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; transition: box-shadow .2s; }
+.grade-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+.grade-inativa { opacity: .6; }
+.grade-header { background: #f8fafc; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb; }
+.grade-dias { font-weight: 600; color: #374151; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.grade-body { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+.grade-info-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #374151; }
+.grade-slots-preview { padding: 8px 16px; background: #f0f9ff; border-top: 1px solid #e0f2fe; }
+.info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #1d4ed8; display: flex; align-items: flex-start; gap: 8px; }

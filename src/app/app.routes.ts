@@ -8,7 +8,7 @@ export const routes: Routes = [
   { path: 'cadastro-cliente',   loadComponent: () => import('./components/cadastro-cliente/cadastro-cliente.component').then(m => m.CadastroClienteComponent) },
   { path: 'redefinir-senha',    loadComponent: () => import('./components/redefinir-senha/redefinir-senha.component').then(m => m.RedefinirSenhaComponent) },
   { path: 'cadastro-prestador', loadComponent: () => import('./components/cadastro-prestador/cadastro-prestador.component').then(m => m.CadastroPrestadorComponent) },
-
+  { path: 'explorar',           loadComponent: () => import('./components/explorar/explorar.component').then(m => m.ExplorarComponent)},
   { path: 'area-cliente', loadComponent: () => import('./components/area-cliente/area-cliente.component').then(m => m.AreaClienteComponent), canActivate: [ClienteGuard] },
 
   { path: '',              redirectTo: '/dashboard', pathMatch: 'full' },
