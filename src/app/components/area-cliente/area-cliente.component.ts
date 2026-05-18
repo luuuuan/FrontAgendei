@@ -285,9 +285,11 @@ export class AreaClienteComponent implements OnInit {
     this.carregandoHorarios = true;
     this.horariosDisponiveis = [];
     this.mensagemDisponibilidade = '';
+    const sid = this.servicosSelecionados[0]?.id || this.servicoSelecionado?.id;
     this.agendamentoService.buscarHorariosDisponiveis(
       this.profissionalSelecionado.id,
       this.dataSelecionada,
+      sid
     ).subscribe({
       next: (horarios) => {
         this.horariosDisponiveis = horarios;
@@ -583,9 +585,11 @@ export class AreaClienteComponent implements OnInit {
     }
     this.carregandoHorariosReagendamento = true;
     this.horaSelecionadaReagendamento = '';
+    const sid = this.agendamentoDetalhes?.servicoId?.[0];
     this.agendamentoService.buscarHorariosDisponiveis(
       this.agendamentoDetalhes.profissionalId,
-      this.dataSelecionadaReagendamento
+      this.dataSelecionadaReagendamento,
+      sid
     ).subscribe({
       next: h => { this.horariosReagendamento = h; this.carregandoHorariosReagendamento = false; },
       error: () => { this.horariosReagendamento = []; this.carregandoHorariosReagendamento = false; }

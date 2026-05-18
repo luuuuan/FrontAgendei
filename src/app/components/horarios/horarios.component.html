@@ -1,4 +1,4 @@
-<div class="page-title">Horários — Grade de Trabalho</div>
+<div class="page-title">Horários — Grade e Folgas</div>
 
 <!-- Selecionar Profissional -->
 <div class="card profissionais-selector">
@@ -6,7 +6,7 @@
     <div class="card-title-sm">Selecione um Profissional</div>
   </div>
   <div class="loading-box" *ngIf="carregando">
-    <i class="fas fa-spinner fa-spin"></i> Carregando profissionais...
+    <i class="fas fa-spinner fa-spin"></i> Carregando...
   </div>
   <div class="prof-selector-grid" *ngIf="!carregando">
     <div *ngFor="let p of profissionais"
@@ -28,123 +28,199 @@
   </div>
 </div>
 
-<!-- Grade do profissional selecionado -->
-<div *ngIf="profissionalSelecionadoId">
-
-  <div class="horarios-header">
-    <div class="horarios-info">
-      <div class="horarios-prof-nome">
-        <i class="fas fa-user-md"></i> {{ profissionalAtual?.nome }}
-      </div>
-      <div class="horarios-stats">
-        <span class="stat-badge">
-          <i class="fas fa-calendar-check"></i> {{ grades.length }} grade(s) cadastrada(s)
-        </span>
-      </div>
-    </div>
-    <button class="btn btn-primary" (click)="abrirModal()">
-      <i class="fas fa-plus"></i> Nova Grade de Trabalho
-    </button>
-  </div>
-
-  <!-- Info box -->
-  <div class="info-box" style="margin-bottom:16px">
-    <i class="fas fa-info-circle"></i>
-    Os horários disponíveis para agendamento serão calculados automaticamente com base
-    na grade de trabalho e na duração do serviço selecionado pelo cliente.
-  </div>
-
-  <div class="loading-box" *ngIf="carregandoGrades">
-    <i class="fas fa-spinner fa-spin"></i> Carregando grades...
-  </div>
-
-  <div class="card" *ngIf="!carregandoGrades">
-    <div class="empty-state" *ngIf="grades.length === 0">
-      <i class="fas fa-calendar-times"></i>
-      <p>Nenhuma grade de trabalho cadastrada para este profissional.</p>
-      <button class="btn btn-primary btn-sm" (click)="abrirModal()">
-        <i class="fas fa-plus"></i> Cadastrar grade de trabalho
-      </button>
-    </div>
-
-    <div class="grades-lista" *ngIf="grades.length > 0">
-      <div *ngFor="let g of grades" class="grade-card" [class.grade-inativa]="!g.ativo">
-
-        <div class="grade-header">
-          <div class="grade-dias">
-            <i class="fas fa-calendar-week"></i>
-            {{ labelDias(g.diasSemana) }}
-          </div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <span class="badge" [class]="g.ativo ? 'badge-success' : 'badge-gray'">
-              {{ g.ativo ? 'Ativa' : 'Inativa' }}
-            </span>
-            <button class="btn btn-sm btn-outline" (click)="abrirModalEdicao(g)" title="Editar">
-              <i class="fas fa-edit"></i>
-            </button>
-            <button class="btn btn-sm btn-danger-outline" (click)="excluir(g.id!)"
-              [disabled]="excluindo === g.id" title="Excluir">
-              <i class="fas fa-spinner fa-spin" *ngIf="excluindo === g.id"></i>
-              <i class="fas fa-trash" *ngIf="excluindo !== g.id"></i>
-            </button>
-          </div>
-        </div>
-
-        <div class="grade-body">
-          <div class="grade-info-item">
-            <i class="fas fa-clock" style="color:var(--primary)"></i>
-            <span>Expediente: <strong>{{ g.horaInicio }} às {{ g.horaFim }}</strong></span>
-          </div>
-          <div class="grade-info-item" *ngIf="g.inicioIntervalo && g.fimIntervalo">
-            <i class="fas fa-coffee" style="color:#f59e0b"></i>
-            <span>Intervalo: <strong>{{ g.inicioIntervalo }} às {{ g.fimIntervalo }}</strong></span>
-          </div>
-          <div class="grade-info-item" *ngIf="!g.inicioIntervalo">
-            <i class="fas fa-minus-circle" style="color:#9ca3af"></i>
-            <span style="color:#9ca3af">Sem intervalo definido</span>
-          </div>
-        </div>
-
-        <!-- Exemplo de slots -->
-        <div class="grade-slots-preview">
-          <span style="font-size:11px;color:#6b7280;margin-right:8px">
-            <i class="fas fa-magic"></i> Slots gerados automaticamente conforme duração do serviço
-          </span>
-        </div>
-
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Placeholder -->
 <div class="placeholder-select" *ngIf="!profissionalSelecionadoId && !carregando">
   <i class="fas fa-hand-pointer"></i>
-  <p>Selecione um profissional acima para gerenciar a grade de trabalho.</p>
+  <p>Selecione um profissional acima para gerenciar grade e folgas.</p>
 </div>
 
-<!-- Modal grade -->
-<div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
-  <div class="modal" (click)="$event.stopPropagation()" style="max-width:500px">
+<!-- Conteúdo -->
+<div *ngIf="profissionalSelecionadoId">
 
+  <div class="horarios-header">
+    <div class="horarios-prof-nome">
+      <i class="fas fa-user-md"></i> {{ profissionalAtual?.nome }}
+    </div>
+  </div>
+
+  <!-- Abas -->
+  <div class="abas-container">
+    <button class="aba-btn" [class.ativa]="abaAtiva === 'grade'" (click)="abaAtiva = 'grade'">
+      <i class="fas fa-calendar-week"></i> Grade de Trabalho
+    </button>
+    <button class="aba-btn" [class.ativa]="abaAtiva === 'folgas'" (click)="abaAtiva = 'folgas'">
+      <i class="fas fa-umbrella-beach"></i> Folgas
+      <span class="aba-badge" *ngIf="folgasFuturas.length > 0">{{ folgasFuturas.length }}</span>
+    </button>
+  </div>
+
+  <!-- ABA: GRADE -->
+  <div *ngIf="abaAtiva === 'grade'">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <button class="btn btn-primary" (click)="abrirModalGrade()">
+        <i class="fas fa-plus"></i> Nova Grade
+      </button>
+    </div>
+
+    <div class="info-box" style="margin-bottom:16px">
+      <i class="fas fa-info-circle"></i>
+      Os horários disponíveis para agendamento são calculados automaticamente com base
+      na grade e na duração do serviço selecionado pelo cliente.
+    </div>
+
+    <div class="loading-box" *ngIf="carregandoGrades">
+      <i class="fas fa-spinner fa-spin"></i> Carregando grades...
+    </div>
+
+    <div *ngIf="!carregandoGrades">
+      <div class="empty-state card" *ngIf="grades.length === 0">
+        <i class="fas fa-calendar-times"></i>
+        <p>Nenhuma grade cadastrada para este profissional.</p>
+        <button class="btn btn-primary btn-sm" (click)="abrirModalGrade()">
+          <i class="fas fa-plus"></i> Cadastrar grade
+        </button>
+      </div>
+
+      <div class="grades-lista" *ngIf="grades.length > 0">
+        <div *ngFor="let g of grades" class="grade-card" [class.grade-inativa]="!g.ativo">
+          <div class="grade-header">
+            <div class="grade-dias">
+              <i class="fas fa-calendar-week"></i> {{ labelDias(g.diasSemana) }}
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="badge" [class]="g.ativo ? 'badge-success' : 'badge-gray'">
+                {{ g.ativo ? 'Ativa' : 'Inativa' }}
+              </span>
+              <button class="btn btn-sm btn-outline" (click)="abrirModalEdicaoGrade(g)">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn btn-sm btn-danger-outline" (click)="excluirGrade(g.id!)"
+                [disabled]="excluindo === g.id">
+                <i class="fas fa-spinner fa-spin" *ngIf="excluindo === g.id"></i>
+                <i class="fas fa-trash" *ngIf="excluindo !== g.id"></i>
+              </button>
+            </div>
+          </div>
+          <div class="grade-body">
+            <div class="grade-info-item">
+              <i class="fas fa-clock" style="color:var(--primary)"></i>
+              <span>Expediente: <strong>{{ g.horaInicio }} às {{ g.horaFim }}</strong></span>
+            </div>
+            <div class="grade-info-item" *ngIf="g.inicioIntervalo && g.fimIntervalo">
+              <i class="fas fa-coffee" style="color:#f59e0b"></i>
+              <span>Intervalo: <strong>{{ g.inicioIntervalo }} às {{ g.fimIntervalo }}</strong></span>
+            </div>
+            <div class="grade-info-item" *ngIf="!g.inicioIntervalo">
+              <i class="fas fa-minus-circle" style="color:#9ca3af"></i>
+              <span style="color:#9ca3af">Sem intervalo</span>
+            </div>
+          </div>
+          <div class="grade-slots-preview">
+            <i class="fas fa-magic"></i>
+            Slots calculados automaticamente conforme duração do serviço
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABA: FOLGAS -->
+  <div *ngIf="abaAtiva === 'folgas'">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <button class="btn btn-primary" (click)="abrirModalFolga()">
+        <i class="fas fa-plus"></i> Registrar Folga
+      </button>
+    </div>
+
+    <div class="loading-box" *ngIf="carregandoFolgas">
+      <i class="fas fa-spinner fa-spin"></i> Carregando folgas...
+    </div>
+
+    <div *ngIf="!carregandoFolgas">
+
+      <!-- Folgas futuras -->
+      <div class="folgas-secao" *ngIf="folgasFuturas.length > 0">
+        <div class="folgas-secao-titulo">
+          <i class="fas fa-calendar-check"></i> Próximas folgas
+        </div>
+        <div class="folgas-lista">
+          <div *ngFor="let f of folgasFuturas" class="folga-card folga-futura">
+            <div class="folga-data">
+              <i class="fas fa-calendar-alt"></i>
+              {{ formatarData(f.data) }}
+            </div>
+            <div class="folga-tipo">
+              <span class="badge badge-warning" *ngIf="f.diaInteiro">Dia inteiro</span>
+              <span class="badge badge-info" *ngIf="!f.diaInteiro">
+                {{ f.horaInicio }} às {{ f.horaFim }}
+              </span>
+            </div>
+            <div class="folga-motivo" *ngIf="f.motivo">
+              <i class="fas fa-comment"></i> {{ f.motivo }}
+            </div>
+            <button class="btn btn-sm btn-danger-outline" (click)="excluirFolga(f.id!)"
+              [disabled]="excluindo === f.id" title="Remover folga">
+              <i class="fas fa-spinner fa-spin" *ngIf="excluindo === f.id"></i>
+              <i class="fas fa-times" *ngIf="excluindo !== f.id"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Folgas passadas -->
+      <div class="folgas-secao" *ngIf="folgasPassadas.length > 0" style="margin-top:20px">
+        <div class="folgas-secao-titulo" style="color:#9ca3af">
+          <i class="fas fa-history"></i> Folgas anteriores
+        </div>
+        <div class="folgas-lista">
+          <div *ngFor="let f of folgasPassadas" class="folga-card folga-passada">
+            <div class="folga-data">{{ formatarData(f.data) }}</div>
+            <div class="folga-tipo">
+              <span class="badge badge-gray" *ngIf="f.diaInteiro">Dia inteiro</span>
+              <span class="badge badge-gray" *ngIf="!f.diaInteiro">
+                {{ f.horaInicio }} às {{ f.horaFim }}
+              </span>
+            </div>
+            <div class="folga-motivo" *ngIf="f.motivo" style="color:#9ca3af">
+              {{ f.motivo }}
+            </div>
+            <button class="btn btn-sm btn-outline" (click)="excluirFolga(f.id!)"
+              [disabled]="excluindo === f.id">
+              <i class="fas fa-trash" *ngIf="excluindo !== f.id"></i>
+              <i class="fas fa-spinner fa-spin" *ngIf="excluindo === f.id"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty-state card"
+        *ngIf="folgasFuturas.length === 0 && folgasPassadas.length === 0">
+        <i class="fas fa-umbrella-beach"></i>
+        <p>Nenhuma folga registrada para este profissional.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal Grade -->
+<div class="modal-overlay" *ngIf="modalGradeAberto" (click)="fecharModalGrade()">
+  <div class="modal" (click)="$event.stopPropagation()" style="max-width:500px">
     <div class="modal-header">
       <div class="modal-title">
         <i class="fas fa-calendar-week"></i>
-        {{ modoEdicao ? 'Editar Grade' : 'Nova Grade de Trabalho' }} — {{ profissionalAtual?.nome }}
+        {{ modoEdicaoGrade ? 'Editar Grade' : 'Nova Grade' }} — {{ profissionalAtual?.nome }}
       </div>
-      <button class="modal-close" (click)="fecharModal()">×</button>
+      <button class="modal-close" (click)="fecharModalGrade()">×</button>
     </div>
-
     <div class="modal-body">
-      <form [formGroup]="form">
-
+      <form [formGroup]="formGrade">
         <div class="form-group">
           <label>Dias de Trabalho *</label>
           <select formControlName="diasSemana">
             <option *ngFor="let d of diasSemanaOpcoes" [value]="d.valor">{{ d.label }}</option>
           </select>
         </div>
-
         <div class="form-row">
           <div class="form-group">
             <label>Início do Expediente *</label>
@@ -155,15 +231,12 @@
             <input type="time" formControlName="horaFim" />
           </div>
         </div>
-
-        <!-- Intervalo -->
         <div class="form-group">
           <label class="checkbox-label" style="display:flex;align-items:center;gap:10px;cursor:pointer">
             <input type="checkbox" formControlName="temIntervalo" style="width:16px;height:16px" />
             <span>Possui intervalo (almoço/pausa)</span>
           </label>
         </div>
-
         <div class="form-row" *ngIf="temIntervalo">
           <div class="form-group">
             <label>Início do Intervalo</label>
@@ -174,7 +247,6 @@
             <input type="time" formControlName="fimIntervalo" />
           </div>
         </div>
-
         <div class="form-group">
           <label>Status</label>
           <select formControlName="ativo">
@@ -182,28 +254,77 @@
             <option [ngValue]="false">Inativa</option>
           </select>
         </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="fecharModalGrade()">Cancelar</button>
+      <button class="btn btn-primary" (click)="salvarGrade()" [disabled]="salvando">
+        <i class="fas fa-spinner fa-spin" *ngIf="salvando"></i>
+        <i class="fas fa-save" *ngIf="!salvando"></i>
+        {{ modoEdicaoGrade ? 'Salvar Alterações' : 'Cadastrar Grade' }}
+      </button>
+    </div>
+  </div>
+</div>
 
-        <!-- Preview informativo -->
-        <div class="info-box" style="margin-top:8px;font-size:12px">
-          <i class="fas fa-lightbulb"></i>
-          Os slots de horário serão gerados automaticamente quando o cliente
-          selecionar um serviço e uma data. O intervalo de tempo entre slots
-          será a duração do serviço escolhido.
+<!-- Modal Folga -->
+<div class="modal-overlay" *ngIf="modalFolgaAberto" (click)="fecharModalFolga()">
+  <div class="modal" (click)="$event.stopPropagation()" style="max-width:440px">
+    <div class="modal-header">
+      <div class="modal-title">
+        <i class="fas fa-umbrella-beach"></i> Registrar Folga — {{ profissionalAtual?.nome }}
+      </div>
+      <button class="modal-close" (click)="fecharModalFolga()">×</button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="formFolga">
+
+        <div class="form-group">
+          <label>Data da Folga *</label>
+          <input type="date" formControlName="data" [min]="dataMinima" />
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+            <input type="checkbox" formControlName="diaInteiro"
+              style="width:16px;height:16px"
+              (change)="onDiaInteiroChange()" />
+            <span>Folga o dia inteiro</span>
+          </label>
+        </div>
+
+        <div class="form-row" *ngIf="!folgaDiaInteiro">
+          <div class="form-group">
+            <label>Hora Início *</label>
+            <input type="time" formControlName="horaInicio" />
+          </div>
+          <div class="form-group">
+            <label>Hora Fim *</label>
+            <input type="time" formControlName="horaFim" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Motivo <span style="color:#9ca3af;font-size:12px">(opcional)</span></label>
+          <input type="text" formControlName="motivo"
+            placeholder="Ex: Consulta médica, compromisso pessoal..." />
+        </div>
+
+        <div class="info-box" style="font-size:12px">
+          <i class="fas fa-info-circle"></i>
+          Clientes não conseguirão agendar com este profissional
+          {{ folgaDiaInteiro ? 'neste dia' : 'neste período' }}.
         </div>
 
       </form>
     </div>
-
     <div class="modal-footer">
-      <button class="btn btn-outline" (click)="fecharModal()">Cancelar</button>
-      <button class="btn btn-primary" (click)="salvar()" [disabled]="salvando">
-        <span *ngIf="salvando"><i class="fas fa-spinner fa-spin"></i> Salvando...</span>
-        <span *ngIf="!salvando">
-          <i class="fas fa-save"></i>
-          {{ modoEdicao ? 'Salvar Alterações' : 'Cadastrar Grade' }}
-        </span>
+      <button class="btn btn-outline" (click)="fecharModalFolga()">Cancelar</button>
+      <button class="btn btn-primary" (click)="salvarFolga()" [disabled]="salvando">
+        <i class="fas fa-spinner fa-spin" *ngIf="salvando"></i>
+        <i class="fas fa-save" *ngIf="!salvando"></i>
+        Registrar Folga
       </button>
     </div>
-
   </div>
 </div>

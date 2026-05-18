@@ -6,7 +6,7 @@ import { environment } from '../../environments/environment';
 export interface GradeTrabalho {
   id?: number;
   profissionalId: number;
-  diasSemana: string; // 'SEG_SEX' | 'SEG_SAB' | 'SEG_DOM'
+  diasSemana: string; 
   horaInicio: string;
   horaFim: string;
   inicioIntervalo?: string;
