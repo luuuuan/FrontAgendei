@@ -1,93 +1,89 @@
 <div class="page-title">Serviços</div>
 
-<!-- Skeleton inicial -->
 <div *ngIf="carregando" style="margin-top:16px">
   <app-skeleton tipo="tabela" [count]="5"></app-skeleton>
 </div>
 
-<!-- Conteúdo -->
 <div *ngIf="!carregando">
 
-<!-- Barra de filtro -->
-<div class="filter-bar">
-  <div class="search-box">
-    <i class="fas fa-search"></i>
-    <input
-      type="text"
-      placeholder="Buscar serviço..."
-      [(ngModel)]="termoBusca"
-      (input)="filtrar()"
-    />
+  <div class="filter-bar">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="Buscar serviço, profissional..." [(ngModel)]="termoBusca" (input)="filtrar()" />
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" (click)="abrirModal()">
+        <i class="fas fa-plus"></i> Novo Serviço
+      </button>
+    </div>
   </div>
-  <div class="actions">
-    <button class="btn btn-primary" (click)="abrirModal()">
-      <i class="fas fa-plus"></i>
-      Novo Serviço
-    </button>
+
+  <div class="erro-aviso" *ngIf="erro">
+    <i class="fas fa-exclamation-circle"></i> {{ erro }}
+    <button class="btn btn-sm btn-outline" (click)="carregarServicos()" style="margin-left:auto">Tentar novamente</button>
   </div>
-</div>
 
-<!-- Loading -->
-<div class="loading-box" *ngIf="carregando">
-  <i class="fas fa-spinner fa-spin fa-2x"></i>
-  <p>Carregando serviços...</p>
-</div>
+  <!-- Cards de serviços -->
+  <div class="servicos-grid" *ngIf="!erro">
 
-<!-- Erro -->
-<div class="erro-aviso" *ngIf="erro && !carregando">
-  <i class="fas fa-exclamation-circle"></i>
-  {{ erro }}
-  <button class="btn btn-sm btn-outline" (click)="carregarServicos()" style="margin-left:auto">
-    Tentar novamente
-  </button>
-</div>
+    <div class="servico-card-admin" *ngFor="let s of servicosFiltrados">
 
-<!-- Tabela de serviços -->
-<div class="table-container" *ngIf="!carregando && !erro">
-  <table>
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>Descrição</th>
-        <th>Duração</th>
-        <th>Buffer</th>
-        <th>Valor</th>
-        <th>Profissional</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let s of servicosFiltrados">
-        <td><strong>{{ s.nome }}</strong></td>
-        <td class="descricao-td">{{ s.descricao }}</td>
-        <td>{{ s.duracaoMinutos }} min</td>
-        <td>{{ s.tempoBuffer || 0 }} min</td>
-        <td>R$ {{ s.valor | number:'1.2-2' }}</td>
-        <td>{{ nomeProfissional(s.profissionalId) }}</td>
-        <td>
+      <div class="servico-card-header-admin">
+        <div class="servico-status-row">
           <span class="badge" [class]="classeStatus(s.statusServico || '')">
             {{ s.statusServico || 'ATIVO' }}
           </span>
-        </td>
-      </tr>
+          <span class="badge" [class]="classeLocal(s.localAtendimento || 'NO_LOCAL')" style="font-size:11px">
+            <i class="fas" [class]="'fa-' + iconLocal(s.localAtendimento || 'NO_LOCAL')"></i>
+            {{ labelLocalAtendimento(s.localAtendimento || 'NO_LOCAL') }}
+          </span>
+        </div>
+        <button class="btn btn-sm btn-outline" (click)="abrirModalEdicao(s)" title="Editar">
+          <i class="fas fa-edit"></i>
+        </button>
+      </div>
 
-      <tr *ngIf="servicosFiltrados.length === 0">
-        <td colspan="7" class="sem-dados">
-          <i class="fas fa-concierge-bell"></i>
-          <span *ngIf="termoBusca">Nenhum serviço encontrado para "{{ termoBusca }}"</span>
-          <span *ngIf="!termoBusca">Nenhum serviço cadastrado.</span>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+      <div class="servico-card-body-admin">
+        <h3 class="servico-nome-admin">{{ s.nome }}</h3>
+        <p class="servico-desc-admin">{{ s.descricao }}</p>
+
+        <div class="servico-profissional">
+          <i class="fas fa-user-md"></i>
+          {{ nomeProfissional(s.profissionalId) }}
+        </div>
+      </div>
+
+      <div class="servico-card-footer-admin">
+        <div class="servico-infos-footer">
+          <span><i class="fas fa-clock"></i> {{ s.duracaoMinutos }} min</span>
+          <span *ngIf="s.tempoBuffer"><i class="fas fa-hourglass-half"></i> +{{ s.tempoBuffer }} min buffer</span>
+        </div>
+        <div class="servico-preco-admin">
+          <span class="preco-tipo">{{ labelTipoCobranca(s.tipoCobranca || 'FIXO') }}</span>
+          <span class="preco-valor">
+            <ng-container *ngIf="!isPercentual">R$ {{ s.valor | number:'1.2-2' }}</ng-container>
+            <ng-container *ngIf="isPercentual">{{ s.valor }}%</ng-container>
+            <span class="preco-unidade">{{ unidadeTipoCobranca(s.tipoCobranca || 'FIXO') }}</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="servicosFiltrados.length === 0" style="grid-column:1/-1">
+      <i class="fas fa-concierge-bell"></i>
+      <span *ngIf="termoBusca">Nenhum serviço encontrado para "{{ termoBusca }}"</span>
+      <span *ngIf="!termoBusca">Nenhum serviço cadastrado.</span>
+    </div>
+  </div>
+
 </div>
 
-<!-- Modal novo serviço -->
+<!-- Modal cadastro/edição -->
 <div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
-  <div class="modal" (click)="$event.stopPropagation()">
+  <div class="modal" (click)="$event.stopPropagation()" style="max-width:560px">
 
     <div class="modal-header">
-      <div class="modal-title">Novo Serviço</div>
+      <div class="modal-title">{{ modoEdicao ? 'Editar Serviço' : 'Novo Serviço' }}</div>
       <button class="modal-close" (click)="fecharModal()">×</button>
     </div>
 
@@ -97,53 +93,68 @@
         <div class="form-group">
           <label>Nome do Serviço *</label>
           <input type="text" formControlName="nome" placeholder="Ex: Corte de cabelo" />
-          <div class="erro-campo" *ngIf="form.get('nome')?.invalid && form.get('nome')?.touched">
-            Nome é obrigatório.
-          </div>
+          <span class="erro-campo" *ngIf="form.get('nome')?.invalid && form.get('nome')?.touched">Obrigatório.</span>
         </div>
 
         <div class="form-group">
           <label>Descrição *</label>
-          <textarea formControlName="descricao" rows="3" placeholder="Descreva o serviço..."></textarea>
-          <div class="erro-campo" *ngIf="form.get('descricao')?.invalid && form.get('descricao')?.touched">
-            Descrição é obrigatória.
-          </div>
+          <textarea formControlName="descricao" rows="2" placeholder="Descreva o serviço..."></textarea>
+          <span class="erro-campo" *ngIf="form.get('descricao')?.invalid && form.get('descricao')?.touched">Obrigatório.</span>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label>Duração (minutos) *</label>
             <input type="number" formControlName="duracaoMinutos" placeholder="30" min="1" />
-            <div class="erro-campo" *ngIf="form.get('duracaoMinutos')?.invalid && form.get('duracaoMinutos')?.touched">
-              Duração inválida.
-            </div>
+            <span class="erro-campo" *ngIf="form.get('duracaoMinutos')?.invalid && form.get('duracaoMinutos')?.touched">Inválido.</span>
           </div>
-
           <div class="form-group">
             <label>Buffer (minutos)</label>
             <input type="number" formControlName="tempoBuffer" placeholder="0" min="0" />
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Valor (R$) *</label>
-          <input type="number" formControlName="valor" placeholder="0.00" min="0" step="0.01" />
-          <div class="erro-campo" *ngIf="form.get('valor')?.invalid && form.get('valor')?.touched">
-            Valor inválido.
+        <!-- Tipo de cobrança -->
+        <div class="form-row">
+          <div class="form-group" style="flex:2">
+            <label>Tipo de Cobrança *</label>
+            <select formControlName="tipoCobranca">
+              <option *ngFor="let t of tiposCobranca" [value]="t.valor">{{ t.label }}</option>
+            </select>
           </div>
+          <div class="form-group" style="flex:1">
+            <label>
+              {{ isPercentual ? 'Percentual (%)' : 'Valor (R$)' }}
+              <span style="color:#6b7280;font-size:11px">{{ unidadeTipoCobranca(tipoCobrancaAtual) }}</span> *
+            </label>
+            <input type="number" formControlName="valor"
+              [placeholder]="isPercentual ? '10' : '0.00'"
+              min="0" step="0.01" />
+            <span class="erro-campo" *ngIf="form.get('valor')?.invalid && form.get('valor')?.touched">Inválido.</span>
+          </div>
+        </div>
+
+        <!-- Info sobre tipo de cobrança variável -->
+        <div class="info-box" *ngIf="tipoCobrancaAtual !== 'FIXO'" style="margin-bottom:12px;font-size:12px">
+          <i class="fas fa-info-circle"></i>
+          Cobrança variável — o valor final será calculado após o serviço, com base na quantidade informada pelo cliente.
+        </div>
+
+        <!-- Local de atendimento -->
+        <div class="form-group">
+          <label>Local de Atendimento *</label>
+          <select formControlName="localAtendimento">
+            <option *ngFor="let l of locaisAtendimento" [value]="l.valor">{{ l.label }}</option>
+          </select>
         </div>
 
         <div class="form-group">
           <label>Profissional *</label>
           <select formControlName="profissionalId">
             <option value="">Selecione um profissional</option>
-            <option *ngFor="let p of profissionais" [value]="p.id">
-              {{ p.nome || 'Profissional #' + p.id }}
-            </option>
+            <option *ngFor="let p of profissionais" [value]="p.id">{{ p.nome || 'Profissional #' + p.id }}</option>
           </select>
-          <div class="erro-campo" *ngIf="form.get('profissionalId')?.invalid && form.get('profissionalId')?.touched">
-            Profissional é obrigatório.
-          </div>
+          <span class="erro-campo" *ngIf="form.get('profissionalId')?.invalid && form.get('profissionalId')?.touched">Obrigatório.</span>
         </div>
 
         <div class="form-group">
@@ -160,11 +171,10 @@
     <div class="modal-footer">
       <button class="btn btn-outline" (click)="fecharModal()">Cancelar</button>
       <button class="btn btn-primary" (click)="salvar()" [disabled]="salvando">
-        <span *ngIf="salvando"><i class="fas fa-spinner fa-spin"></i> Salvando...</span>
-        <span *ngIf="!salvando">Cadastrar Serviço</span>
+        <i class="fas fa-spinner fa-spin" *ngIf="salvando"></i>
+        <i class="fas fa-save" *ngIf="!salvando"></i>
+        {{ modoEdicao ? 'Salvar Alterações' : 'Cadastrar Serviço' }}
       </button>
     </div>
-
   </div>
-</div>
 </div>

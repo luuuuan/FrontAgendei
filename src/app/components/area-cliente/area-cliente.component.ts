@@ -59,6 +59,7 @@ export class AreaClienteComponent implements OnInit {
   horaSelecionada = '';
   observacoes = '';
   salvandoAgendamento = false;
+  quantidadeServico = 1; // para cobranças variáveis (m², horas, etc.)
   dataMinima = new Date().toISOString().split('T')[0];
   horariosDisponiveis: string[] = [];
   carregandoHorarios = false;
@@ -69,6 +70,26 @@ export class AreaClienteComponent implements OnInit {
   modalEnderecoAberto = false;
   buscandoCep = false;
   enderecoTemp: EnderecoAgendamento = { cep: '', logradouro: '', numero: '', bairro: '', cidade: '', estado: '' };
+
+  get tiposVariaveis(): string[] {
+    return ['HORA', 'METRO_QUADRADO', 'METRO_LINEAR', 'UNIDADE', 'DIARIA'];
+  }
+
+  get servicoTemCobrancaVariavel(): boolean {
+    return this.servicosSelecionados.some(s => this.tiposVariaveis.includes(s.tipoCobranca || ''));
+  }
+
+  get valorTotalCalculado(): number {
+    return this.servicosSelecionados.reduce((acc, s) => {
+      const tipo = s.tipoCobranca || 'FIXO';
+      if (this.tiposVariaveis.includes(tipo)) return acc + s.valor * this.quantidadeServico;
+      return acc + s.valor;
+    }, 0);
+  }
+
+  labelUnidade(tipo: string): string {
+    return ({ HORA: 'horas', METRO_QUADRADO: 'm²', METRO_LINEAR: 'metros', UNIDADE: 'unidades', DIARIA: 'dias' } as any)[tipo] || '';
+  }
 
   get profissionalAtendeADomicilio(): boolean {
     return this.profissionalSelecionado?.atendeADomicilio === true;
@@ -332,6 +353,7 @@ export class AreaClienteComponent implements OnInit {
     this.horaSelecionada = '';
     this.observacoes = '';
     this.enderecoAgendamento = null;
+    this.quantidadeServico = 1;
     this.dataAtual = new Date();
     this.gerarCalendario();
     this.telaAtiva = 'novo-agendamento';
