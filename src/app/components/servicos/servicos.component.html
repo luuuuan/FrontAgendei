@@ -61,8 +61,8 @@
         <div class="servico-preco-admin">
           <span class="preco-tipo">{{ labelTipoCobranca(s.tipoCobranca || 'FIXO') }}</span>
           <span class="preco-valor">
-            <ng-container *ngIf="!isPercentual">R$ {{ s.valor | number:'1.2-2' }}</ng-container>
-            <ng-container *ngIf="isPercentual">{{ s.valor }}%</ng-container>
+            <ng-container *ngIf="!isPercentual">R$ {{ s.valorServico | number:'1.2-2' }}</ng-container>
+            <ng-container *ngIf="isPercentual">{{ s.valorServico }}%</ng-container>
             <span class="preco-unidade">{{ unidadeTipoCobranca(s.tipoCobranca || 'FIXO') }}</span>
           </span>
         </div>

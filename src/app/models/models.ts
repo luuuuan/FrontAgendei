@@ -29,10 +29,10 @@ export interface Servico {
   descricao: string;
   duracaoMinutos: number;
   tempoBuffer?: number;
-  valor: number;
+  valorServico: number;
   valorUnitario?: number;
-  tipoCobranca?: string;  // FIXO | HORA | METRO_QUADRADO | METRO_LINEAR | UNIDADE | DIARIA | PERCENTUAL
-  localAtendimento?: string; // NO_LOCAL | DOMICILIO
+  tipoCobranca?: string; 
+  localAtendimento?: string;
   profissionalId: number;
   profissionalNome?: string;
   statusServico?: string;

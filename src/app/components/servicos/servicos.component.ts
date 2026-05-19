@@ -58,7 +58,7 @@ export class ServicosComponent implements OnInit {
       duracaoMinutos:        ['', [Validators.required, Validators.min(1)]],
       tempoBuffer:           [0],
       tipoCobranca:          ['FIXO', Validators.required],
-      valor:                 ['', [Validators.required, Validators.min(0)]],
+      valorServico:          ['', [Validators.required, Validators.min(0)]],
       localAtendimento:      ['NO_LOCAL', Validators.required],
       profissionalId:        ['', Validators.required],
       statusServico:         ['ATIVO'],
@@ -147,7 +147,7 @@ export class ServicosComponent implements OnInit {
       nome: s.nome, descricao: s.descricao,
       duracaoMinutos: s.duracaoMinutos, tempoBuffer: s.tempoBuffer ?? 0,
       tipoCobranca: s.tipoCobranca || 'FIXO',
-      valor: s.valor, localAtendimento: s.localAtendimento || 'NO_LOCAL',
+      valorServico: s.valorServico, localAtendimento: s.localAtendimento || 'NO_LOCAL',
       profissionalId: s.profissionalId,
       statusServico: s.statusServico || 'ATIVO',
       statusExecucaoServico: s.statusExecucaoServico || 'PENDENTE'

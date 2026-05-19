@@ -82,8 +82,8 @@ export class AreaClienteComponent implements OnInit {
   get valorTotalCalculado(): number {
     return this.servicosSelecionados.reduce((acc, s) => {
       const tipo = s.tipoCobranca || 'FIXO';
-      if (this.tiposVariaveis.includes(tipo)) return acc + s.valor * this.quantidadeServico;
-      return acc + s.valor;
+      if (this.tiposVariaveis.includes(tipo)) return acc + s.valorServico * this.quantidadeServico;
+      return acc + s.valorServico;
     }, 0);
   }
 
@@ -374,7 +374,7 @@ export class AreaClienteComponent implements OnInit {
   }
 
   get valorTotalServicos(): number {
-    return this.servicosSelecionados.reduce((acc, s) => acc + s.valor, 0);
+    return this.servicosSelecionados.reduce((acc, s) => acc + s.valorServico, 0);
   }
 
   get duracaoTotalServicos(): number {
@@ -432,8 +432,8 @@ export class AreaClienteComponent implements OnInit {
       dataCriacao: new Date().toISOString(),
       horaInicio: this.horaSelecionada,
       statusAgendamento: 'PENDENTE',
-      taxaPlataforma: this.servicoSelecionado.valor * 0.1,
-      valorTotal: this.servicoSelecionado.valor,
+      taxaPlataforma: this.servicoSelecionado.valorServico * 0.1,
+      valorTotal: this.servicoSelecionado.valorServico,
       observacoes: this.observacoes,
       usuarioId: sessao.usuarioId,
       profissionalId: this.profissionalSelecionado.id!,

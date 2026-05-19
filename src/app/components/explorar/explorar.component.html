@@ -78,7 +78,7 @@
         </div>
       </div>
       <div class="servico-card-footer">
-        <div class="servico-preco">R$ {{ s.valor | number:'1.2-2' }}</div>
+        <div class="servico-preco">R$ {{ s.valorServico | number:'1.2-2' }}</div>
         <button class="btn-contratar" (click)="contratarServico(s)">
           <i class="fas fa-calendar-plus"></i> Agendar
         </button>
@@ -105,7 +105,7 @@
 
       <div class="servico-selecionado" *ngIf="servicoInteresse">
         <strong>{{ servicoInteresse.nome }}</strong>
-        <span>R$ {{ servicoInteresse.valor | number:'1.2-2' }} · {{ servicoInteresse.duracaoMinutos }} min</span>
+        <span>R$ {{ servicoInteresse.valorServico | number:'1.2-2' }} · {{ servicoInteresse.duracaoMinutos }} min</span>
       </div>
 
       <p>Para agendar, crie sua conta gratuitamente ou entre se já tiver cadastro.</p>

@@ -118,7 +118,7 @@ export class RelatoriosComponent implements OnInit {
       ags.forEach(ag => ag.servicoId?.forEach(sid => {
         cnt[sid] = (cnt[sid] || 0) + 1;
         const sv = this.servicos.find(s => s.id === sid);
-        val[sid] = (val[sid] || 0) + (sv?.valor || 0);
+        val[sid] = (val[sid] || 0) + (sv?.valorServico || 0);
       }));
       this.servicosRanking = this.servicos
         .map(s => ({ nome: s.nome, quantidade: cnt[s.id!] || 0, percentual: 0, valor: val[s.id!] || 0 }))

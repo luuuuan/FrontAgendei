@@ -212,7 +212,7 @@
               </div>
               <div class="service-nome">{{ s.nome }}</div>
               <div class="service-duracao"><i class="fas fa-clock"></i> {{ s.duracaoMinutos }} min</div>
-              <div class="service-preco">R$ {{ s.valor | number:'1.2-2' }}</div>
+              <div class="service-preco">R$ {{ s.valorServico | number:'1.2-2' }}</div>
               <div class="service-desc">{{ s.descricao }}</div>
             </div>
             <div class="empty-state" *ngIf="servicos.length === 0">
