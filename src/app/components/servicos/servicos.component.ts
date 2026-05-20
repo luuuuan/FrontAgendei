@@ -28,19 +28,19 @@ export class ServicosComponent implements OnInit {
   servicoEditandoId: number | null = null;
 
   tiposCobranca = [
-    { valor: 'FIXO',          label: 'Valor fixo',        unidade: '' },
-    { valor: 'HORA',          label: 'Por hora',           unidade: '/hora' },
-    { valor: 'METRO_QUADRADO',label: 'Por m²',             unidade: '/m²' },
-    { valor: 'METRO_LINEAR',  label: 'Por metro linear',   unidade: '/ml' },
-    { valor: 'UNIDADE',       label: 'Por unidade/ponto',  unidade: '/un' },
-    { valor: 'DIARIA',        label: 'Por diária',         unidade: '/dia' },
-    { valor: 'PERCENTUAL',    label: 'Percentual (%)',      unidade: '%' },
+    { valor: 'FIXO', label: 'Valor fixo', unidade: '' },
+    { valor: 'HORA', label: 'Por hora', unidade: '/hora' },
+    { valor: 'METRO_QUADRADO', label: 'Por m²', unidade: '/m²' },
+    { valor: 'METRO_LINEAR', label: 'Por metro linear', unidade: '/ml' },
+    { valor: 'UNIDADE', label: 'Por unidade/ponto', unidade: '/un' },
+    { valor: 'DIARIA', label: 'Por diária', unidade: '/dia' },
+    { valor: 'PERCENTUAL', label: 'Percentual (%)', unidade: '%' },
   ];
 
   locaisAtendimento = [
-    { valor: 'NO_LOCAL',   label: 'No estabelecimento' },
-    { valor: 'DOMICILIO',  label: 'No domicílio do cliente' },
-    { valor: 'AMBOS',      label: 'Ambos' },
+    { valor: 'NO_LOCAL', label: 'No estabelecimento' },
+    { valor: 'DOMICILIO', label: 'No domicílio do cliente' },
+    { valor: 'AMBOS', label: 'Ambos' },
   ];
 
   form: FormGroup;
@@ -50,18 +50,19 @@ export class ServicosComponent implements OnInit {
     private servicoService: ServicoService,
     private profissionalService: ProfissionalService,
     private authService: AuthService,
-    private toast: ToastService
+    private toast: ToastService,
+
   ) {
     this.form = this.fb.group({
-      nome:                  ['', Validators.required],
-      descricao:             ['', Validators.required],
-      duracaoMinutos:        ['', [Validators.required, Validators.min(1)]],
-      tempoBuffer:           [0],
-      tipoCobranca:          ['FIXO', Validators.required],
-      valorServico:          ['', [Validators.required, Validators.min(0)]],
-      localAtendimento:      ['NO_LOCAL', Validators.required],
-      profissionalId:        ['', Validators.required],
-      statusServico:         ['ATIVO'],
+      nome: ['', Validators.required],
+      descricao: ['', Validators.required],
+      duracaoMinutos: ['', [Validators.required, Validators.min(1)]],
+      tempoBuffer: [0],
+      tipoCobranca: ['FIXO', Validators.required],
+      valor: ['', [Validators.required, Validators.min(0)]],
+      localAtendimento: ['NO_LOCAL', Validators.required],
+      profissionalId: [''],
+      statusServico: ['ATIVO'],
       statusExecucaoServico: ['PENDENTE']
     });
   }
@@ -70,7 +71,7 @@ export class ServicosComponent implements OnInit {
     this.carregarServicos();
     this.profissionalService.listar().subscribe({
       next: l => this.profissionais = l,
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -88,14 +89,14 @@ export class ServicosComponent implements OnInit {
     const t = this.termoBusca.toLowerCase().trim();
     this.servicosFiltrados = t
       ? this.servicos.filter(s =>
-          s.nome?.toLowerCase().includes(t) ||
-          s.descricao?.toLowerCase().includes(t) ||
-          this.nomeProfissional(s.profissionalId).toLowerCase().includes(t)
-        )
+        s.nome?.toLowerCase().includes(t) ||
+        s.descricao?.toLowerCase().includes(t) ||
+        this.nomeProfissional(s.profissionalId).toLowerCase().includes(t)
+      )
       : this.servicos;
   }
 
-  nomeProfissional(id: number) {
+  nomeProfissional(id: number | undefined) {
     return this.profissionais.find(p => p.id === id)?.nome || `Profissional #${id}`;
   }
 
@@ -147,7 +148,7 @@ export class ServicosComponent implements OnInit {
       nome: s.nome, descricao: s.descricao,
       duracaoMinutos: s.duracaoMinutos, tempoBuffer: s.tempoBuffer ?? 0,
       tipoCobranca: s.tipoCobranca || 'FIXO',
-      valorServico: s.valorServico, localAtendimento: s.localAtendimento || 'NO_LOCAL',
+      valor: s.valor, localAtendimento: s.localAtendimento || 'NO_LOCAL',
       profissionalId: s.profissionalId,
       statusServico: s.statusServico || 'ATIVO',
       statusExecucaoServico: s.statusExecucaoServico || 'PENDENTE'
@@ -160,11 +161,14 @@ export class ServicosComponent implements OnInit {
   salvar() {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     this.salvando = true;
+    const sessao = this.authService.getSessao();
     const payload = {
       ...this.form.value,
+      valorServico: Number(this.form.value.valor),
       duracaoMinutos: Number(this.form.value.duracaoMinutos),
-      valor:          Number(this.form.value.valor),
-      profissionalId: Number(this.form.value.profissionalId)
+      profissionalId: this.form.value.profissionalId ? Number(this.form.value.profissionalId) : null,
+      prestadorId: sessao?.prestadorId
+
     };
 
     const operacao = this.modoEdicao && this.servicoEditandoId

@@ -1112,3 +1112,9 @@ textarea {
 .service-check { position: absolute; top: 8px; right: 8px; color: var(--primary); font-size: 20px; }
 .selecao-resumo { margin-top: 16px; background: #fff; border: 1px solid var(--primary); border-radius: 12px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .selecao-info { display: flex; gap: 16px; align-items: center; font-size: 13px; color: #374151; flex-wrap: wrap; }
+
+/* Busca de serviços no agendamento */
+.busca-servicos { margin-bottom: 12px; }
+.search-box-inline { display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px; }
+.search-box-inline i { color:#9ca3af;font-size:14px; }
+.search-box-inline input { flex:1;border:none;background:transparent;outline:none;font-size:14px;color:#374151; }

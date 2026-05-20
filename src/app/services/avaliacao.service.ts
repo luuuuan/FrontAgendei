@@ -7,7 +7,7 @@ export interface AvaliacaoPayload {
   nota: number;
   comentario?: string;
   agendamentoId?: number;
-  profissionalId: number;
+  profissionalId?: number;
   usuarioId?: number;
 }
 

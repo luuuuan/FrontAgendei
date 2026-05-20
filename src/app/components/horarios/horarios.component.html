@@ -1,7 +1,14 @@
 <div class="page-title">Horários — Grade e Folgas</div>
 
+<!-- Modo Autônomo — prestador sem profissionais -->
+<div class="info-box" *ngIf="modoAutonomo" style="margin-bottom:16px">
+  <i class="fas fa-user-tie"></i>
+  Modo autônomo ativo — você não tem profissionais cadastrados.
+  A grade e as folgas serão vinculadas diretamente ao seu estabelecimento.
+</div>
+
 <!-- Selecionar Profissional -->
-<div class="card profissionais-selector">
+<div class="card profissionais-selector" *ngIf="!modoAutonomo">
   <div class="card-header-inline">
     <div class="card-title-sm">Selecione um Profissional</div>
   </div>
@@ -35,11 +42,13 @@
 </div>
 
 <!-- Conteúdo -->
-<div *ngIf="profissionalSelecionadoId">
+<div *ngIf="profissionalSelecionadoId || modoAutonomo">
 
   <div class="horarios-header">
     <div class="horarios-prof-nome">
-      <i class="fas fa-user-md"></i> {{ profissionalAtual?.nome }}
+      <i class="fas fa-user-md"></i>
+      <span *ngIf="!modoAutonomo">{{ profissionalAtual?.nome }}</span>
+      <span *ngIf="modoAutonomo">Meu Estabelecimento</span>
     </div>
   </div>
 

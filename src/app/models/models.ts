@@ -21,6 +21,8 @@ export interface UsuarioLoginResponse {
   email: string;
   tipoUsuario: string;
   prestadorId?: number;
+  nomeEmpresa?: string;
+  nomeFantasia?: string;
 }
 
 export interface Servico {
@@ -29,11 +31,15 @@ export interface Servico {
   descricao: string;
   duracaoMinutos: number;
   tempoBuffer?: number;
-  valorServico: number;
+  valor: number;
+  valorServico?: number;  
   valorUnitario?: number;
-  tipoCobranca?: string; 
-  localAtendimento?: string;
-  profissionalId: number;
+  tipoCobranca?: string;  // FIXO | HORA | METRO_QUADRADO | METRO_LINEAR | UNIDADE | DIARIA | PERCENTUAL
+  localAtendimento?: string; // NO_LOCAL | DOMICILIO
+  profissionalId?: number;  // opcional — se null, é o próprio prestador
+  nomeProfissional?: string;
+  prestadorNome?: string;
+  nomePrestador?: string;
   profissionalNome?: string;
   statusServico?: string;
   statusExecucaoServico?: string;
@@ -64,7 +70,9 @@ export interface Agendamento {
   valorTotal?: number;
   observacoes?: string;
   usuarioId: number;
-  profissionalId: number;
+  profissionalId?: number;  // opcional — se null, é o próprio prestador
+  prestadorNome?: string;
+  nomePrestador?: string;
   servicos: number[];
   enderecoId?: number;
 }
@@ -79,7 +87,9 @@ export interface AgendamentoResponse {
   valorTotal?: number;
   observacoes?: string;
   usuarioId: number;
-  profissionalId: number;
+  profissionalId?: number;  // opcional — se null, é o próprio prestador
+  prestadorNome?: string;
+  nomePrestador?: string;
   servicoId: number[];
 }
 

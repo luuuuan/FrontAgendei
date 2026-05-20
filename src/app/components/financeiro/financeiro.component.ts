@@ -57,7 +57,7 @@ export class FinanceiroComponent implements OnInit {
     return ag.usuarioId ? 'Usuário #' + ag.usuarioId : '-';
   }
 
-  nomeProfissional(id: number) { return this.profissionais.find(p => p.id === id)?.nome || 'Profissional #' + id; }
+  nomeProfissional(id: number | undefined) { return this.profissionais.find(p => p.id === id)?.nome || 'Profissional #' + id; }
   nomeServico(id: number) { return this.servicos.find(s => s.id === id)?.nome || 'Serviço #' + id; }
   classeStatus(s: string) { return ({ CONFIRMADO: 'badge-success', PENDENTE: 'badge-warning', CANCELADO: 'badge-danger', REALIZADO: 'badge-success', AUSENTE: 'badge-gray' } as any)[s] || 'badge-gray'; }
   labelStatus(s: string) { return ({ CONFIRMADO: 'Confirmado', PENDENTE: 'Pendente', CANCELADO: 'Cancelado', REALIZADO: 'Realizado', AUSENTE: 'Ausente' } as any)[s] || s; }

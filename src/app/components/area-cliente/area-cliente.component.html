@@ -88,7 +88,7 @@
       </button>
     </div>
     <div class="header-usuario">
-      <div class="avatar-cliente">{{ iniciais }}</div>
+      <div class="avatar-cliente">{{ iniciaisUsuario }}</div>
       <span class="usuario-nome">{{ usuarioLogado?.nome || 'Cliente' }}</span>
       <button class="btn-sair" (click)="sair()" title="Sair">
         <i class="fas fa-sign-out-alt"></i>
@@ -202,20 +202,62 @@
           <div class="loading-box" *ngIf="carregandoServicos">
             <i class="fas fa-spinner fa-spin"></i> Carregando...
           </div>
+          <!-- Campo de busca -->
+          <div class="busca-servicos" style="margin-bottom:16px">
+            <div class="search-box-inline">
+              <i class="fas fa-search"></i>
+              <input type="text" [(ngModel)]="termoBusca" (input)="filtrarServicos()"
+                placeholder="Buscar serviço, profissional..." />
+            </div>
+          </div>
+
           <div class="service-grid" *ngIf="!carregandoServicos">
             <div class="service-card"
-              *ngFor="let s of servicos"
+              *ngFor="let s of servicosFiltrados"
               (click)="toggleServico(s)"
               [class.service-card-selecionado]="isServicoSelecionado(s)">
               <div class="service-check" *ngIf="isServicoSelecionado(s)">
                 <i class="fas fa-check-circle"></i>
               </div>
               <div class="service-nome">{{ s.nome }}</div>
-              <div class="service-duracao"><i class="fas fa-clock"></i> {{ s.duracaoMinutos }} min</div>
-              <div class="service-preco">R$ {{ s.valorServico | number:'1.2-2' }}</div>
               <div class="service-desc">{{ s.descricao }}</div>
+
+              <!-- Profissional ou Prestador -->
+              <div class="service-profissional-info">
+                <ng-container *ngIf="s.profissionalId">
+                  <div class="service-prof-avatar">{{ gerarIniciais(nomeProfissional(s.profissionalId)) }}</div>
+                  <span>{{ nomeProfissional(s.profissionalId) }}</span>
+                </ng-container>
+                <ng-container *ngIf="!s.profissionalId">
+                  <div class="service-prof-avatar" style="background:#6b7280">{{ gerarIniciais(s.nomePrestador || 'P') }}</div>
+                  <span>{{ s.nomePrestador || 'Prestador' }}</span>
+                  <span class="badge badge-gray" style="font-size:10px">Prestador</span>
+                </ng-container>
+              </div>
+
+              <!-- Local de atendimento -->
+              <div class="service-local" *ngIf="s.localAtendimento">
+                <i class="fas" [class.fa-store]="s.localAtendimento === 'NO_LOCAL'"
+                  [class.fa-home]="s.localAtendimento === 'DOMICILIO'"
+                  [class.fa-exchange-alt]="s.localAtendimento === 'AMBOS'"></i>
+                <span *ngIf="s.localAtendimento === 'NO_LOCAL'">No estabelecimento</span>
+                <span *ngIf="s.localAtendimento === 'DOMICILIO'">Atende a domicílio</span>
+                <span *ngIf="s.localAtendimento === 'AMBOS'">No local ou domicílio</span>
+              </div>
+
+              <div class="service-footer-info">
+                <span class="service-duracao"><i class="fas fa-clock"></i> {{ s.duracaoMinutos }} min</span>
+                <span class="service-preco">
+                  <ng-container *ngIf="s.tipoCobranca === 'FIXO' || !s.tipoCobranca">
+                    R$ {{ (s.valorServico ?? s.valor) | number:'1.2-2' }}
+                  </ng-container>
+                  <ng-container *ngIf="s.tipoCobranca && s.tipoCobranca !== 'FIXO'">
+                    R$ {{ (s.valorServico ?? s.valor) | number:'1.2-2' }}/{{ s.tipoCobranca === 'HORA' ? 'h' : s.tipoCobranca === 'METRO_QUADRADO' ? 'm²' : s.tipoCobranca === 'METRO_LINEAR' ? 'ml' : s.tipoCobranca === 'DIARIA' ? 'dia' : 'un' }}
+                  </ng-container>
+                </span>
+              </div>
             </div>
-            <div class="empty-state" *ngIf="servicos.length === 0">
+            <div class="empty-state" *ngIf="servicosFiltrados.length === 0">
               <i class="fas fa-concierge-bell"></i>
               <p>Nenhum serviço disponível no momento.</p>
             </div>
@@ -235,29 +277,7 @@
         </div>
 
         <!-- Step 2: Profissional -->
-        <div *ngIf="stepAgendamento === 2">
-          <h3 class="step-titulo">Selecione um Profissional</h3>
-          <p class="step-sub" *ngIf="servicoSelecionado">
-            Serviço: <strong>{{ servicoSelecionado.nome }}</strong>
-          </p>
-          <div class="prof-lista">
-            <div class="prof-item" *ngFor="let p of profissionais" (click)="selecionarProfissional(p)">
-              <div class="prof-avatar">{{ p.nome ? p.nome[0].toUpperCase() : '?' }}</div>
-              <div class="prof-info">
-                <div class="prof-nome">{{ p.nome || 'Profissional' }}</div>
-                <div class="prof-desc">{{ p.descricao || 'Especialista' }}</div>
-              </div>
-              <i class="fas fa-chevron-right" style="color: var(--gray)"></i>
-            </div>
-            <div class="empty-state" *ngIf="profissionais.length === 0">
-              <i class="fas fa-user-md"></i>
-              <p>Nenhum profissional disponível.</p>
-            </div>
-          </div>
-          <button class="btn-step-voltar" (click)="stepAgendamento = 1">
-            <i class="fas fa-arrow-left"></i> Voltar
-          </button>
-        </div>
+        <!-- Step 2 eliminado — profissional selecionado automaticamente pelo serviço -->
 
         <!-- Step 3: Data e Hora -->
         <div *ngIf="stepAgendamento === 3">
@@ -351,7 +371,9 @@
             </div>
             <div class="resumo-item">
               <span class="resumo-label"><i class="fas fa-user-md"></i> Profissional</span>
-              <span class="resumo-valor">{{ profissionalSelecionado?.nome }}</span>
+              <span class="resumo-valor">
+                {{ profissionalSelecionado?.nome || 'Prestador' }}
+              </span>
             </div>
             <div class="resumo-item">
               <span class="resumo-label"><i class="fas fa-calendar"></i> Data</span>
@@ -393,15 +415,32 @@
               </span>
             </div>
 
-            <!-- Local do atendimento (só aparece se profissional atende a domicílio) -->
-            <div class="resumo-item" *ngIf="profissionalAtendeADomicilio" style="flex-direction:column;align-items:flex-start;gap:6px">
+            <!-- Local do atendimento -->
+            <div class="resumo-item" *ngIf="servicoSelecionado?.localAtendimento" style="flex-direction:column;align-items:flex-start;gap:6px">
               <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
                 <span class="resumo-label"><i class="fas fa-map-marker-alt"></i> Local do Atendimento</span>
-                <button class="btn btn-sm btn-outline" (click)="abrirModalEndereco()" style="font-size:12px;padding:4px 10px">
+                <button class="btn btn-sm btn-outline"
+                  *ngIf="servicoSelecionado?.localAtendimento === 'DOMICILIO' || servicoSelecionado?.localAtendimento === 'AMBOS'"
+                  (click)="abrirModalEndereco()" style="font-size:12px;padding:4px 10px">
                   <i class="fas fa-edit"></i> Alterar Endereço
                 </button>
               </div>
-              <span class="resumo-valor" style="font-size:13px;color:#6b7280">{{ enderecoExibicao }}</span>
+              <span class="resumo-valor" style="font-size:13px;color:#6b7280">
+                <ng-container *ngIf="servicoSelecionado?.localAtendimento === 'NO_LOCAL'">
+                  <i class="fas fa-store"></i> No estabelecimento do prestador
+                </ng-container>
+                <ng-container *ngIf="servicoSelecionado?.localAtendimento === 'DOMICILIO' || servicoSelecionado?.localAtendimento === 'AMBOS'">
+                  <i class="fas fa-home"></i> {{ enderecoExibicao }}
+                </ng-container>
+              </span>
+            </div>
+
+            <!-- Forma de cobrança -->
+            <div class="resumo-item" *ngIf="servicoSelecionado?.tipoCobranca && servicoSelecionado?.tipoCobranca !== 'FIXO'">
+              <span class="resumo-label"><i class="fas fa-info-circle"></i> Cobrança</span>
+              <span class="resumo-valor" style="font-size:12px;color:#f59e0b">
+                Valor variável — confirmado após o serviço
+              </span>
             </div>
           </div>
 
@@ -551,7 +590,7 @@
         </div>
 
         <div class="perfil-avatar-section">
-          <div class="avatar-grande">{{ iniciais }}</div>
+          <div class="avatar-grande">{{ iniciaisUsuario }}</div>
           <div class="perfil-nome-email">
             <h2>{{ usuarioLogado?.nome }}</h2>
             <p>{{ usuarioLogado?.email }}</p>

@@ -226,7 +226,7 @@
           <select formControlName="servicos">
             <option value="">Selecione um serviço</option>
             <option *ngFor="let s of servicos" [value]="s.id">
-              {{ s.nome }} — R$ {{ s.valorServico | number:'1.2-2' }}
+              {{ s.nome }} — R$ {{ (s.valorServico ?? s.valor) | number:'1.2-2' }}
             </option> 
           </select>
           <div class="erro-campo" *ngIf="form.get('servicos')?.invalid && form.get('servicos')?.touched">

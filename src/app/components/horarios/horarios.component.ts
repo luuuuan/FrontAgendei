@@ -6,6 +6,7 @@ import { ToastService } from '../../services/toast.service';
 import { GradeTrabalhoService, GradeTrabalho } from '../../services/grade-trabalho.service';
 import { FolgaService, Folga } from '../../services/folga.service';
 import { Profissional } from '../../models/models';
+import { AuthService } from '../../services/auth.service';
 
 type AbaAtiva = 'grade' | 'folgas';
 
@@ -23,6 +24,8 @@ export class HorariosComponent implements OnInit {
   folgas: Folga[] = [];
 
   profissionalSelecionadoId: number | null = null;
+  modoAutonomo = false; // true quando prestador não tem profissionais
+  prestadorId: number | null = null;
   carregando = false;
   carregandoGrades = false;
   carregandoFolgas = false;
@@ -54,7 +57,8 @@ export class HorariosComponent implements OnInit {
     private profissionalService: ProfissionalService,
     private gradeTrabalhoService: GradeTrabalhoService,
     private folgaService: FolgaService,
-    private toast: ToastService
+    private toast: ToastService,
+    private authService: AuthService
   ) {
     this.formGrade = this.fb.group({
       diasSemana:      ['SEG_SEX', Validators.required],
@@ -75,13 +79,44 @@ export class HorariosComponent implements OnInit {
     });
   }
 
-  ngOnInit() { this.carregarProfissionais(); }
+  ngOnInit() {
+    const sessao = this.authService.getSessao();
+    this.prestadorId = sessao?.prestadorId ?? null;
+    this.carregarProfissionais();
+  }
 
   carregarProfissionais() {
     this.carregando = true;
     this.profissionalService.listar().subscribe({
-      next: l => { this.profissionais = l; this.carregando = false; },
+      next: l => {
+        this.profissionais = l;
+        this.carregando = false;
+        // Se não tem profissionais, ativa modo autônomo e carrega grade do prestador
+        if (l.length === 0) {
+          this.modoAutonomo = true;
+          this.carregarGradesPrestador();
+          this.carregarFolgasPrestador();
+        }
+      },
       error: () => { this.carregando = false; }
+    });
+  }
+
+  carregarGradesPrestador() {
+    if (!this.prestadorId) return;
+    this.carregandoGrades = true;
+    this.gradeTrabalhoService.buscarPorPrestador(this.prestadorId).subscribe({
+      next: l => { this.grades = l; this.carregandoGrades = false; },
+      error: () => { this.carregandoGrades = false; }
+    });
+  }
+
+  carregarFolgasPrestador() {
+    if (!this.prestadorId) return;
+    this.carregandoFolgas = true;
+    this.folgaService.buscarPorPrestador(this.prestadorId).subscribe({
+      next: l => { this.folgas = l.sort((a, b) => a.data.localeCompare(b.data)); this.carregandoFolgas = false; },
+      error: () => { this.carregandoFolgas = false; }
     });
   }
 
@@ -141,7 +176,8 @@ export class HorariosComponent implements OnInit {
     if (v.temIntervalo && v.inicioIntervalo >= v.fimIntervalo) { this.toast.erro('Início do intervalo deve ser anterior ao fim.'); return; }
 
     const payload: GradeTrabalho = {
-      profissionalId:  this.profissionalSelecionadoId!,
+      profissionalId:  this.modoAutonomo ? undefined : this.profissionalSelecionadoId!,
+      prestadorId:     this.modoAutonomo ? this.prestadorId! : undefined,
       diasSemana:      v.diasSemana,
       horaInicio:      v.horaInicio,
       horaFim:         v.horaFim,

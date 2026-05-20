@@ -60,11 +60,11 @@ export class ExplorarComponent implements OnInit {
       );
     }
 
-    lista = lista.filter(s => s.valorServico <= this.filtroValorMax);
+    lista = lista.filter(s => (s.valorServico ?? s.valor) <= this.filtroValorMax);
  
     switch (this.filtroOrdem) {
-      case 'valor_asc':  lista.sort((a, b) => a.valorServico - b.valorServico); break;
-      case 'valor_desc': lista.sort((a, b) => b.valorServico - a.valorServico); break;
+      case 'valor_asc':  lista.sort((a, b) => (a.valorServico ?? a.valor) - (b.valorServico ?? b.valor)); break;
+      case 'valor_desc': lista.sort((a, b) => (b.valorServico ?? b.valor) - (a.valorServico ?? a.valor)); break;
       case 'duracao':    lista.sort((a, b) => a.duracaoMinutos - b.duracaoMinutos); break;
       default:           lista.sort((a, b) => a.nome.localeCompare(b.nome)); break;
     }
@@ -92,6 +92,6 @@ export class ExplorarComponent implements OnInit {
   irParaLogin() { this.router.navigate(['/login']); }
 
   get valorMaximo(): number {
-    return this.servicos.length > 0 ? Math.max(...this.servicos.map(s => s.valorServico)) : 1000;
+    return this.servicos.length > 0 ? Math.max(...this.servicos.map(s => s.valorServico ?? s.valor)) : 1000;
   }
 }

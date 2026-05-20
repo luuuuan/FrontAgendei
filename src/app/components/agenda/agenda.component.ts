@@ -134,7 +134,7 @@ export class AgendaComponent implements OnInit {
     return match ? match[1].trim() : '-';
   }
 
-  nomeProfissional(id: number) { const p = this.profissionais.find(p => p.id === id); return p?.nome || 'Profissional #' + id; }
+  nomeProfissional(id: number | undefined) { const p = this.profissionais.find(p => p.id === id); return p?.nome || 'Profissional #' + id; }
   nomeServico(id: number) { const s = this.servicos.find(s => s.id === id); return s?.nome || 'Serviço #' + id; }
   labelStatus(s: string) { return ({ CONFIRMADO: 'Confirmado', PENDENTE: 'Pendente', CANCELADO: 'Cancelado', REALIZADO: 'Realizado', AUSENTE: 'Ausente' } as any)[s] || s; }
   classeStatus(s: string) { return ({ CONFIRMADO: 'badge-success', PENDENTE: 'badge-warning', CANCELADO: 'badge-danger', REALIZADO: 'badge-info', AUSENTE: 'badge-gray' } as any)[s] || 'badge-gray'; }
