@@ -311,7 +311,6 @@ export class AreaClienteComponent implements OnInit {
     this.mensagemDisponibilidade = '';
     const sid = this.servicosSelecionados[0]?.id || this.servicoSelecionado?.id;
     this.agendamentoService.buscarHorariosDisponiveis(
-      this.profissionalSelecionado?.id ?? 0,
       this.dataSelecionada,
       sid
     ).subscribe({
@@ -638,7 +637,6 @@ export class AreaClienteComponent implements OnInit {
     this.horaSelecionadaReagendamento = '';
     const sid = this.agendamentoDetalhes?.servicoId?.[0];
     this.agendamentoService.buscarHorariosDisponiveis(
-      this.agendamentoDetalhes.profissionalId,
       this.dataSelecionadaReagendamento,
       sid
     ).subscribe({
