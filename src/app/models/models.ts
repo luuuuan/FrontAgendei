@@ -31,8 +31,8 @@ export interface Servico {
   tempoBuffer?: number;
   valor: number;
   valorUnitario?: number;
-  tipoCobranca?: string;  // FIXO | HORA | METRO_QUADRADO | METRO_LINEAR | UNIDADE | DIARIA | PERCENTUAL
-  localAtendimento?: string; // NO_LOCAL | DOMICILIO
+  tipoCobranca?: string; 
+  localAtendimento?: string;
   profissionalId: number;
   profissionalNome?: string;
   statusServico?: string;
