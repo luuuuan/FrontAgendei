@@ -27,7 +27,11 @@ export class FolgaService {
     return this.http.get<Folga[]>(`${this.apiUrl}/profissional/${profissionalId}`);
   }
 
-  excluir(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/excluir/${id}`);
+  buscarPorPrestador(prestadorId: number): Observable<Folga[]> {
+    return this.http.get<Folga[]>(`${this.apiUrl}/prestador/${prestadorId}`);
   }
+
+  excluir(id: number): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/desativar/${id}`, { ativo: false });
+}
 }

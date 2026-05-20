@@ -5,7 +5,8 @@ import { environment } from '../../environments/environment';
 
 export interface GradeTrabalho {
   id?: number;
-  profissionalId: number;
+  profissionalId?: number;  // opcional para prestador autônomo
+  prestadorId?: number;     // usado quando prestador executa diretamente
   diasSemana: string; 
   horaInicio: string;
   horaFim: string;
@@ -28,11 +29,15 @@ export class GradeTrabalhoService {
     return this.http.get<GradeTrabalho[]>(`${this.apiUrl}/profissional/${profissionalId}`);
   }
 
+  buscarPorPrestador(prestadorId: number): Observable<GradeTrabalho[]> {
+    return this.http.get<GradeTrabalho[]>(`${this.apiUrl}/prestador/${prestadorId}`);
+  }
+
   atualizar(id: number, grade: GradeTrabalho): Observable<GradeTrabalho> {
     return this.http.put<GradeTrabalho>(`${this.apiUrl}/atualizar/${id}`, grade);
   }
 
   excluir(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/excluir/${id}`);
+    return this.http.patch<void>(`${this.apiUrl}/desativar/${id}`, { ativo: false });
   }
 }

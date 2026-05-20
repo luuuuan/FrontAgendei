@@ -22,7 +22,7 @@ import { AvaliacaoService } from '../../services/avaliacao.service';
 export class AreaClienteComponent implements OnInit {
 
   usuarioLogado: Usuario | null = null;
-  iniciais = 'CL';
+  iniciaisUsuario = 'CL';
 
   // Dados
   agendamentosHoje: AgendamentoResponse[] = [];
@@ -52,6 +52,8 @@ export class AreaClienteComponent implements OnInit {
   }
 
   stepAgendamento = 1;
+  termoBusca = '';
+  servicosFiltrados: any[] = [];
   servicoSelecionado: Servico | null = null; // mantido para compatibilidade
   servicosSelecionados: Servico[] = [];
   profissionalSelecionado: Profissional | null = null;
@@ -82,8 +84,8 @@ export class AreaClienteComponent implements OnInit {
   get valorTotalCalculado(): number {
     return this.servicosSelecionados.reduce((acc, s) => {
       const tipo = s.tipoCobranca || 'FIXO';
-      if (this.tiposVariaveis.includes(tipo)) return acc + s.valor * this.quantidadeServico;
-      return acc + s.valor;
+      if (this.tiposVariaveis.includes(tipo)) return acc + (s.valorServico ?? s.valor ?? 0) * this.quantidadeServico;
+      return acc + (s.valorServico ?? s.valor ?? 0);
     }, 0);
   }
 
@@ -182,7 +184,7 @@ export class AreaClienteComponent implements OnInit {
     this.usuarioService.buscarPorId(sessao.usuarioId).subscribe({
       next: (usuario) => {
         this.usuarioLogado = usuario;
-        this.iniciais = this.gerarIniciais(usuario.nome);
+        this.iniciaisUsuario = this.gerarIniciais(usuario.nome);
         this.formPerfil.patchValue({
           nome: usuario.nome,
           email: usuario.email,
@@ -246,14 +248,14 @@ export class AreaClienteComponent implements OnInit {
   carregarServicos() {
     this.carregandoServicos = true;
     this.servicoService.listar().subscribe({
-      next: (lista) => { this.servicos = lista; this.carregandoServicos = false; this.verificarInicial(); },
+      next: (lista) => { this.servicos = lista; this.servicosFiltrados = lista; this.carregandoServicos = false; this.verificarInicial(); },
       error: () => { this.carregandoServicos = false; this.verificarInicial(); }
     });
   }
 
   carregarProfissionais() {
     this.carregandoProfissionais = true;
-    this.profissionalService.listar().subscribe({
+    this.profissionalService.listarTodos().subscribe({
       next: (lista) => { this.profissionais = lista; this.carregandoProfissionais = false; this.verificarInicial(); },
       error: () => { this.carregandoProfissionais = false; this.verificarInicial(); }
     });
@@ -298,17 +300,17 @@ export class AreaClienteComponent implements OnInit {
     this.horaSelecionada = '';
     this.horariosDisponiveis = [];
     this.mensagemDisponibilidade = '';
-    if (this.profissionalSelecionado?.id) { this.carregarHorariosDisponiveis(); }
+    this.carregarHorariosDisponiveis(); // sempre tenta buscar ao selecionar dia
   }
 
   carregarHorariosDisponiveis() {
-    if (!this.profissionalSelecionado?.id || !this.dataSelecionada) return;
+    if (!this.dataSelecionada) return;
+    if (!this.servicoSelecionado?.id && this.servicosSelecionados.length === 0) return;
     this.carregandoHorarios = true;
     this.horariosDisponiveis = [];
     this.mensagemDisponibilidade = '';
     const sid = this.servicosSelecionados[0]?.id || this.servicoSelecionado?.id;
     this.agendamentoService.buscarHorariosDisponiveis(
-      this.profissionalSelecionado.id,
       this.dataSelecionada,
       sid
     ).subscribe({
@@ -349,6 +351,8 @@ export class AreaClienteComponent implements OnInit {
     this.servicoSelecionado = null;
     this.servicosSelecionados = [];
     this.profissionalSelecionado = null;
+    this.termoBusca = '';
+    this.servicosFiltrados = [...this.servicos];
     this.dataSelecionada = '';
     this.horaSelecionada = '';
     this.observacoes = '';
@@ -374,7 +378,7 @@ export class AreaClienteComponent implements OnInit {
   }
 
   get valorTotalServicos(): number {
-    return this.servicosSelecionados.reduce((acc, s) => acc + s.valor, 0);
+    return this.servicosSelecionados.reduce((acc, s) => acc + (s.valorServico ?? s.valor ?? 0), 0);
   }
 
   get duracaoTotalServicos(): number {
@@ -383,15 +387,39 @@ export class AreaClienteComponent implements OnInit {
 
   confirmarServicos() {
     if (this.servicosSelecionados.length === 0) { this.toast.aviso('Selecione ao menos um servico.'); return; }
-    // Para compatibilidade com o resto do fluxo, usa o primeiro como principal
     this.servicoSelecionado = this.servicosSelecionados[0];
-    this.profissionais = [];
-    // Busca profissionais que atendem todos os serviços selecionados
-    this.profissionalService.listarPorServico(this.servicoSelecionado.id!).subscribe({
-      next: (lista) => this.profissionais = lista,
-      error: () => {}
-    });
-    this.stepAgendamento = 2;
+
+    if (this.servicoSelecionado.profissionalId) {
+      // Serviço tem profissional vinculado — busca e seta automaticamente
+      this.profissionalService.listarPorServico(this.servicoSelecionado.id!).subscribe({
+        next: (lista) => {
+          if (lista.length > 0) {
+            this.profissionalSelecionado = lista[0];
+            if (!this.profissionalSelecionado.atendeADomicilio) {
+              this.enderecoAgendamento = null;
+            }
+          }
+          this.profissionais = lista;
+        },
+        error: () => {}
+      });
+    } else {
+      // Serviço sem profissional — o próprio prestador executa
+      this.profissionalSelecionado = null;
+    }
+    this.stepAgendamento = 3; // pula o step 2
+  }
+
+  filtrarServicos() {
+    const t = this.termoBusca.toLowerCase().trim();
+    this.servicosFiltrados = t
+      ? this.servicos.filter(s =>
+          s.nome?.toLowerCase().includes(t) ||
+          s.descricao?.toLowerCase().includes(t) ||
+          (s.nomeProfissional || '').toLowerCase().includes(t) ||
+          (s.nomePrestador || '').toLowerCase().includes(t)
+        )
+      : this.servicos;
   }
 
   selecionarServico(s: Servico) {
@@ -436,7 +464,7 @@ export class AreaClienteComponent implements OnInit {
       valorTotal: this.servicoSelecionado.valor,
       observacoes: this.observacoes,
       usuarioId: sessao.usuarioId,
-      profissionalId: this.profissionalSelecionado.id!,
+      profissionalId: this.profissionalSelecionado?.id,  // nullable quando prestador executa
       servicos: this.servicosSelecionados.length > 0 ? this.servicosSelecionados.map(s => s.id!) : [this.servicoSelecionado!.id!],
       enderecoId: this.usuarioLogado?.enderecoId
     } as any).subscribe({
@@ -524,7 +552,7 @@ export class AreaClienteComponent implements OnInit {
     }).subscribe({
       next: (usuario) => {
         this.usuarioLogado = { ...this.usuarioLogado!, ...usuario };
-        this.iniciais = this.gerarIniciais(usuario.nome);
+        this.iniciaisUsuario = this.gerarIniciais(usuario.nome);
         this.toast.sucesso('Dados atualizados com sucesso!');
         this.salvandoPerfil = false;
       },
@@ -609,7 +637,6 @@ export class AreaClienteComponent implements OnInit {
     this.horaSelecionadaReagendamento = '';
     const sid = this.agendamentoDetalhes?.servicoId?.[0];
     this.agendamentoService.buscarHorariosDisponiveis(
-      this.agendamentoDetalhes.profissionalId,
       this.dataSelecionadaReagendamento,
       sid
     ).subscribe({
@@ -709,7 +736,12 @@ export class AreaClienteComponent implements OnInit {
     return p.length === 1 ? p[0][0].toUpperCase() : (p[0][0] + p[p.length - 1][0]).toUpperCase();
   }
 
-  nomeProfissional(id: number): string {
+  nomeProfissional(id: number | undefined): string {
+    if (!id) {
+      // sem profissional — mostra o nome do prestador
+      const sessao = this.authService.getSessao();
+      return sessao?.nomeEmpresa || 'Prestador';
+    }
     const p = this.profissionais.find(p => p.id === id);
     return p?.nome || 'Profissional #' + id;
   }

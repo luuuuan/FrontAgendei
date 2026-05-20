@@ -142,6 +142,24 @@
   color: var(--danger);
 }
 
+@media (max-width: 768px) {
+  .header {
+    padding: 0 16px 0 64px; /* espaço para o hamburger à esquerda */
+    justify-content: center;
+  }
+
+  .header-logo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .header-actions {
+    position: absolute;
+    right: 16px;
+  }
+}
+
 @media (max-width: 600px) {
   .header-user-info {
     display: none;

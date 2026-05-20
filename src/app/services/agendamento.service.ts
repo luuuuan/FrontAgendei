@@ -34,11 +34,13 @@ export class AgendamentoService {
     });
   }
 
-  buscarHorariosDisponiveis(profissionalId: number, data: string, servicoId?: number): Observable<string[]> {
+  buscarHorariosDisponiveis(data: string, servicoId?: number, profissionalId?: number, prestadorId?: number): Observable<string[]> {
     let params = new HttpParams()
-      .set('profissionalId', profissionalId)
-      .set('dataAgendamento', data);
+    .set('dataAgendamento', data)
     if (servicoId) params = params.set('servicoId', servicoId);
+    if (profissionalId) params = params.set('profissionalId', profissionalId);
+    if (prestadorId) params = params.set('prestadorId', prestadorId);
+    
     return this.http.get<string[]>(`${this.apiUrl}/disponibilidade`, { params });
   }
 

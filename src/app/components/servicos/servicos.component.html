@@ -49,7 +49,8 @@
 
         <div class="servico-profissional">
           <i class="fas fa-user-md"></i>
-          {{ nomeProfissional(s.profissionalId) }}
+          <span *ngIf="s.profissionalId">{{ nomeProfissional(s.profissionalId) }}</span>
+          <span *ngIf="!s.profissionalId" style="color:#6b7280">Prestador</span>
         </div>
       </div>
 
@@ -61,10 +62,10 @@
         <div class="servico-preco-admin">
           <span class="preco-tipo">{{ labelTipoCobranca(s.tipoCobranca || 'FIXO') }}</span>
           <span class="preco-valor">
-            <ng-container *ngIf="!isPercentual">R$ {{ s.valor | number:'1.2-2' }}</ng-container>
-            <ng-container *ngIf="isPercentual">{{ s.valor }}%</ng-container>
+            <ng-container *ngIf="s.tipoCobranca !== 'PERCENTUAL'">R$ {{ (s.valorServico ?? s.valor) | number:'1.2-2' }}</ng-container>
+            <ng-container *ngIf="s.tipoCobranca === 'PERCENTUAL'">{{ s.valorServico ?? s.valor }}%</ng-container>
             <span class="preco-unidade">{{ unidadeTipoCobranca(s.tipoCobranca || 'FIXO') }}</span>
-          </span>
+          </span> 
         </div>
       </div>
     </div>
@@ -149,12 +150,11 @@
         </div>
 
         <div class="form-group">
-          <label>Profissional *</label>
+          <label>Profissional <span style="color:#9ca3af;font-size:12px">(opcional — deixe em branco se o próprio prestador executa)</span></label>
           <select formControlName="profissionalId">
-            <option value="">Selecione um profissional</option>
+            <option value="">Prestador executa diretamente</option>
             <option *ngFor="let p of profissionais" [value]="p.id">{{ p.nome || 'Profissional #' + p.id }}</option>
           </select>
-          <span class="erro-campo" *ngIf="form.get('profissionalId')?.invalid && form.get('profissionalId')?.touched">Obrigatório.</span>
         </div>
 
         <div class="form-group">

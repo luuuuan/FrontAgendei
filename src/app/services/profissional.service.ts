@@ -21,6 +21,11 @@ export class ProfissionalService {
     return this.http.get<Profissional[]>(`${this.apiUrl}/profissionaisCadastrados`, { params });
   }
 
+  // Para uso do cliente — lista todos sem filtrar por prestador
+  listarTodos(): Observable<Profissional[]> {
+    return this.http.get<Profissional[]>(`${this.apiUrl}/profissionaisCadastrados`);
+  }
+
   listarPorServico(servicoId: number): Observable<Profissional[]> {
     return this.http.get<Profissional[]>(`${this.apiUrl}/profissionalServico/${servicoId}`);
   }

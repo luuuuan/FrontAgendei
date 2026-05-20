@@ -118,7 +118,7 @@ export class RelatoriosComponent implements OnInit {
       ags.forEach(ag => ag.servicoId?.forEach(sid => {
         cnt[sid] = (cnt[sid] || 0) + 1;
         const sv = this.servicos.find(s => s.id === sid);
-        val[sid] = (val[sid] || 0) + (sv?.valor || 0);
+        val[sid] = (val[sid] || 0) + (sv?.valorServico || sv?.valor || 0);
       }));
       this.servicosRanking = this.servicos
         .map(s => ({ nome: s.nome, quantidade: cnt[s.id!] || 0, percentual: 0, valor: val[s.id!] || 0 }))
@@ -129,7 +129,7 @@ export class RelatoriosComponent implements OnInit {
 
     if (this.profissionais.length > 0) {
       const cnt: any = {};
-      ags.forEach(ag => { cnt[ag.profissionalId] = (cnt[ag.profissionalId] || 0) + 1; });
+      ags.forEach(ag => { if (ag.profissionalId) cnt[ag.profissionalId] = (cnt[ag.profissionalId] || 0) + 1; });
       this.profissionaisRanking = this.profissionais
         .map(p => ({ nome: p.nome || 'Profissional #' + p.id, quantidade: cnt[p.id!] || 0, percentual: 0 }))
         .sort((a, b) => b.quantidade - a.quantidade).slice(0, 8);
@@ -165,7 +165,7 @@ export class RelatoriosComponent implements OnInit {
     let csv = 'Data,Profissional,Servico,Status,Valor\n';
     this.agendamentosFiltrados.forEach(ag => {
       const data = ag.dataAgendamento?.split('T')[0] || '';
-      const prof = this.nomeProfissional(ag.profissionalId);
+      const prof = this.nomeProfissional(ag.profissionalId ?? undefined);
       const servs = (ag.servicoId || []).map(s => this.nomeServico(s)).join('; ');
       const valor = (ag.valorTotal || 0).toFixed(2);
       csv += `${data},"${prof}","${servs}",${ag.statusAgendamento},${valor}\n`;
@@ -181,7 +181,7 @@ export class RelatoriosComponent implements OnInit {
   }
 
   corBarra(i: number) { return ['#4361ee', '#4cc9f0', '#2ec4b6', '#ff9f1c', '#f72585'][i % 5]; }
-  nomeProfissional(id: number) { return this.profissionais.find(p => p.id === id)?.nome || 'Profissional #' + id; }
+  nomeProfissional(id: number | undefined) { return this.profissionais.find(p => p.id === id)?.nome || 'Profissional #' + id; }
   nomeServico(id: number) { return this.servicos.find(s => s.id === id)?.nome || 'Servico #' + id; }
   formatarData(v: string) {
     if (!v) return '-';
