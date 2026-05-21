@@ -193,7 +193,7 @@ export class AreaClienteComponent implements OnInit {
           dataNascimento: usuario.dataNascimento || ''
         });
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -310,9 +310,14 @@ export class AreaClienteComponent implements OnInit {
     this.horariosDisponiveis = [];
     this.mensagemDisponibilidade = '';
     const sid = this.servicosSelecionados[0]?.id || this.servicoSelecionado?.id;
+    const profId = this.profissionalSelecionado?.id;
+    const servico = this.servicosSelecionados[0] || this.servicoSelecionado;
+    const prestId = !profId ? (servico as any)?.prestadorId : undefined;
     this.agendamentoService.buscarHorariosDisponiveis(
       this.dataSelecionada,
-      sid
+      sid,
+      profId,
+      prestId
     ).subscribe({
       next: (horarios) => {
         this.horariosDisponiveis = horarios;
@@ -401,7 +406,7 @@ export class AreaClienteComponent implements OnInit {
           }
           this.profissionais = lista;
         },
-        error: () => {}
+        error: () => { }
       });
     } else {
       // Serviço sem profissional — o próprio prestador executa
@@ -414,11 +419,11 @@ export class AreaClienteComponent implements OnInit {
     const t = this.termoBusca.toLowerCase().trim();
     this.servicosFiltrados = t
       ? this.servicos.filter(s =>
-          s.nome?.toLowerCase().includes(t) ||
-          s.descricao?.toLowerCase().includes(t) ||
-          (s.nomeProfissional || '').toLowerCase().includes(t) ||
-          (s.nomePrestador || '').toLowerCase().includes(t)
-        )
+        s.nome?.toLowerCase().includes(t) ||
+        s.descricao?.toLowerCase().includes(t) ||
+        (s.nomeProfissional || '').toLowerCase().includes(t) ||
+        (s.nomePrestador || '').toLowerCase().includes(t)
+      )
       : this.servicos;
   }
 
@@ -427,7 +432,7 @@ export class AreaClienteComponent implements OnInit {
     this.profissionais = [];
     this.profissionalService.listarPorServico(s.id!).subscribe({
       next: (lista) => this.profissionais = lista,
-      error: () => {}
+      error: () => { }
     });
     this.stepAgendamento = 2;
   }
@@ -447,7 +452,7 @@ export class AreaClienteComponent implements OnInit {
 
   confirmarAgendamento() {
     const sessao = this.authService.getSessao();
-    if (!sessao || !this.servicoSelecionado || !this.profissionalSelecionado || !this.dataSelecionada || !this.horaSelecionada) {
+    if (!sessao || !this.servicoSelecionado || !this.dataSelecionada || !this.horaSelecionada) {
       this.toast.erro('Preencha todos os dados do agendamento.');
       return;
     }
@@ -460,11 +465,12 @@ export class AreaClienteComponent implements OnInit {
       dataCriacao: new Date().toISOString(),
       horaInicio: this.horaSelecionada,
       statusAgendamento: 'PENDENTE',
-      taxaPlataforma: this.servicoSelecionado.valor * 0.1,
+      taxaPlataforma: (this.servicoSelecionado.valorServico ?? this.servicoSelecionado.valor ?? 0) * 0.1, 
       valorTotal: this.servicoSelecionado.valor,
       observacoes: this.observacoes,
       usuarioId: sessao.usuarioId,
-      profissionalId: this.profissionalSelecionado?.id,  // nullable quando prestador executa
+      profissionalId: this.profissionalSelecionado?.id ?? undefined,
+      prestadorId: !this.profissionalSelecionado ? (this.servicoSelecionado as any)?.prestadorId : undefined,
       servicos: this.servicosSelecionados.length > 0 ? this.servicosSelecionados.map(s => s.id!) : [this.servicoSelecionado!.id!],
       enderecoId: this.usuarioLogado?.enderecoId
     } as any).subscribe({
@@ -519,9 +525,9 @@ export class AreaClienteComponent implements OnInit {
           this.toast.erro('CEP nao encontrado.');
         } else {
           this.enderecoTemp.logradouro = data.logradouro;
-          this.enderecoTemp.bairro     = data.bairro;
-          this.enderecoTemp.cidade     = data.localidade;
-          this.enderecoTemp.estado     = data.uf;
+          this.enderecoTemp.bairro = data.bairro;
+          this.enderecoTemp.cidade = data.localidade;
+          this.enderecoTemp.estado = data.uf;
           this.toast.sucesso('Endereco preenchido!');
         }
         this.buscandoCep = false;
@@ -636,9 +642,11 @@ export class AreaClienteComponent implements OnInit {
     this.carregandoHorariosReagendamento = true;
     this.horaSelecionadaReagendamento = '';
     const sid = this.agendamentoDetalhes?.servicoId?.[0];
+    const profId = this.agendamentoDetalhes?.profissionalId;
     this.agendamentoService.buscarHorariosDisponiveis(
       this.dataSelecionadaReagendamento,
-      sid
+      sid,
+      profId
     ).subscribe({
       next: h => { this.horariosReagendamento = h; this.carregandoHorariosReagendamento = false; },
       error: () => { this.horariosReagendamento = []; this.carregandoHorariosReagendamento = false; }

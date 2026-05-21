@@ -249,6 +249,7 @@ export class HorariosComponent implements OnInit {
       error: (err: any) => { this.toast.erro(err.mensagemAmigavel || 'Erro ao remover.'); this.excluindo = null; }
     });
   }
+  
 
   get folgasFuturas(): Folga[] {
     const hoje = new Date().toISOString().split('T')[0];

@@ -18,6 +18,7 @@ export class ConfiguracoesComponent implements OnInit {
   salvando = false;
   carregandoGrade = false;
   gradeId: number | null = null;
+  buscandoCep = false;
   formEmpresa: FormGroup;
   formNotificacoes: FormGroup;
 
@@ -51,6 +52,13 @@ export class ConfiguracoesComponent implements OnInit {
       temIntervalo:      [false],
       inicioIntervalo:   ['12:00'],
       fimIntervalo:      ['13:00'],
+      cep:               [''],
+      logradouro:        [''],
+      numero:            [''],
+      complemento:       [''],
+      bairro:            [''],
+      cidade:            [''],
+      estado:            [''],
     });
 
     this.formNotificacoes = this.fb.group({
@@ -77,7 +85,20 @@ export class ConfiguracoesComponent implements OnInit {
         const endereco = (usuario as any).endereco?.logradouro
           ? `${(usuario as any).endereco.logradouro}, ${(usuario as any).endereco.numero} - ${(usuario as any).endereco.bairro}`
           : '';
-        this.formEmpresa.patchValue({ nomeEmpresa: nome, email, telefone, endereco });
+        const end = (usuario as any).endereco;
+        this.formEmpresa.patchValue({
+          nomeEmpresa:  nome,
+          email,
+          telefone,
+          endereco,
+          cep:          end?.cep || '',
+          logradouro:   end?.logradouro || '',
+          numero:       end?.numero || '',
+          complemento:  end?.complemento || '',
+          bairro:       end?.bairro || '',
+          cidade:       end?.cidade || '',
+          estado:       end?.estado || '',
+        });
       },
       error: () => {}
     });
@@ -105,6 +126,35 @@ export class ConfiguracoesComponent implements OnInit {
       },
       error: () => { this.carregandoGrade = false; }
     });
+  }
+
+  buscarCep() {
+    const cep = this.formEmpresa.get('cep')?.value?.replace(/\D/g, '');
+    if (!cep || cep.length !== 8) { this.toast.erro('CEP inválido.'); return; }
+    this.buscandoCep = true;
+    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      .then(r => r.json())
+      .then((data: any) => {
+        if (data.erro) { this.toast.erro('CEP não encontrado.'); }
+        else {
+          this.formEmpresa.patchValue({
+            logradouro: data.logradouro,
+            bairro:     data.bairro,
+            cidade:     data.localidade,
+            estado:     data.uf
+          });
+          this.toast.sucesso('Endereço preenchido!');
+        }
+        this.buscandoCep = false;
+      })
+      .catch(() => { this.toast.erro('Erro ao buscar CEP.'); this.buscandoCep = false; });
+  }
+
+  aplicarMascaraCep(event: any) {
+    let v = event.target.value.replace(/\D/g, '').slice(0, 8);
+    v = v.replace(/(\d{5})(\d{0,3})/, '$1-$2');
+    event.target.value = v;
+    this.formEmpresa.get('cep')?.setValue(v, { emitEvent: false });
   }
 
   salvarEmpresa() {

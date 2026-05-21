@@ -14,9 +14,9 @@ export class AgendamentoService {
     return this.http.post<AgendamentoResponse>(`${this.apiUrl}/criarAgendamento`, agendamento);
   }
 
-  buscarPorData(dataCriacao: string): Observable<AgendamentoResponse[]> {
+  buscarPorData(dataAgendamento: string): Observable<AgendamentoResponse[]> {
     return this.http.get<AgendamentoResponse[]>(`${this.apiUrl}/consultaAgendamento`, {
-      params: { dataCriacao }
+      params: { dataAgendamento }
     });
   }
 
@@ -48,9 +48,6 @@ export class AgendamentoService {
     return this.http.patch<AgendamentoResponse>(`${this.apiUrl}/atualizar-status/${id}`, { status });
   }
 
-  avaliar(payload: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/avaliacao`, payload);
-  }
 
   buscarPorPrestador(prestadorId: number): Observable<AgendamentoResponse[]> {
     return this.http.get<AgendamentoResponse[]>(`${this.apiUrl}/todos`, {

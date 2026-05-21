@@ -75,7 +75,7 @@
       <div
         *ngFor="let dia of diasDoMes"
         class="dia-cell"
-        [class.hoje]="ehHoje(dia)"
+        [class.hoje]="ehHoje(dia)" [class.selecionado]="diaSelecionado === dia" (click)="selecionarDia(dia)" style="cursor:pointer"
         [class.vazio]="!dia"
       >
         <span *ngIf="dia">{{ dia }}</span>
@@ -83,7 +83,52 @@
     </div>
   </div>
 
-  <!-- Agendamentos de hoje -->
+  <!-- Agendamentos do dia selecionado -->
+<div class="card" *ngIf="diaSelecionado" style="margin-top:16px">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fas fa-calendar-day"></i>
+      Agendamentos — dia {{ diaSelecionado }}/{{ dataAtual.getMonth() + 1 }}/{{ dataAtual.getFullYear() }}
+    </div>
+  </div>
+  <div class="loading-box" *ngIf="carregandoDia">
+    <i class="fas fa-spinner fa-spin"></i> Carregando...
+  </div>
+  <div *ngIf="!carregandoDia">
+    <div class="empty-state" *ngIf="agendamentosDiaSelecionado.length === 0">
+      <i class="fas fa-calendar-times"></i>
+      <p>Nenhum agendamento para este dia.</p>
+    </div>
+    <table *ngIf="agendamentosDiaSelecionado.length > 0">
+      <thead>
+        <tr>
+          <th>Hora</th>
+          <th>Profissional</th>
+          <th>Serviços</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let ag of agendamentosDiaSelecionado">
+          <td>{{ ag.horaInicio?.substring(0,5) || '-' }}</td>
+          <td>{{ nomeProfissional(ag.profissionalId) }}</td>
+          <td>
+            <span *ngFor="let s of ag.servicoId" class="badge badge-primary" style="margin-right:4px">
+              {{ nomeServico(s) }}
+            </span>
+          </td>
+          <td>
+            <span class="badge" [class]="classeStatus(ag.statusAgendamento)">
+              {{ labelStatus(ag.statusAgendamento) }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Agendamentos de hoje -->
   <div class="card">
     <div class="card-header">
       <div class="card-title">Agendamentos de Hoje</div>

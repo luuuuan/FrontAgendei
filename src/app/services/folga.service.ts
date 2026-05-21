@@ -17,7 +17,7 @@ export interface Folga {
 export class FolgaService {
   private apiUrl = `${environment.apiUrl}/folga`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   cadastrar(folga: Folga): Observable<Folga> {
     return this.http.post<Folga>(`${this.apiUrl}/cadastrar`, folga);
@@ -31,7 +31,8 @@ export class FolgaService {
     return this.http.get<Folga[]>(`${this.apiUrl}/prestador/${prestadorId}`);
   }
 
-  excluir(id: number): Observable<void> {
-    return this.http.patch<void>(`${this.apiUrl}/desativar/${id}`, { ativo: false });
-}
+  excluir(id: number ): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/desativar/${id}`, { ativo: false }   
+    );
+  }
 }

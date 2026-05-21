@@ -59,7 +59,19 @@ export class ProfissionaisComponent implements OnInit {
   ngOnInit() {
     const sessao = this.authService.getSessao();
     this.carregarProfissionais(sessao?.prestadorId);
-    this.servicoService.listar().subscribe({ next: l => this.servicos = l, error: () => { } });
+    this.servicoService.listarPorPrestador(this.authService.getSessao()?.prestadorId).subscribe({
+      next: l => {
+        this.servicos = l;
+        // Re-enrich profissionais if already loaded
+        if (this.profissionais.length > 0) {
+          this.profissionais = this.profissionais.map(p => ({
+            ...p,
+            servico: l.filter(s => s.profissionalId === p.id)
+          }));
+        }
+      },
+      error: () => {}
+    });
   }
 
   carregarProfissionais(prestadorId?: number) {
@@ -68,7 +80,12 @@ export class ProfissionaisComponent implements OnInit {
     this.carregando = true;
     this.erro = '';
     this.profissionalService.listar().subscribe({
-      next: l => { this.profissionais = l; this.profissionaisFiltrados = l; this.carregando = false; },
+      next: l => {
+        // Enrich profissionais with their servicos
+        this.profissionais = l.map(p => ({
+          ...p,
+          servico: this.servicos.filter(s => s.profissionalId === p.id)
+        })); this.profissionaisFiltrados = l; this.carregando = false; },
       error: (err: any) => { this.erro = err.mensagemAmigavel || 'Erro ao carregar.'; this.carregando = false; }
     });
   }

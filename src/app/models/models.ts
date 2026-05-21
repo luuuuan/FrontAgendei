@@ -36,8 +36,12 @@ export interface Servico {
   valorUnitario?: number;
   tipoCobranca?: string; 
   localAtendimento?: string;
-  profissionalId: number;
+  profissionalId?: number;      
   profissionalNome?: string;
+  nomeProfissional?: string;
+  prestadorId?: number;
+  prestadorNome?: string;
+  nomePrestador?: string;
   statusServico?: string;
   statusExecucaoServico?: string;
 }

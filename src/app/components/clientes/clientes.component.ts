@@ -49,7 +49,6 @@ export class ClientesComponent implements OnInit {
     this.carregando = true;
     this.erro = '';
     const sessao = this.authService.getSessao();
-    // Busca clientes filtrados pelo prestador da sessão
     this.usuarioService.listarClientesPorPrestador(sessao?.prestadorId).subscribe({
       next: l => { this.clientes = l; this.clientesFiltrados = l; this.carregando = false; },
       error: (err: any) => { this.erro = err.mensagemAmigavel || 'Erro ao carregar.'; this.carregando = false; }

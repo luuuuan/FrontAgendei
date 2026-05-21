@@ -5,6 +5,7 @@ import { AgendamentoService } from '../../services/agendamento.service';
 import { ProfissionalService } from '../../services/profissional.service';
 import { ServicoService } from '../../services/servico.service';
 import { ToastService } from '../../services/toast.service';
+import { AuthService } from '../../services/auth.service';
 import { AgendamentoResponse, Profissional, Servico } from '../../models/models';
 
 @Component({
@@ -18,6 +19,7 @@ export class AgendaComponent implements OnInit {
   agendamentos: AgendamentoResponse[] = [];
   profissionais: Profissional[] = [];
   servicos: Servico[] = [];
+  prestadorId: number | null = null;
   carregando = false;
   erro = '';
   modalAberto = false;
@@ -45,7 +47,8 @@ export class AgendaComponent implements OnInit {
     private agendamentoService: AgendamentoService,
     private profissionalService: ProfissionalService,
     private servicoService: ServicoService,
-    private toast: ToastService
+    private toast: ToastService,
+    private authService: AuthService
   ) {
     this.form = this.fb.group({
       dataAgendamento: ['', Validators.required],
@@ -59,6 +62,8 @@ export class AgendaComponent implements OnInit {
   }
 
   ngOnInit() {
+    const sessao = this.authService.getSessao();
+    this.prestadorId = sessao?.prestadorId ?? null;
     this.buscarAgendamentos();
     this.profissionalService.listar().subscribe({ next: l => this.profissionais = l, error: () => {} });
     this.servicoService.listar().subscribe({ next: l => this.servicos = l, error: () => {} });
@@ -134,7 +139,21 @@ export class AgendaComponent implements OnInit {
     return match ? match[1].trim() : '-';
   }
 
-  nomeProfissional(id: number | undefined) { const p = this.profissionais.find(p => p.id === id); return p?.nome || 'Profissional #' + id; }
+  nomeProfissional(id: number | undefined): string {
+    if (!id) return 'Prestador';
+    const p = this.profissionais.find(p => p.id === id);
+    return p?.nome || 'Profissional #' + id;
+  }
+
+ 
+
+  // Fix Invalid Date - horaInicio separado da data
+  formatarHora(v: string | undefined): string {
+    if (!v) return '-';
+    // se já é HH:mm:ss, retorna direto
+    if (/^\d{2}:\d{2}/.test(v)) return v.substring(0, 5);
+    return '-';
+  }
   nomeServico(id: number) { const s = this.servicos.find(s => s.id === id); return s?.nome || 'Serviço #' + id; }
   labelStatus(s: string) { return ({ CONFIRMADO: 'Confirmado', PENDENTE: 'Pendente', CANCELADO: 'Cancelado', REALIZADO: 'Realizado', AUSENTE: 'Ausente' } as any)[s] || s; }
   classeStatus(s: string) { return ({ CONFIRMADO: 'badge-success', PENDENTE: 'badge-warning', CANCELADO: 'badge-danger', REALIZADO: 'badge-info', AUSENTE: 'badge-gray' } as any)[s] || 'badge-gray'; }
