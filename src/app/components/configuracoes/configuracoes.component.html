@@ -8,6 +8,9 @@
   <button class="aba-btn" [class.ativa]="abaAtiva === 'notificacoes'"  (click)="abaAtiva = 'notificacoes'">
     <i class="fas fa-bell"></i> Notificações
   </button>
+  <button class="aba-btn" [class.ativa]="abaAtiva === 'bancario'" (click)="abaAtiva = 'bancario'">
+    <i class="fas fa-university"></i> Dados Bancários
+  </button>
 
 </div>
 
@@ -54,7 +57,7 @@
         <label>CEP</label>
         <div style="display:flex;gap:8px">
           <input type="text" formControlName="cep" placeholder="00000-000" maxlength="9"
-            (input)="aplicarMascaraCep($event)" style="flex:1" />
+            (input)="aplicarMascaraCep($event)" style="flex:1;padding:8px 12px" />
           <button type="button" class="btn btn-outline btn-sm" (click)="buscarCep()" [disabled]="buscandoCep">
             <i class="fas fa-spinner fa-spin" *ngIf="buscandoCep"></i>
             <i class="fas fa-search" *ngIf="!buscandoCep"></i>
@@ -238,3 +241,102 @@
   </form>
 </div>
 
+<div class="card config-card" *ngIf="abaAtiva === 'bancario'">
+  <div class="config-header">
+    <div class="config-title"><i class="fas fa-university"></i> Dados Bancários</div>
+    <p class="config-desc">
+      Informe os dados bancários para receber os pagamentos dos agendamentos.
+      <span style="color:#dc2626;font-size:12px">
+        <i class="fas fa-lock"></i> Dados criptografados e seguros.
+      </span>
+    </p>
+  </div>
+
+  <div class="info-aviso" style="background:#fffbeb;border-color:#fbbf24;color:#92400e;margin-bottom:20px">
+    <i class="fas fa-exclamation-triangle"></i>
+    Certifique-se de que os dados estão corretos. Transferências incorretas não podem ser revertidas automaticamente.
+  </div>
+
+  <form [formGroup]="formBancario">
+
+    <div class="form-row-2">
+      <div class="form-group" style="flex:2;position:relative">
+        <label>Banco *</label>
+        <input type="text" [(ngModel)]="termoBanco" [ngModelOptions]="{standalone: true}"
+          (input)="filtrarBancos()" (blur)="fecharSugestoes()"
+          placeholder="Digite o nome do banco..."
+          [style.border-color]="!bancoSelecionado && formBancario.get('banco')?.touched ? 'var(--danger)' : ''" />
+        <div class="banco-sugestoes" *ngIf="mostrarSugestoesBanco">
+          <div class="banco-sugestao-item" *ngFor="let b of bancosFiltrados" (mousedown)="selecionarBanco(b)">
+            <span class="banco-codigo">{{ b.codigo }}</span>
+            <span>{{ b.nome }}</span>
+          </div>
+        </div>
+        <span class="erro-campo" *ngIf="!bancoSelecionado && formBancario.get('banco')?.touched">
+          Selecione um banco da lista.
+        </span>
+      </div>
+      <div class="form-group" style="flex:1">
+        <label>Tipo de Conta *</label>
+        <select formControlName="tipoConta">
+          <option *ngFor="let t of tiposConta" [value]="t.valor">{{ t.label }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row-2">
+      <div class="form-group">
+        <label>Agência *</label>
+        <input type="text" formControlName="agencia" placeholder="0000"
+          (input)="aplicarMascaraAgencia($event)" maxlength="6" />
+        <span class="erro-campo" *ngIf="formBancario.get('agencia')?.invalid && formBancario.get('agencia')?.touched">
+          Obrigatório.
+        </span>
+      </div>
+      <div class="form-group">
+        <label>Conta *</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" formControlName="conta" placeholder="000000000"
+            (input)="aplicarMascaraConta($event)" maxlength="12" style="flex:1;padding:8px 12px" />
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <label style="font-size:11px;color:#6b7280">Dígito</label>
+            <input type="text" formControlName="digitoConta" placeholder="0"
+              maxlength="1" style="width:50px;text-align:center" />
+          </div>
+        </div>
+        <span class="erro-campo" *ngIf="formBancario.get('conta')?.invalid && formBancario.get('conta')?.touched">
+          Obrigatório.
+        </span>
+      </div>
+    </div>
+
+    <div class="secao-titulo" style="margin-top:20px">Titular da Conta</div>
+
+    <div class="form-row-2">
+      <div class="form-group" style="flex:2">
+        <label>Nome completo do titular *</label>
+        <input type="text" formControlName="nomeTitular" placeholder="Nome como no banco" />
+        <span class="erro-campo" *ngIf="formBancario.get('nomeTitular')?.invalid && formBancario.get('nomeTitular')?.touched">
+          Obrigatório.
+        </span>
+      </div>
+      <div class="form-group" style="flex:1">
+        <label>CPF do titular *</label>
+        <input type="text" formControlName="cpfTitular" placeholder="000.000.000-00"
+          (input)="aplicarMascaraCpfTitular($event)" maxlength="14" />
+        <span class="erro-campo" *ngIf="formBancario.get('cpfTitular')?.invalid && formBancario.get('cpfTitular')?.touched">
+          Obrigatório.
+        </span>
+      </div>
+    </div>
+
+    <div class="form-actions" style="margin-top:24px">
+      <button type="button" class="btn btn-primary" (click)="salvarDadosBancarios()" [disabled]="salvandoBancario">
+        <i class="fas fa-spinner fa-spin" *ngIf="salvandoBancario"></i>
+        <i class="fas fa-save" *ngIf="!salvandoBancario"></i>
+        {{ salvandoBancario ? 'Salvando...' : (dadosBancariosId ? 'Atualizar Dados' : 'Salvar Dados Bancários') }}
+      </button>
+    </div>
+
+  </form>
+</div>

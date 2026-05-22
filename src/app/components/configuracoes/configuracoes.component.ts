@@ -4,28 +4,45 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { ToastService } from '../../services/toast.service';
 import { AuthService } from '../../services/auth.service';
 import { GradeTrabalhoService } from '../../services/grade-trabalho.service';
+import { BancoService, Banco } from '../../services/banco.service';
+import { DadosBancariosService } from '../../services/dados-bancarios.service';
 import { UsuarioService } from '../../services/usuario.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-configuracoes',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './configuracoes.component.html',
+  imports: [CommonModule, ReactiveFormsModule, FormsModule], templateUrl: './configuracoes.component.html',
   styleUrls: ['./configuracoes.component.css']
 })
 export class ConfiguracoesComponent implements OnInit {
-  abaAtiva: 'empresa' | 'notificacoes' = 'empresa';
+  abaAtiva: 'empresa' | 'notificacoes' | 'bancario' = 'empresa';
+  salvandoBancario = false;
+  dadosBancariosId: number | null = null;
   salvando = false;
   carregandoGrade = false;
   gradeId: number | null = null;
   buscandoCep = false;
   formEmpresa: FormGroup;
   formNotificacoes: FormGroup;
+  formBancario: FormGroup;
+
+  bancos: Banco[] = [];
+  bancosFiltrados: Banco[] = [];
+  termoBanco = '';
+  mostrarSugestoesBanco = false;
+  bancoSelecionado: Banco | null = null;
+
+  tiposConta = [
+    { valor: 'CORRENTE', label: 'Conta Corrente' },
+    { valor: 'POUPANCA', label: 'Conta Poupança' },
+    { valor: 'PAGAMENTO', label: 'Conta de Pagamento' },
+  ];
 
   diasMap: Record<string, string> = {
-    'Segunda a Sexta':    'SEG_SEX',
-    'Segunda a Sábado':   'SEG_SAB',
-    'Segunda a Domingo':  'SEG_DOM',
+    'Segunda a Sexta': 'SEG_SEX',
+    'Segunda a Sábado': 'SEG_SAB',
+    'Segunda a Domingo': 'SEG_DOM',
   };
 
   diasMapInverso: Record<string, string> = {
@@ -39,39 +56,135 @@ export class ConfiguracoesComponent implements OnInit {
     private toast: ToastService,
     private authService: AuthService,
     private gradeTrabalhoService: GradeTrabalhoService,
-    private usuarioService: UsuarioService
+    private usuarioService: UsuarioService,
+    private bancoService: BancoService,
+    private dadosBancariosService: DadosBancariosService
   ) {
     this.formEmpresa = this.fb.group({
-      nomeEmpresa:       ['', Validators.required],
-      email:             ['', [Validators.required, Validators.email]],
-      telefone:          [''],
-      endereco:          [''],
-      horarioAbertura:   ['08:00'],
+      nomeEmpresa: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      telefone: [''],
+      endereco: [''],
+      horarioAbertura: ['08:00'],
       horarioFechamento: ['18:00'],
       diasFuncionamento: ['Segunda a Sexta'],
-      temIntervalo:      [false],
-      inicioIntervalo:   ['12:00'],
-      fimIntervalo:      ['13:00'],
-      cep:               [''],
-      logradouro:        [''],
-      numero:            [''],
-      complemento:       [''],
-      bairro:            [''],
-      cidade:            [''],
-      estado:            [''],
+      temIntervalo: [false],
+      inicioIntervalo: ['12:00'],
+      fimIntervalo: ['13:00'],
+      cep: [''],
+      logradouro: [''],
+      numero: [''],
+      complemento: [''],
+      bairro: [''],
+      cidade: [''],
+      estado: [''],
+    });
+
+    this.formBancario = this.fb.group({
+      banco: ['', Validators.required],
+      agencia: ['', Validators.required],
+      conta: ['', Validators.required],
+      digitoConta: [''],
+      tipoConta: ['CORRENTE', Validators.required],
+      cpfTitular: ['', Validators.required],
+      nomeTitular: ['', Validators.required],
     });
 
     this.formNotificacoes = this.fb.group({
-      emailConfirmacao:    [true],
-      emailLembrete:       [true],
-      emailCancelamento:   [true],
-      antecedenciaLembrete:['24']
+      emailConfirmacao: [true],
+      emailLembrete: [true],
+      emailCancelamento: [true],
+      antecedenciaLembrete: ['24']
     });
   }
 
   ngOnInit() {
     this.carregarDadosPrestador();
     this.carregarGrade();
+    this.carregarDadosBancarios();
+    this.bancoService.listar().subscribe({
+      next: l => {
+        this.bancos = l;
+      },
+      error: () => { }
+    });
+  }
+
+  carregarDadosBancarios() {
+    const sessao = this.authService.getSessao();
+    if (!sessao?.prestadorId) return;
+    // Busca dados bancários do prestador
+    this.dadosBancariosService.buscarPorPrestador(sessao.prestadorId).subscribe({
+      next: (dados: any) => {
+        if (dados) {
+          this.dadosBancariosId = dados.id ?? null;
+          this.formBancario.patchValue({
+            bancoid: dados.banco || '',
+            agencia: dados.agencia || '',
+            conta: dados.conta || '',
+            digitoConta: dados.digitoConta || '',
+            tipoConta: dados.tipoConta || 'CORRENTE',
+            cpfTitular: dados.cpfTitular || '',
+            nomeTitular: dados.nomeTitular || '',
+          });
+        }
+      },
+      error: () => { } // sem dados ainda
+    });
+  }
+
+  salvarDadosBancarios() {
+    if (this.formBancario.invalid) { this.formBancario.markAllAsTouched(); return; }
+    const sessao = this.authService.getSessao();
+    if (!sessao?.prestadorId) return;
+
+    const v = this.formBancario.value;
+    const payload = {
+      bancoId: v.banco,  // back espera bancoId
+      agencia: v.agencia,
+      conta: v.conta,
+      digitoConta: v.digitoConta,
+      tipoConta: v.tipoConta,
+      cpfTitular: v.cpfTitular,
+      nomeTitular: v.nomeTitular,
+      prestadorId: sessao.prestadorId
+    };
+
+    this.salvandoBancario = true;
+    const operacao = this.dadosBancariosId
+      ? this.dadosBancariosService.atualizar(this.dadosBancariosId, payload as any)
+      : this.dadosBancariosService.cadastrar(payload as any);
+
+    operacao.subscribe({
+      next: (dados) => {
+        this.dadosBancariosId = dados.id ?? this.dadosBancariosId;
+        this.toast.sucesso('Dados bancários salvos com sucesso!');
+        this.salvandoBancario = false;
+      },
+      error: (err: any) => {
+        this.toast.erro(err.mensagemAmigavel || 'Erro ao salvar dados bancários.');
+        this.salvandoBancario = false;
+      }
+    });
+  }
+
+  aplicarMascaraAgencia(event: any) {
+    let v = event.target.value.replace(/\D/g, '').slice(0, 6);
+    event.target.value = v;
+    this.formBancario.get('agencia')?.setValue(v, { emitEvent: false });
+  }
+
+  aplicarMascaraConta(event: any) {
+    let v = event.target.value.replace(/\D/g, '').slice(0, 12);
+    event.target.value = v;
+    this.formBancario.get('conta')?.setValue(v, { emitEvent: false });
+  }
+
+  aplicarMascaraCpfTitular(event: any) {
+    let v = event.target.value.replace(/\D/g, '').slice(0, 11);
+    v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+    event.target.value = v;
+    this.formBancario.get('cpfTitular')?.setValue(v, { emitEvent: false });
   }
 
   carregarDadosPrestador() {
@@ -87,20 +200,20 @@ export class ConfiguracoesComponent implements OnInit {
           : '';
         const end = (usuario as any).endereco;
         this.formEmpresa.patchValue({
-          nomeEmpresa:  nome,
+          nomeEmpresa: nome,
           email,
           telefone,
           endereco,
-          cep:          end?.cep || '',
-          logradouro:   end?.logradouro || '',
-          numero:       end?.numero || '',
-          complemento:  end?.complemento || '',
-          bairro:       end?.bairro || '',
-          cidade:       end?.cidade || '',
-          estado:       end?.estado || '',
+          cep: end?.cep || '',
+          logradouro: end?.logradouro || '',
+          numero: end?.numero || '',
+          complemento: end?.complemento || '',
+          bairro: end?.bairro || '',
+          cidade: end?.cidade || '',
+          estado: end?.estado || '',
         });
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -115,17 +228,39 @@ export class ConfiguracoesComponent implements OnInit {
           const g = grades[0];
           this.gradeId = g.id ?? null;
           this.formEmpresa.patchValue({
-            horarioAbertura:   g.horaInicio,
+            horarioAbertura: g.horaInicio,
             horarioFechamento: g.horaFim,
             diasFuncionamento: this.diasMapInverso[g.diasSemana] || g.diasSemana,
-            temIntervalo:      !!(g.inicioIntervalo && g.fimIntervalo),
-            inicioIntervalo:   g.inicioIntervalo || '12:00',
-            fimIntervalo:      g.fimIntervalo    || '13:00',
+            temIntervalo: !!(g.inicioIntervalo && g.fimIntervalo),
+            inicioIntervalo: g.inicioIntervalo || '12:00',
+            fimIntervalo: g.fimIntervalo || '13:00',
           });
         }
       },
       error: () => { this.carregandoGrade = false; }
     });
+  }
+
+  filtrarBancos() {
+    const t = this.termoBanco.toLowerCase().trim();
+    this.bancosFiltrados = t.length >= 2
+      ? this.bancos.filter(b =>
+        b.nome.toLowerCase().includes(t) ||
+        b.codigo.includes(t)
+      ).slice(0, 8)
+      : [];
+    this.mostrarSugestoesBanco = this.bancosFiltrados.length > 0;
+  }
+
+  selecionarBanco(banco: Banco) {
+    this.bancoSelecionado = banco;
+    this.termoBanco = banco.nome;
+    this.mostrarSugestoesBanco = false;
+    this.formBancario.get('banco')?.setValue(banco.id);
+  }
+
+  fecharSugestoes() {
+    setTimeout(() => { this.mostrarSugestoesBanco = false; }, 200);
   }
 
   buscarCep() {
@@ -139,9 +274,9 @@ export class ConfiguracoesComponent implements OnInit {
         else {
           this.formEmpresa.patchValue({
             logradouro: data.logradouro,
-            bairro:     data.bairro,
-            cidade:     data.localidade,
-            estado:     data.uf
+            bairro: data.bairro,
+            cidade: data.localidade,
+            estado: data.uf
           });
           this.toast.sucesso('Endereço preenchido!');
         }
@@ -164,13 +299,13 @@ export class ConfiguracoesComponent implements OnInit {
 
     const v = this.formEmpresa.value;
     const payload = {
-      prestadorId:     sessao.prestadorId,
-      diasSemana:      this.diasMap[v.diasFuncionamento] || 'SEG_SEX',
-      horaInicio:      v.horarioAbertura,
-      horaFim:         v.horarioFechamento,
+      prestadorId: sessao.prestadorId,
+      diasSemana: this.diasMap[v.diasFuncionamento] || 'SEG_SEX',
+      horaInicio: v.horarioAbertura,
+      horaFim: v.horarioFechamento,
       inicioIntervalo: v.temIntervalo ? v.inicioIntervalo : undefined,
-      fimIntervalo:    v.temIntervalo ? v.fimIntervalo    : undefined,
-      ativo:           true
+      fimIntervalo: v.temIntervalo ? v.fimIntervalo : undefined,
+      ativo: true
     };
 
     this.salvando = true;

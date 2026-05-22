@@ -55,4 +55,5 @@ export class UsuarioService {
   redefinirSenha(token: string, novaSenha: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/redefinirSenha`, { token, novaSenha });
   }
+
 }
