@@ -12,7 +12,8 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-configuracoes',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule], templateUrl: './configuracoes.component.html',
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  templateUrl: './configuracoes.component.html',
   styleUrls: ['./configuracoes.component.css']
 })
 export class ConfiguracoesComponent implements OnInit {
@@ -104,7 +105,7 @@ export class ConfiguracoesComponent implements OnInit {
     this.carregarDadosBancarios();
     this.bancoService.listar().subscribe({
       next: l => {
-        this.bancos = l;
+        this.bancos = l.filter((b, i, arr) => arr.findIndex(x => x.id === b.id) === i);
       },
       error: () => { }
     });
@@ -113,7 +114,6 @@ export class ConfiguracoesComponent implements OnInit {
   carregarDadosBancarios() {
     const sessao = this.authService.getSessao();
     if (!sessao?.prestadorId) return;
-    // Busca dados bancários do prestador
     this.dadosBancariosService.buscarPorPrestador(sessao.prestadorId).subscribe({
       next: (dados: any) => {
         if (dados) {
@@ -140,12 +140,12 @@ export class ConfiguracoesComponent implements OnInit {
 
     const v = this.formBancario.value;
     const payload = {
-      bancoId: v.banco,  // back espera bancoId
-      agencia: v.agencia,
-      conta: v.conta,
+      bancoId:     v.banco,  // back espera bancoId
+      agencia:     v.agencia,
+      conta:       v.conta,
       digitoConta: v.digitoConta,
-      tipoConta: v.tipoConta,
-      cpfTitular: v.cpfTitular,
+      tipoConta:   v.tipoConta,
+      cpfTitular:  v.cpfTitular,
       nomeTitular: v.nomeTitular,
       prestadorId: sessao.prestadorId
     };
@@ -180,9 +180,15 @@ export class ConfiguracoesComponent implements OnInit {
     this.formBancario.get('conta')?.setValue(v, { emitEvent: false });
   }
 
-  aplicarMascaraCpfTitular(event: any) {
-    let v = event.target.value.replace(/\D/g, '').slice(0, 11);
-    v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+  aplicarMascaraCpfCnpjTitular(event: any) {
+    let v = event.target.value.replace(/\D/g, '');
+    if (v.length <= 11) {
+      // CPF
+      v = v.slice(0, 11).replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+    } else {
+      // CNPJ
+      v = v.slice(0, 14).replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, '$1.$2.$3/$4-$5');
+    }
     event.target.value = v;
     this.formBancario.get('cpfTitular')?.setValue(v, { emitEvent: false });
   }

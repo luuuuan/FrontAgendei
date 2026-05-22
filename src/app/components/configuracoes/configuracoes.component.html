@@ -22,6 +22,7 @@
 
   <form [formGroup]="formEmpresa" class="config-form">
 
+    
     <div class="form-group">
       <label>Nome da Empresa *</label>
       <input type="text" formControlName="nomeEmpresa" placeholder="Ex: Salão da Maria" />
@@ -43,11 +44,6 @@
         <label>Telefone</label>
         <input type="tel" formControlName="telefone" placeholder="(00) 00000-0000" />
       </div>
-    </div>
-
-    <div class="form-group">
-      <label>Endereço</label>
-      <input type="text" formControlName="endereco" placeholder="Rua, número, bairro, cidade" />
     </div>
 
     <!-- Endereço -->
@@ -295,10 +291,10 @@
       </div>
       <div class="form-group">
         <label>Conta *</label>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;align-items:center">
           <input type="text" formControlName="conta" placeholder="000000000"
-            (input)="aplicarMascaraConta($event)" maxlength="12" style="flex:1;padding:8px 12px" />
-          <div style="display:flex;flex-direction:column;gap:2px">
+            (input)="aplicarMascaraConta($event)" maxlength="12" style="flex:1" />
+          <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
             <label style="font-size:11px;color:#6b7280">Dígito</label>
             <input type="text" formControlName="digitoConta" placeholder="0"
               maxlength="1" style="width:50px;text-align:center" />
@@ -321,9 +317,9 @@
         </span>
       </div>
       <div class="form-group" style="flex:1">
-        <label>CPF do titular *</label>
-        <input type="text" formControlName="cpfTitular" placeholder="000.000.000-00"
-          (input)="aplicarMascaraCpfTitular($event)" maxlength="14" />
+        <label>CPF / CNPJ do titular *</label>
+        <input type="text" formControlName="cpfTitular" placeholder="CPF ou CNPJ do titular"
+          (input)="aplicarMascaraCpfCnpjTitular($event)" maxlength="18" />
         <span class="erro-campo" *ngIf="formBancario.get('cpfTitular')?.invalid && formBancario.get('cpfTitular')?.touched">
           Obrigatório.
         </span>
