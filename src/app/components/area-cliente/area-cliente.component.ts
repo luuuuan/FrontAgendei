@@ -11,6 +11,7 @@ import { ToastService } from '../../services/toast.service';
 import { AgendamentoResponse, Servico, Profissional, Usuario, EnderecoAgendamento } from '../../models/models';
 import { SkeletonComponent } from '../skeleton/skeleton.component';
 import { AvaliacaoService } from '../../services/avaliacao.service';
+import { environment } from '../../../environments/environment';
 import { PagamentoService, PagamentoResponse } from '../../services/pagamento.service';
 
 @Component({
@@ -566,7 +567,7 @@ export class AreaClienteComponent implements OnInit {
   }
 
   inicializarStripe() {
-    const stripeKey = 'pk_test_SUA_PUBLISHABLE_KEY_AQUI';
+    const stripeKey = environment.stripePublishableKey;
     this.stripeInstance = (window as any).Stripe(stripeKey);
     this.stripeElements = this.stripeInstance.elements();
     this.stripeCardElement = this.stripeElements.create('card', {
