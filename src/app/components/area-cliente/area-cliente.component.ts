@@ -11,6 +11,7 @@ import { ToastService } from '../../services/toast.service';
 import { AgendamentoResponse, Servico, Profissional, Usuario, EnderecoAgendamento } from '../../models/models';
 import { SkeletonComponent } from '../skeleton/skeleton.component';
 import { AvaliacaoService } from '../../services/avaliacao.service';
+import { PagamentoService, PagamentoResponse } from '../../services/pagamento.service';
 
 @Component({
   selector: 'app-area-cliente',
@@ -24,7 +25,6 @@ export class AreaClienteComponent implements OnInit {
   usuarioLogado: Usuario | null = null;
   iniciaisUsuario = 'CL';
 
-  // Dados
   agendamentosHoje: AgendamentoResponse[] = [];
   todoAgendamentos: AgendamentoResponse[] = [];
   servicos: Servico[] = [];
@@ -41,7 +41,6 @@ export class AreaClienteComponent implements OnInit {
   get totalConfirmados() { return this.agendamentosHoje.filter(a => a.statusAgendamento === 'CONFIRMADO').length; }
   get totalPendentes() { return this.agendamentosHoje.filter(a => a.statusAgendamento === 'PENDENTE').length; }
 
-  // Fix 6: servicos e profissionais CONTRATADOS pelo cliente
   get servicosContratados(): Servico[] {
     const ids = new Set(this.todoAgendamentos.flatMap(a => a.servicoId ?? []));
     return this.servicos.filter(s => s.id && ids.has(s.id));
@@ -54,20 +53,19 @@ export class AreaClienteComponent implements OnInit {
   stepAgendamento = 1;
   termoBusca = '';
   servicosFiltrados: any[] = [];
-  servicoSelecionado: Servico | null = null; // mantido para compatibilidade
+  servicoSelecionado: Servico | null = null;
   servicosSelecionados: Servico[] = [];
   profissionalSelecionado: Profissional | null = null;
   dataSelecionada = '';
   horaSelecionada = '';
   observacoes = '';
   salvandoAgendamento = false;
-  quantidadeServico = 1; // para cobranças variáveis (m², horas, etc.)
+  quantidadeServico = 1;
   dataMinima = new Date().toISOString().split('T')[0];
   horariosDisponiveis: string[] = [];
   carregandoHorarios = false;
   mensagemDisponibilidade = '';
 
-  // Domicilio
   enderecoAgendamento: EnderecoAgendamento | null = null;
   modalEnderecoAberto = false;
   buscandoCep = false;
@@ -111,28 +109,37 @@ export class AreaClienteComponent implements OnInit {
   mesLabel = '';
   diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
 
-  // Detalhe agendamento
   agendamentoDetalhes: AgendamentoResponse | null = null;
   modalDetalhesAberto = false;
 
-  // UC017 — Avaliacao
+  // UC017
   modalAvaliacaoAberto = false;
   agendamentoParaAvaliar: AgendamentoResponse | null = null;
   notaAvaliacao = 0;
   comentarioAvaliacao = '';
   enviandoAvaliacao = false;
 
-  // UC003 — Cancelar/Reagendar
+  // UC003
   modalCancelarAberto = false;
   modalReagendar = false;
   cancelando = false;
   reagendando = false;
   motivoCancelamento = '';
-  // horarios disponiveis para reagendamento
   horariosReagendamento: string[] = [];
   carregandoHorariosReagendamento = false;
   dataSelecionadaReagendamento = '';
   horaSelecionadaReagendamento = '';
+
+  // UC012 — Pagamento
+  modalPagamentoAberto = false;
+  formaPgto = 'CARTAO_CREDITO';
+  pagamentoProcessando = false;
+  pagamentoConcluido = false;
+  stripeErro = '';
+  stripeElements: any = null;
+  stripeCardElement: any = null;
+  stripeInstance: any = null;
+  pagamentoAtual: PagamentoResponse | null = null;
 
   // Perfil
   formPerfil: FormGroup;
@@ -141,7 +148,6 @@ export class AreaClienteComponent implements OnInit {
   salvandoSenha = false;
   abaPerfilAtiva: 'dados' | 'senha' = 'dados';
 
-  // Filtro historico
   filtroHistorico: 'todos' | 'CONFIRMADO' | 'PENDENTE' | 'CANCELADO' = 'todos';
 
   constructor(
@@ -153,7 +159,8 @@ export class AreaClienteComponent implements OnInit {
     private usuarioService: UsuarioService,
     private toast: ToastService,
     private router: Router,
-    private avaliacaoService: AvaliacaoService
+    private avaliacaoService: AvaliacaoService,
+    private pagamentoService: PagamentoService
   ) {
     this.formPerfil = this.fb.group({
       nome: ['', Validators.required],
@@ -300,7 +307,7 @@ export class AreaClienteComponent implements OnInit {
     this.horaSelecionada = '';
     this.horariosDisponiveis = [];
     this.mensagemDisponibilidade = '';
-    this.carregarHorariosDisponiveis(); // sempre tenta buscar ao selecionar dia
+    this.carregarHorariosDisponiveis();
   }
 
   carregarHorariosDisponiveis() {
@@ -313,12 +320,7 @@ export class AreaClienteComponent implements OnInit {
     const profId = this.profissionalSelecionado?.id;
     const servico = this.servicosSelecionados[0] || this.servicoSelecionado;
     const prestId = !profId ? (servico as any)?.prestadorId : undefined;
-    this.agendamentoService.buscarHorariosDisponiveis(
-      this.dataSelecionada,
-      sid,
-      profId,
-      prestId
-    ).subscribe({
+    this.agendamentoService.buscarHorariosDisponiveis(this.dataSelecionada, sid, profId, prestId).subscribe({
       next: (horarios) => {
         this.horariosDisponiveis = horarios;
         this.carregandoHorarios = false;
@@ -368,12 +370,19 @@ export class AreaClienteComponent implements OnInit {
     this.telaAtiva = 'novo-agendamento';
   }
 
-  // Multi-seleção de serviços
   toggleServico(s: Servico) {
     const idx = this.servicosSelecionados.findIndex(x => x.id === s.id);
     if (idx >= 0) {
       this.servicosSelecionados.splice(idx, 1);
     } else {
+      if (this.servicosSelecionados.length > 0) {
+        const prestadorAtual = this.servicosSelecionados[0].prestadorId ?? this.servicosSelecionados[0].profissionalId;
+        const prestadorNovo = s.prestadorId ?? s.profissionalId;
+        if (prestadorAtual !== prestadorNovo) {
+          this.toast.aviso('Selecione servicos do mesmo prestador.');
+          return;
+        }
+      }
       this.servicosSelecionados.push(s);
     }
   }
@@ -393,26 +402,21 @@ export class AreaClienteComponent implements OnInit {
   confirmarServicos() {
     if (this.servicosSelecionados.length === 0) { this.toast.aviso('Selecione ao menos um servico.'); return; }
     this.servicoSelecionado = this.servicosSelecionados[0];
-
     if (this.servicoSelecionado.profissionalId) {
-      // Serviço tem profissional vinculado — busca e seta automaticamente
       this.profissionalService.listarPorServico(this.servicoSelecionado.id!).subscribe({
         next: (lista) => {
           if (lista.length > 0) {
             this.profissionalSelecionado = lista[0];
-            if (!this.profissionalSelecionado.atendeADomicilio) {
-              this.enderecoAgendamento = null;
-            }
+            if (!this.profissionalSelecionado.atendeADomicilio) this.enderecoAgendamento = null;
           }
           this.profissionais = lista;
         },
         error: () => { }
       });
     } else {
-      // Serviço sem profissional — o próprio prestador executa
       this.profissionalSelecionado = null;
     }
-    this.stepAgendamento = 3; // pula o step 2
+    this.stepAgendamento = 3;
   }
 
   filtrarServicos() {
@@ -458,14 +462,13 @@ export class AreaClienteComponent implements OnInit {
     }
     const hoje = new Date().toISOString().split('T')[0];
     if (this.dataSelecionada < hoje) { this.toast.erro('Nao e possivel agendar para datas passadas.'); return; }
-
     this.salvandoAgendamento = true;
     this.agendamentoService.criar({
       dataAgendamento: this.dataSelecionada,
       dataCriacao: new Date().toISOString(),
       horaInicio: this.horaSelecionada,
       statusAgendamento: 'PENDENTE',
-      taxaPlataforma: (this.servicoSelecionado.valorServico ?? this.servicoSelecionado.valor ?? 0) * 0.1, 
+      taxaPlataforma: (this.servicoSelecionado.valorServico ?? this.servicoSelecionado.valor ?? 0) * 0.1,
       valorTotal: this.servicoSelecionado.valor,
       observacoes: this.observacoes,
       usuarioId: sessao.usuarioId,
@@ -494,7 +497,6 @@ export class AreaClienteComponent implements OnInit {
   fecharDetalhes() { this.modalDetalhesAberto = false; this.agendamentoDetalhes = null; }
   mudarTelaHistorico() { this.telaAtiva = 'historico'; if (this.todoAgendamentos.length === 0) this.carregarHistorico(); }
 
-  // Modal endereco agendamento (domicilio)
   abrirModalEndereco() {
     const e = this.enderecoAgendamento;
     this.enderecoTemp = e ? { ...e } : { cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '' };
@@ -542,6 +544,119 @@ export class AreaClienteComponent implements OnInit {
     this.enderecoTemp.cep = v;
   }
 
+  // UC012 — Pagamento
+  abrirModalPagamento(ag: AgendamentoResponse) {
+    this.agendamentoDetalhes = ag;
+    this.formaPgto = 'CARTAO_CREDITO';
+    this.pagamentoProcessando = false;
+    this.pagamentoConcluido = false;
+    this.stripeErro = '';
+    this.pagamentoAtual = null;
+    this.modalPagamentoAberto = true;
+    this.modalDetalhesAberto = false;
+    setTimeout(() => this.inicializarStripe(), 300);
+  }
+
+  fecharModalPagamento() {
+    this.modalPagamentoAberto = false;
+    if (this.stripeCardElement) {
+      this.stripeCardElement.destroy();
+      this.stripeCardElement = null;
+    }
+  }
+
+  inicializarStripe() {
+    const stripeKey = 'pk_test_SUA_PUBLISHABLE_KEY_AQUI';
+    this.stripeInstance = (window as any).Stripe(stripeKey);
+    this.stripeElements = this.stripeInstance.elements();
+    this.stripeCardElement = this.stripeElements.create('card', {
+      style: {
+        base: {
+          fontSize: '15px',
+          color: '#374151',
+          fontFamily: 'inherit',
+          '::placeholder': { color: '#9ca3af' }
+        }
+      }
+    });
+    this.stripeCardElement.mount('#stripe-card-element');
+    this.stripeCardElement.on('change', (event: any) => {
+      this.stripeErro = event.error ? event.error.message : '';
+    });
+  }
+
+  processarPagamento() {
+    if (!this.agendamentoDetalhes?.id || !this.agendamentoDetalhes?.valorTotal) return;
+    this.pagamentoProcessando = true;
+    this.stripeErro = '';
+    this.pagamentoService.criarIntent(
+      this.agendamentoDetalhes.id,
+      this.agendamentoDetalhes.valorTotal,
+      this.formaPgto
+    ).subscribe({
+      next: (intentResponse) => {
+        if (this.formaPgto === 'PIX') {
+          this.confirmarPagamentoNoBackend(intentResponse.clientSecret.split('_secret_')[0]);
+          return;
+        }
+        this.stripeInstance.confirmCardPayment(intentResponse.clientSecret, {
+          payment_method: { card: this.stripeCardElement }
+        }).then((result: any) => {
+          if (result.error) {
+            this.stripeErro = result.error.message;
+            this.pagamentoProcessando = false;
+          } else {
+            this.confirmarPagamentoNoBackend(result.paymentIntent.id);
+          }
+        });
+      },
+      error: (err: any) => {
+        this.toast.erro(err.mensagemAmigavel || 'Erro ao iniciar pagamento.');
+        this.pagamentoProcessando = false;
+      }
+    });
+  }
+
+  confirmarPagamentoNoBackend(paymentIntentId: string) {
+    this.pagamentoService.confirmar({
+      agendamentoId: this.agendamentoDetalhes!.id!,
+      paymentIntentId,
+      valor: this.agendamentoDetalhes!.valorTotal!,
+      formaPgto: this.formaPgto
+    }).subscribe({
+      next: (pagamento) => {
+        this.pagamentoAtual = pagamento;
+        this.pagamentoProcessando = false;
+        this.pagamentoConcluido = true;
+        this.toast.sucesso('Pagamento realizado com sucesso!');
+        this.carregarHistorico();
+      },
+      error: (err: any) => {
+        this.toast.erro(err.mensagemAmigavel || 'Erro ao confirmar pagamento.');
+        this.pagamentoProcessando = false;
+      }
+    });
+  }
+
+  baixarComprovante() {
+    if (!this.agendamentoDetalhes?.id) return;
+    this.pagamentoService.baixarComprovante(this.agendamentoDetalhes.id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `comprovante-agendamento-${this.agendamentoDetalhes!.id}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => this.toast.erro('Erro ao baixar comprovante.')
+    });
+  }
+
+  podePagar(ag: AgendamentoResponse): boolean {
+    return ag.statusAgendamento === 'CONFIRMADO' && !!ag.valorTotal && ag.valorTotal > 0;
+  }
+
   // Perfil
   salvarPerfil() {
     if (this.formPerfil.invalid) { this.formPerfil.markAllAsTouched(); return; }
@@ -582,15 +697,14 @@ export class AreaClienteComponent implements OnInit {
     });
   }
 
-  // UC003 — Cancelar agendamento
+  // UC003
   podeCancelar(ag: AgendamentoResponse): boolean {
     if (!ag.dataAgendamento || !ag.horaInicio) return false;
     if (['CANCELADO', 'REALIZADO', 'AUSENTE'].includes(ag.statusAgendamento)) return false;
     const dataHora = new Date(ag.dataAgendamento + 'T' + ag.horaInicio);
     const agora = new Date();
     const diffMs = dataHora.getTime() - agora.getTime();
-    const diffHoras = diffMs / (1000 * 60 * 60);
-    return diffHoras >= 2; // RN-07: pode cancelar até 2h antes
+    return diffMs / (1000 * 60 * 60) >= 2;
   }
 
   abrirModalCancelar(ag: AgendamentoResponse) {
@@ -620,7 +734,6 @@ export class AreaClienteComponent implements OnInit {
     });
   }
 
-  // UC003 — Reagendar
   abrirModalReagendar(ag: AgendamentoResponse) {
     this.agendamentoDetalhes = ag;
     this.dataSelecionadaReagendamento = '';
@@ -635,19 +748,12 @@ export class AreaClienteComponent implements OnInit {
   buscarHorariosReagendamento() {
     if (!this.dataSelecionadaReagendamento || !this.agendamentoDetalhes?.profissionalId) return;
     const hoje = new Date().toISOString().split('T')[0];
-    if (this.dataSelecionadaReagendamento < hoje) {
-      this.toast.aviso('Selecione uma data futura.');
-      return;
-    }
+    if (this.dataSelecionadaReagendamento < hoje) { this.toast.aviso('Selecione uma data futura.'); return; }
     this.carregandoHorariosReagendamento = true;
     this.horaSelecionadaReagendamento = '';
     const sid = this.agendamentoDetalhes?.servicoId?.[0];
     const profId = this.agendamentoDetalhes?.profissionalId;
-    this.agendamentoService.buscarHorariosDisponiveis(
-      this.dataSelecionadaReagendamento,
-      sid,
-      profId
-    ).subscribe({
+    this.agendamentoService.buscarHorariosDisponiveis(this.dataSelecionadaReagendamento, sid, profId).subscribe({
       next: h => { this.horariosReagendamento = h; this.carregandoHorariosReagendamento = false; },
       error: () => { this.horariosReagendamento = []; this.carregandoHorariosReagendamento = false; }
     });
@@ -660,10 +766,8 @@ export class AreaClienteComponent implements OnInit {
     }
     this.reagendando = true;
     const sessao = this.authService.getSessao();
-    // 1. Cancela o agendamento original
     this.agendamentoService.atualizarStatus(this.agendamentoDetalhes.id!, 'CANCELADO').subscribe({
       next: () => {
-        // 2. Cria novo agendamento com nova data/hora
         this.agendamentoService.criar({
           dataAgendamento: this.dataSelecionadaReagendamento,
           horaInicio: this.horaSelecionadaReagendamento,
@@ -695,7 +799,7 @@ export class AreaClienteComponent implements OnInit {
     });
   }
 
-  // UC017 — Avaliar prestador
+  // UC017
   podeAvaliar(ag: AgendamentoResponse): boolean {
     return ag.statusAgendamento === 'REALIZADO';
   }
@@ -709,7 +813,6 @@ export class AreaClienteComponent implements OnInit {
   }
 
   fecharModalAvaliacao() { this.modalAvaliacaoAberto = false; this.agendamentoParaAvaliar = null; }
-
   definirNota(n: number) { this.notaAvaliacao = n; }
 
   enviarAvaliacao() {
@@ -746,7 +849,6 @@ export class AreaClienteComponent implements OnInit {
 
   nomeProfissional(id: number | undefined): string {
     if (!id) {
-      // sem profissional — mostra o nome do prestador
       const sessao = this.authService.getSessao();
       return sessao?.nomeEmpresa || 'Prestador';
     }

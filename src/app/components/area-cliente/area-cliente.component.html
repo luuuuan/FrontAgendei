@@ -746,6 +746,12 @@
           style="background:#f59e0b;border-color:#f59e0b">
           <i class="fas fa-star"></i> Avaliar Servico
         </button>
+        <button class="btn btn-primary"
+          *ngIf="agendamentoDetalhes && podePagar(agendamentoDetalhes)"
+          (click)="abrirModalPagamento(agendamentoDetalhes!)"
+          style="background:#16a34a;border-color:#16a34a">
+          <i class="fas fa-credit-card"></i> Pagar
+        </button>
         <button class="btn btn-outline"
           *ngIf="agendamentoDetalhes && podeCancelar(agendamentoDetalhes)"
           (click)="abrirModalReagendar(agendamentoDetalhes!)"
@@ -855,6 +861,83 @@
           <i class="fas fa-spinner fa-spin" *ngIf="reagendando"></i>
           <i class="fas fa-calendar-check" *ngIf="!reagendando"></i>
           {{ reagendando ? 'Reagendando...' : 'Confirmar Reagendamento' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Modal Pagamento UC012 -->
+  <div class="modal-overlay" *ngIf="modalPagamentoAberto" (click)="fecharModalPagamento()">
+    <div class="modal modal-pagamento" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fas fa-credit-card" style="color:#4361ee"></i> Pagamento
+        </div>
+        <button class="modal-close" (click)="fecharModalPagamento()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="pagamento-resumo" *ngIf="agendamentoDetalhes">
+          <div class="pagamento-resumo-linha">
+            <span><i class="fas fa-calendar"></i> {{ formatarData(agendamentoDetalhes.dataAgendamento) }}</span>
+            <span *ngIf="agendamentoDetalhes.horaInicio"> às {{ agendamentoDetalhes.horaInicio }}</span>
+          </div>
+          <div class="pagamento-resumo-linha">
+            <span><i class="fas fa-user-md"></i> {{ nomeProfissional(agendamentoDetalhes.profissionalId) }}</span>
+          </div>
+          <div class="pagamento-resumo-valor">
+            R$ {{ (agendamentoDetalhes.valorTotal ?? 0) | number:'1.2-2' }}
+          </div>
+        </div>
+        <div class="form-group" *ngIf="!pagamentoProcessando && !pagamentoConcluido">
+          <label>Forma de pagamento</label>
+          <div class="formas-pgto">
+            <button class="forma-btn" [class.ativo]="formaPgto === 'CARTAO_CREDITO'" (click)="formaPgto = 'CARTAO_CREDITO'">
+              <i class="fas fa-credit-card"></i> Cartão de Crédito
+            </button>
+            <button class="forma-btn" [class.ativo]="formaPgto === 'CARTAO_DEBITO'" (click)="formaPgto = 'CARTAO_DEBITO'">
+              <i class="fas fa-credit-card"></i> Cartão de Débito
+            </button>
+            <button class="forma-btn" [class.ativo]="formaPgto === 'PIX'" (click)="formaPgto = 'PIX'">
+              <i class="fas fa-qrcode"></i> PIX
+            </button>
+          </div>
+        </div>
+        <div *ngIf="!pagamentoProcessando && !pagamentoConcluido && (formaPgto === 'CARTAO_CREDITO' || formaPgto === 'CARTAO_DEBITO')">
+          <div class="form-group">
+            <label>Dados do cartão</label>
+            <div id="stripe-card-element" class="stripe-card-element"></div>
+            <div class="stripe-error" *ngIf="stripeErro">
+              <i class="fas fa-exclamation-circle"></i> {{ stripeErro }}
+            </div>
+          </div>
+        </div>
+        <div *ngIf="!pagamentoProcessando && !pagamentoConcluido && formaPgto === 'PIX'" class="pix-info">
+          <i class="fas fa-qrcode" style="font-size:48px;color:#4361ee"></i>
+          <p>Após confirmar, você receberá as instruções de pagamento PIX.</p>
+        </div>
+        <div class="pagamento-processando" *ngIf="pagamentoProcessando">
+          <div class="loading-spinner"></div>
+          <p>Processando pagamento...</p>
+        </div>
+        <div class="pagamento-concluido" *ngIf="pagamentoConcluido">
+          <div class="concluido-icone"><i class="fas fa-check-circle"></i></div>
+          <h3>Pagamento confirmado!</h3>
+          <p>Seu agendamento foi pago com sucesso.</p>
+          <button class="btn btn-outline" (click)="baixarComprovante()">
+            <i class="fas fa-download"></i> Baixar Comprovante
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer" *ngIf="!pagamentoProcessando && !pagamentoConcluido">
+        <button class="btn btn-outline" (click)="fecharModalPagamento()">Cancelar</button>
+        <button class="btn btn-primary" (click)="processarPagamento()" [disabled]="!formaPgto">
+          <i class="fas fa-lock"></i> Pagar R$ {{ (agendamentoDetalhes?.valorTotal ?? 0) | number:'1.2-2' }}
+        </button>
+      </div>
+      <div class="modal-footer" *ngIf="pagamentoConcluido">
+        <button class="btn btn-primary" (click)="fecharModalPagamento()">
+          <i class="fas fa-check"></i> Fechar
         </button>
       </div>
     </div>

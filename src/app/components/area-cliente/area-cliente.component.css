@@ -1118,3 +1118,116 @@ textarea {
 .search-box-inline { display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px; }
 .search-box-inline i { color:#9ca3af;font-size:14px; }
 .search-box-inline input { flex:1;border:none;background:transparent;outline:none;font-size:14px;color:#374151; }
+
+/* ===== UC012 — Pagamento ===== */
+.modal-pagamento { max-width: 460px; }
+
+.pagamento-resumo {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+}
+
+.pagamento-resumo-linha {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 4px;
+  display: flex;
+  gap: 8px;
+}
+
+.pagamento-resumo-valor {
+  font-size: 24px;
+  font-weight: 700;
+  color: #4361ee;
+  margin-top: 8px;
+}
+
+.formas-pgto {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.forma-btn {
+  flex: 1;
+  min-width: 120px;
+  padding: 10px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.forma-btn:hover { border-color: #4361ee; color: #4361ee; }
+.forma-btn.ativo { background: #eff2ff; border-color: #4361ee; color: #4361ee; font-weight: 600; }
+
+.stripe-card-element {
+  padding: 12px 14px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  transition: border-color .2s;
+  margin-top: 8px;
+}
+.stripe-card-element:focus-within { border-color: #4361ee; }
+
+.stripe-error {
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pix-info {
+  text-align: center;
+  padding: 24px;
+  color: #6b7280;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.pagamento-processando {
+  text-align: center;
+  padding: 32px;
+  color: #6b7280;
+}
+
+.pagamento-concluido {
+  text-align: center;
+  padding: 24px;
+}
+
+.concluido-icone {
+  font-size: 56px;
+  color: #16a34a;
+  margin-bottom: 12px;
+}
+
+.pagamento-concluido h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px;
+}
+
+.pagamento-concluido p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 16px;
+}
