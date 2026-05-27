@@ -4,3 +4,4 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 .angular/
+src/environments/environment.ts

@@ -37,7 +37,7 @@
       <tr>
         <th>Data / Hora</th>
         <th>Profissional</th>
-        <th>Usuário</th>
+        <th>Cliente</th>
         <th>Serviços</th>
         <th>Valor Total</th>
         <th>Status</th>
@@ -48,7 +48,7 @@
       <tr *ngFor="let ag of agendamentos">
         <td>{{ formatarDataHora(ag.dataAgendamento) }}</td>
         <td>{{ nomeProfissional(ag.profissionalId) }}</td>
-        <td>{{ nomeClienteObs(ag.observacoes) }}</td>
+        <td>{{ nomeCliente(ag) }}</td>
         <td>
           <span *ngFor="let s of ag.servicoId" class="badge badge-primary" style="margin-right:4px">
             {{ nomeServico(s) }}
@@ -111,7 +111,7 @@
 
         <div class="detalhe-bloco">
           <div class="detalhe-label"><i class="fas fa-user"></i> Cliente</div>
-          <div class="detalhe-valor">{{ nomeClienteObs(agendamentoDetalhes.observacoes) }}</div>
+          <div class="detalhe-valor">{{ nomeCliente(agendamentoDetalhes) }}</div>
         </div>
 
         <div class="detalhe-bloco">

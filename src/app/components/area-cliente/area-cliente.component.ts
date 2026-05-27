@@ -61,8 +61,19 @@ export class AreaClienteComponent implements OnInit {
   horaSelecionada = '';
   observacoes = '';
   salvandoAgendamento = false;
+  // Step 4 - pagamento integrado ao agendamento
+  formaPgtoAgendamento = 'CARTAO_CREDITO';
+  pagandoAgendamento = false;
+  stripeElementsAgendamento: any = null;
+  stripeCardAgendamento: any = null;
+  stripeErroAgendamento = '';
   quantidadeServico = 1;
-  dataMinima = new Date().toISOString().split('T')[0];
+  get dataMinima(): string {
+    const agora = new Date();
+    return agora.getFullYear() + '-' +
+      String(agora.getMonth() + 1).padStart(2, '0') + '-' +
+      String(agora.getDate()).padStart(2, '0');
+  }
   horariosDisponiveis: string[] = [];
   carregandoHorarios = false;
   mensagemDisponibilidade = '';
@@ -141,6 +152,9 @@ export class AreaClienteComponent implements OnInit {
   stripeCardElement: any = null;
   stripeInstance: any = null;
   pagamentoAtual: PagamentoResponse | null = null;
+  pixQrCodeUrl = '';
+  pixCopiaCola = '';
+  aguardandoPix = false;
 
   // Perfil
   formPerfil: FormGroup;
@@ -149,7 +163,7 @@ export class AreaClienteComponent implements OnInit {
   salvandoSenha = false;
   abaPerfilAtiva: 'dados' | 'senha' = 'dados';
 
-  filtroHistorico: 'todos' | 'CONFIRMADO' | 'PENDENTE' | 'CANCELADO' = 'todos';
+  filtroHistorico: 'todos' | 'CONFIRMADO' | 'PENDENTE' | 'CANCELADO' | 'REALIZADO' | 'PAGO' = 'todos';
 
   constructor(
     private fb: FormBuilder,
@@ -211,14 +225,20 @@ export class AreaClienteComponent implements OnInit {
     if (!sessao) { this.carregandoAgendamentos = false; return; }
     this.agendamentoService.buscarPorUsuario(sessao.usuarioId).subscribe({
       next: (lista) => {
-        const hoje = new Date().toISOString().split('T')[0];
+        const agora = new Date();
+    const hoje = agora.getFullYear() + '-' +
+      String(agora.getMonth() + 1).padStart(2, '0') + '-' +
+      String(agora.getDate()).padStart(2, '0');
         this.agendamentosHoje = lista.filter(a => a.dataAgendamento?.startsWith(hoje));
         this.todoAgendamentos = lista;
         this.carregandoAgendamentos = false;
         this.verificarInicial();
       },
       error: () => {
-        const hoje = new Date().toISOString().split('T')[0];
+        const agora = new Date();
+    const hoje = agora.getFullYear() + '-' +
+      String(agora.getMonth() + 1).padStart(2, '0') + '-' +
+      String(agora.getDate()).padStart(2, '0');
         this.agendamentoService.buscarPorData(hoje).subscribe({
           next: (lista) => {
             this.agendamentosHoje = lista.filter(a => a.usuarioId === sessao.usuarioId);
@@ -302,8 +322,11 @@ export class AreaClienteComponent implements OnInit {
     if (!dia) return;
     const ano = this.dataAtual.getFullYear(), mes = this.dataAtual.getMonth() + 1;
     const data = ano + '-' + String(mes).padStart(2, '0') + '-' + String(dia).padStart(2, '0');
-    const hoje = new Date().toISOString().split('T')[0];
-    if (data < hoje) { this.toast.aviso('Nao e possivel agendar para datas passadas.'); return; }
+    const agora = new Date();
+    const hoje = agora.getFullYear() + '-' +
+      String(agora.getMonth() + 1).padStart(2, '0') + '-' +
+      String(agora.getDate()).padStart(2, '0');
+    if (data < hoje) { this.toast.aviso('Não é possível agendar para datas passadas.'); return; }
     this.dataSelecionada = data;
     this.horaSelecionada = '';
     this.horariosDisponiveis = [];
@@ -450,9 +473,37 @@ export class AreaClienteComponent implements OnInit {
 
   confirmarDataHora() {
     if (!this.dataSelecionada || !this.horaSelecionada) { this.toast.aviso('Selecione a data e o horario.'); return; }
-    const hoje = new Date().toISOString().split('T')[0];
-    if (this.dataSelecionada < hoje) { this.toast.erro('Nao e possivel agendar para datas passadas.'); return; }
+    const agora = new Date();
+    const hoje = agora.getFullYear() + '-' +
+      String(agora.getMonth() + 1).padStart(2, '0') + '-' +
+      String(agora.getDate()).padStart(2, '0');
+    if (this.dataSelecionada < hoje) { this.toast.erro('Não é possível agendar para datas passadas.'); return; }
     this.stepAgendamento = 4;
+    this.inicializarStripeAgendamento();
+  }
+
+  // Step 4: inicializa Stripe ao entrar na tela de pagamento
+  inicializarStripeAgendamento() {
+    setTimeout(() => {
+      if (this.stripeCardAgendamento) {
+        this.stripeCardAgendamento.destroy();
+        this.stripeCardAgendamento = null;
+      }
+      if (!this.stripeInstance) {
+        this.stripeInstance = (window as any).Stripe(environment.stripePublishableKey);
+      }
+      this.stripeElementsAgendamento = this.stripeInstance.elements();
+      this.stripeCardAgendamento = this.stripeElementsAgendamento.create('card', {
+        style: {
+          base: { fontSize: '15px', color: '#374151', fontFamily: 'inherit',
+            '::placeholder': { color: '#9ca3af' } }
+        }
+      });
+      this.stripeCardAgendamento.mount('#stripe-card-agendamento');
+      this.stripeCardAgendamento.on('change', (event: any) => {
+        this.stripeErroAgendamento = event.error ? event.error.message : '';
+      });
+    }, 300);
   }
 
   confirmarAgendamento() {
@@ -461,35 +512,80 @@ export class AreaClienteComponent implements OnInit {
       this.toast.erro('Preencha todos os dados do agendamento.');
       return;
     }
-    const hoje = new Date().toISOString().split('T')[0];
-    if (this.dataSelecionada < hoje) { this.toast.erro('Nao e possivel agendar para datas passadas.'); return; }
+    const agora = new Date();
+    const hoje = agora.getFullYear() + '-' +
+      String(agora.getMonth() + 1).padStart(2, '0') + '-' +
+      String(agora.getDate()).padStart(2, '0');
+    if (this.dataSelecionada < hoje) { this.toast.erro('Não é possível agendar para datas passadas.'); return; }
+
+    const valor = this.servicoTemCobrancaVariavel ? this.valorTotalCalculado : this.valorTotalServicos;
+
+    this.pagandoAgendamento = true;
+    this.stripeErroAgendamento = '';
+
+    if (this.formaPgtoAgendamento === 'PIX') {
+      // PIX: cria agendamento e mostra QR code
+      this.criarAgendamentoESalvar(sessao, valor, null);
+      return;
+    }
+
+    // Cartão: cria intent, confirma no Stripe, depois cria agendamento
+    this.pagamentoService.criarIntent(0, valor, this.formaPgtoAgendamento).subscribe({
+      next: (intent) => {
+        this.stripeInstance.confirmCardPayment(intent.clientSecret, {
+          payment_method: { card: this.stripeCardAgendamento }
+        }).then((result: any) => {
+          if (result.error) {
+            this.stripeErroAgendamento = result.error.message;
+            this.pagandoAgendamento = false;
+          } else {
+            this.criarAgendamentoESalvar(sessao, valor, result.paymentIntent.id);
+          }
+        });
+      },
+      error: (err: any) => {
+        this.toast.erro(err.mensagemAmigavel || 'Erro ao processar pagamento.');
+        this.pagandoAgendamento = false;
+      }
+    });
+  }
+
+  criarAgendamentoESalvar(sessao: any, valor: number, paymentIntentId: string | null) {
     this.salvandoAgendamento = true;
     this.agendamentoService.criar({
       dataAgendamento: this.dataSelecionada,
       dataCriacao: new Date().toISOString(),
       horaInicio: this.horaSelecionada,
-      statusAgendamento: 'PENDENTE',
-      taxaPlataforma: (this.servicoSelecionado.valorServico ?? this.servicoSelecionado.valor ?? 0) * 0.1,
-      valorTotal: this.servicoSelecionado.valor,
+      statusAgendamento: paymentIntentId ? 'PAGO' : 'PENDENTE',
+      taxaPlataforma: valor * 0.1,
+      valorTotal: valor,
       observacoes: this.observacoes,
       usuarioId: sessao.usuarioId,
       profissionalId: this.profissionalSelecionado?.id ?? undefined,
       prestadorId: !this.profissionalSelecionado ? (this.servicoSelecionado as any)?.prestadorId : undefined,
-      servicos: this.servicosSelecionados.length > 0 ? this.servicosSelecionados.map(s => s.id!) : [this.servicoSelecionado!.id!],
-      enderecoId: this.usuarioLogado?.enderecoId
+      servicos: this.servicosSelecionados.length > 0
+        ? this.servicosSelecionados.map(s => s.id!)
+        : [this.servicoSelecionado!.id!],
+      enderecoId: this.usuarioLogado?.enderecoId,
+      paymentIntentId
     } as any).subscribe({
       next: (ag) => {
-        this.toast.sucesso('Agendamento realizado com sucesso!');
+        // pagamento já confirmado pelo back via @Transactional
+        this.toast.sucesso(paymentIntentId
+          ? 'Agendamento realizado e pagamento confirmado!'
+          : 'Agendamento realizado! Aguardando pagamento PIX.');
         this.telaAtiva = 'historico';
         this.carregarHistorico();
         this.carregarAgendamentosHoje();
         this.salvandoAgendamento = false;
+        this.pagandoAgendamento = false;
         this.agendamentoDetalhes = ag;
         this.modalDetalhesAberto = true;
       },
       error: (err: any) => {
         this.toast.erro(err.mensagemAmigavel || 'Erro ao agendar.');
         this.salvandoAgendamento = false;
+        this.pagandoAgendamento = false;
       }
     });
   }
@@ -597,7 +693,33 @@ export class AreaClienteComponent implements OnInit {
     ).subscribe({
       next: (intentResponse) => {
         if (this.formaPgto === 'PIX') {
-          this.confirmarPagamentoNoBackend(intentResponse.clientSecret.split('_secret_')[0]);
+          const stripeKey = environment.stripePublishableKey || '';
+          const isModoTeste = stripeKey.startsWith('pk_test_');
+
+          if (isModoTeste) {
+            // Modo teste — simula QR Code PIX para demonstração
+            this.pixQrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' +
+              encodeURIComponent('00020126580014BR.GOV.BCB.PIX0136agendei-demo@pix.com.br5204000053039865802BR5913Agendei Demo6009SAO PAULO62070503***6304ABCD');
+            this.pixCopiaCola = '00020126580014BR.GOV.BCB.PIX0136agendei-demo@pix.com.br5204000053039865802BR5913Agendei Demo6009SAO PAULO62070503***6304ABCD';
+            this.pagamentoProcessando = false;
+            this.aguardandoPix = true;
+          } else {
+            // Produção — usa o Stripe real
+            this.stripeInstance.confirmPaymentIntent(intentResponse.clientSecret, {
+              payment_method: { type: 'pix' }
+            }).then((result: any) => {
+              if (result.error) {
+                this.stripeErro = result.error.message;
+                this.pagamentoProcessando = false;
+              } else if (result.paymentIntent?.next_action?.pix_display_qr_code) {
+                const pix = result.paymentIntent.next_action.pix_display_qr_code;
+                this.pixQrCodeUrl = pix.image_url_png;
+                this.pixCopiaCola = pix.data;
+                this.pagamentoProcessando = false;
+                this.aguardandoPix = true;
+              }
+            });
+          }
           return;
         }
         this.stripeInstance.confirmCardPayment(intentResponse.clientSecret, {
@@ -629,7 +751,7 @@ export class AreaClienteComponent implements OnInit {
         this.pagamentoAtual = pagamento;
         this.pagamentoProcessando = false;
         this.pagamentoConcluido = true;
-        this.toast.sucesso('Pagamento realizado com sucesso!');
+        this.toast.sucesso('Pagamento realizado! Status atualizado para PAGO.');
         this.carregarHistorico();
       },
       error: (err: any) => {
@@ -655,7 +777,13 @@ export class AreaClienteComponent implements OnInit {
   }
 
   podePagar(ag: AgendamentoResponse): boolean {
-    return ag.statusAgendamento === 'CONFIRMADO' && !!ag.valorTotal && ag.valorTotal > 0;
+    return ag.statusAgendamento === 'REALIZADO'
+      && !!ag.valorTotal
+      && ag.valorTotal > 0
+  }
+
+  estaPago(ag: AgendamentoResponse): boolean {
+    return ag.statusAgendamento === 'PAGO';
   }
 
   // Perfil
@@ -720,9 +848,18 @@ export class AreaClienteComponent implements OnInit {
   confirmarCancelamento() {
     if (!this.agendamentoDetalhes) return;
     this.cancelando = true;
-    this.agendamentoService.atualizarStatus(this.agendamentoDetalhes.id!, 'CANCELADO').subscribe({
+    const ag = this.agendamentoDetalhes;
+    this.agendamentoService.atualizarStatus(ag.id!, 'CANCELADO').subscribe({
       next: () => {
-        this.toast.sucesso('Agendamento cancelado com sucesso.');
+        // Se estava PAGO, dispara reembolso automático
+        if (ag.statusAgendamento === 'PAGO') {
+          this.pagamentoService.reembolsar(ag.id!).subscribe({
+            next: () => this.toast.sucesso('Agendamento cancelado e reembolso realizado automaticamente!'),
+            error: () => this.toast.aviso('Agendamento cancelado. Entre em contato para o reembolso.')
+          });
+        } else {
+          this.toast.sucesso('Agendamento cancelado com sucesso.');
+        }
         this.fecharModalCancelar();
         this.carregarHistorico();
         this.carregarAgendamentosHoje();
@@ -748,7 +885,10 @@ export class AreaClienteComponent implements OnInit {
 
   buscarHorariosReagendamento() {
     if (!this.dataSelecionadaReagendamento || !this.agendamentoDetalhes?.profissionalId) return;
-    const hoje = new Date().toISOString().split('T')[0];
+    const agora = new Date();
+    const hoje = agora.getFullYear() + '-' +
+      String(agora.getMonth() + 1).padStart(2, '0') + '-' +
+      String(agora.getDate()).padStart(2, '0');
     if (this.dataSelecionadaReagendamento < hoje) { this.toast.aviso('Selecione uma data futura.'); return; }
     this.carregandoHorariosReagendamento = true;
     this.horaSelecionadaReagendamento = '';

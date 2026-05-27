@@ -15,16 +15,44 @@
           (input)="aplicarFiltros()"
           placeholder="Buscar por serviço ou descrição..."
         />
+        <button *ngIf="termoBusca" class="btn-limpar-busca" (click)="termoBusca=''; aplicarFiltros()">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
 
       <div class="hero-acoes">
-        <a routerLink="/login" class="btn-hero-outline">Entrar</a>
-        <a routerLink="/cadastro-cliente" class="btn-hero">Criar conta grátis</a>
+        <a routerLink="/login" class="btn-hero-outline"><i class="fas fa-sign-in-alt"></i> Entrar</a>
+        <a routerLink="/cadastro-cliente" class="btn-hero"><i class="fas fa-user-plus"></i> Criar conta grátis</a>
       </div>
     </div>
   </div>
 
-  <!-- Filtros -->
+  <!-- Filtros de Local -->
+  <div class="filtros-local">
+    <button
+      class="filtro-local-btn"
+      [class.ativo]="filtroLocal === ''"
+      (click)="filtroLocal = ''; aplicarFiltros()"
+    >
+      <i class="fas fa-globe"></i> Todos
+    </button>
+    <button
+      class="filtro-local-btn"
+      [class.ativo]="filtroLocal === 'NO_LOCAL'"
+      (click)="filtroLocal = filtroLocal === 'NO_LOCAL' ? '' : 'NO_LOCAL'; aplicarFiltros()"
+    >
+      <i class="fas fa-store"></i> No estabelecimento
+    </button>
+    <button
+      class="filtro-local-btn"
+      [class.ativo]="filtroLocal === 'DOMICILIO'"
+      (click)="filtroLocal = filtroLocal === 'DOMICILIO' ? '' : 'DOMICILIO'; aplicarFiltros()"
+    >
+      <i class="fas fa-home"></i> A domicílio
+    </button>
+  </div>
+
+  <!-- Filtros avançados -->
   <div class="explorar-filtros">
     <div class="filtro-item">
       <label><i class="fas fa-sort-amount-down"></i> Ordenar por</label>
@@ -35,8 +63,9 @@
         <option value="duracao">Menor duração</option>
       </select>
     </div>
+
     <div class="filtro-item">
-      <label><i class="fas fa-dollar-sign"></i> Valor máximo: R$ {{ filtroValorMax }}</label>
+      <label><i class="fas fa-tag"></i> Valor máximo: <strong>R$ {{ filtroValorMax }}</strong></label>
       <input
         type="range"
         [(ngModel)]="filtroValorMax"
@@ -46,75 +75,131 @@
         step="10"
       />
     </div>
+
     <div class="filtro-resultado">
-      <span>{{ servicosFiltrados.length }} serviço(s) encontrado(s)</span>
+      <span class="badge-resultado">
+        <i class="fas fa-list"></i>
+        {{ servicosFiltrados.length }} serviço(s) encontrado(s)
+      </span>
+      <button class="btn-limpar-filtros" *ngIf="temFiltrosAtivos" (click)="limparFiltros()">
+        <i class="fas fa-times"></i> Limpar filtros
+      </button>
     </div>
   </div>
 
   <!-- Loading -->
   <div class="explorar-loading" *ngIf="carregando">
-    <i class="fas fa-spinner fa-spin fa-2x"></i>
-    <p>Carregando serviços...</p>
+    <div class="loading-spinner"></div>
+    <p>Buscando serviços...</p>
   </div>
 
-  <!-- Grid de serviços -->
-  <div class="explorar-grid" *ngIf="!carregando">
+  <div *ngIf="!carregando">
 
-    <div class="servico-card" *ngFor="let s of servicosFiltrados">
-      <div class="servico-card-header">
-        <div class="servico-icone"><i class="fas fa-concierge-bell"></i></div>
-        <div class="servico-badge">Disponível</div>
-      </div>
-      <div class="servico-card-body">
-        <h3 class="servico-nome">{{ s.nome }}</h3>
-        <p class="servico-desc">{{ s.descricao }}</p>
-        <div class="servico-infos">
-          <span class="servico-info-item">
-            <i class="fas fa-clock"></i> {{ s.duracaoMinutos }} min
-          </span>
-          <span class="servico-info-item" *ngIf="s.tempoBuffer">
-            <i class="fas fa-hourglass-half"></i> +{{ s.tempoBuffer }} min buffer
-          </span>
+    <!-- Grid de serviços -->
+    <div class="explorar-grid" *ngIf="servicosFiltrados.length > 0">
+      <div class="servico-card" *ngFor="let s of servicosFiltrados">
+        <div class="servico-card-header">
+          <div class="servico-icone">
+            <i [class]="getIcone(s)"></i>
+          </div>
+          <div class="servico-badges">
+            <span class="badge-disponivel">Disponível</span>
+            <span class="badge-local" *ngIf="s.localAtendimento">
+              <i [class]="getLocalIcone(s.localAtendimento)"></i>
+              {{ getLocalLabel(s.localAtendimento) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="servico-card-body">
+          <h3 class="servico-nome">{{ s.nome }}</h3>
+          <p class="servico-desc">{{ s.descricao || 'Sem descrição disponível.' }}</p>
+
+          <div class="servico-meta">
+            <span *ngIf="s.prestadorNome || s.nomePrestador" class="servico-prestador">
+              <i class="fas fa-building"></i>
+              {{ s.prestadorNome || s.nomePrestador }}
+            </span>
+            <span *ngIf="s.profissionalNome || s.nomeProfissional" class="servico-prestador">
+              <i class="fas fa-user-tie"></i>
+              {{ s.profissionalNome || s.nomeProfissional }}
+            </span>
+          </div>
+
+          <div class="servico-infos">
+            <span class="servico-info-item">
+              <i class="fas fa-clock"></i> {{ s.duracaoMinutos }} min
+            </span>
+            <span class="servico-info-item" *ngIf="s.tempoBuffer">
+              <i class="fas fa-hourglass-half"></i> +{{ s.tempoBuffer }} min
+            </span>
+            <span class="servico-info-item" *ngIf="s.tipoCobranca === 'POR_HORA'">
+              <i class="fas fa-stopwatch"></i> Por hora
+            </span>
+            <span class="servico-info-item" *ngIf="s.tipoCobranca === 'POR_UNIDADE'">
+              <i class="fas fa-box"></i> Por unidade
+            </span>
+          </div>
+        </div>
+
+        <div class="servico-card-footer">
+          <div class="servico-preco">
+            <span class="preco-label">a partir de</span>
+            R$ {{ (s.valorServico ?? 0) | number:'1.2-2' }}
+          </div>
+          <button class="btn-contratar" (click)="contratarServico(s)">
+            <i class="fas fa-calendar-plus"></i> Agendar
+          </button>
         </div>
       </div>
-      <div class="servico-card-footer">
-        <div class="servico-preco">R$ {{ (s.valorServico ?? s.valor) | number:'1.2-2' }}</div>
-        <button class="btn-contratar" (click)="contratarServico(s)">
-          <i class="fas fa-calendar-plus"></i> Agendar
-        </button>
-      </div>
     </div>
 
-    <div class="empty-state" *ngIf="servicosFiltrados.length === 0 && !carregando">
-      <i class="fas fa-search" style="font-size:48px;color:#d1d5db;display:block;margin-bottom:12px"></i>
-      <p>Nenhum serviço encontrado para os filtros selecionados.</p>
-      <button class="btn-hero-outline" (click)="termoBusca=''; filtroValorMax=valorMaximo; aplicarFiltros()">
-        Limpar filtros
+    <!-- Empty state -->
+    <div class="empty-state" *ngIf="servicosFiltrados.length === 0">
+      <div class="empty-icone"><i class="fas fa-search-minus"></i></div>
+      <h3>Nenhum serviço encontrado</h3>
+      <p>Tente ajustar os filtros ou buscar por outro termo.</p>
+      <button class="btn-hero-outline btn-limpar-empty" (click)="limparFiltros()">
+        <i class="fas fa-redo"></i> Limpar filtros
       </button>
     </div>
+
   </div>
 
-  <!-- Modal pedindo cadastro -->
-  <div class="modal-overlay" *ngIf="modalCadastroAberto" (click)="fecharModal()">
+  <!-- Modal cadastro -->
+  <div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
     <div class="modal-cadastro" (click)="$event.stopPropagation()">
-      <button class="modal-close" (click)="fecharModal()">×</button>
+      <button class="modal-close" (click)="fecharModal()">
+        <i class="fas fa-times"></i>
+      </button>
 
-      <div class="modal-icone"><i class="fas fa-user-plus"></i></div>
-
+      <div class="modal-icone"><i class="fas fa-calendar-check"></i></div>
       <h2>Quer agendar este serviço?</h2>
 
       <div class="servico-selecionado" *ngIf="servicoInteresse">
-        <strong>{{ servicoInteresse.nome }}</strong>
-        <span>R$ {{ (servicoInteresse.valorServico ?? servicoInteresse.valor) | number:'1.2-2' }} · {{ servicoInteresse.duracaoMinutos }} min</span>
+        <div class="servico-sel-icone">
+          <i [class]="getIcone(servicoInteresse)"></i>
+        </div>
+        <div class="servico-sel-info">
+          <strong>{{ servicoInteresse.nome }}</strong>
+          <span>
+            R$ {{ (servicoInteresse.valorServico ?? 0) | number:'1.2-2' }}
+            · {{ servicoInteresse.duracaoMinutos }} min
+          </span>
+          <span *ngIf="servicoInteresse.localAtendimento" class="servico-sel-local">
+            <i [class]="getLocalIcone(servicoInteresse.localAtendimento)"></i>
+            {{ getLocalLabel(servicoInteresse.localAtendimento) }}
+          </span>
+        </div>
       </div>
 
       <p>Para agendar, crie sua conta gratuitamente ou entre se já tiver cadastro.</p>
 
       <div class="modal-btns">
-        <button class="btn-hero" (click)="irParaCadastro()">
+        <button class="btn-modal-primary" (click)="irParaCadastro()">
           <i class="fas fa-user-plus"></i> Criar conta grátis
         </button>
-        <button class="btn-hero-outline" (click)="irParaLogin()">
+        <button class="btn-modal-outline" (click)="irParaLogin()">
           <i class="fas fa-sign-in-alt"></i> Já tenho conta
         </button>
       </div>

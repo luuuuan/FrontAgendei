@@ -182,7 +182,7 @@
             <span>1</span> Serviço
           </div>
           <div class="booking-step-sep"></div>
-          <div class="booking-step-tab" [class.ativo]="stepAgendamento >= 2" [class.concluido]="stepAgendamento > 2">
+          <div class="booking-step-tab" [class.ativo]="stepAgendamento >= 2" [class.concluido]="stepAgendamento > 2" style="display:none">
             <span>2</span> Profissional
           </div>
           <div class="booking-step-sep"></div>
@@ -352,7 +352,7 @@
           </div>
 
           <div class="step-actions">
-            <button class="btn-step-voltar" (click)="stepAgendamento = 2">
+            <button class="btn-step-voltar" (click)="stepAgendamento = 1">
               <i class="fas fa-arrow-left"></i> Voltar
             </button>
             <button class="btn-primary-sm" (click)="confirmarDataHora()">
@@ -512,13 +512,65 @@
             <label>Observações (opcional)</label>
             <textarea [(ngModel)]="observacoes" rows="3" placeholder="Alguma informação adicional..."></textarea>
           </div>
+          <!-- Pagamento integrado ao agendamento -->
+          <div class="pagamento-agendamento" style="margin:16px 0;padding:16px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px">
+            <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:12px">
+              <i class="fas fa-lock" style="color:#4361ee"></i> Pagamento
+            </div>
+
+            <div class="formas-pgto">
+              <button class="forma-btn" [class.ativo]="formaPgtoAgendamento === 'CARTAO_CREDITO'"
+                (click)="formaPgtoAgendamento = 'CARTAO_CREDITO'; inicializarStripeAgendamento()">
+                <i class="fas fa-credit-card"></i> Crédito
+              </button>
+              <button class="forma-btn" [class.ativo]="formaPgtoAgendamento === 'CARTAO_DEBITO'"
+                (click)="formaPgtoAgendamento = 'CARTAO_DEBITO'; inicializarStripeAgendamento()">
+                <i class="fas fa-credit-card"></i> Débito
+              </button>
+              <button class="forma-btn" [class.ativo]="formaPgtoAgendamento === 'PIX'"
+                (click)="formaPgtoAgendamento = 'PIX'">
+                <i class="fas fa-qrcode"></i> PIX
+              </button>
+            </div>
+
+            <div *ngIf="formaPgtoAgendamento !== 'PIX'" style="margin-top:12px">
+              <div id="stripe-card-agendamento" class="stripe-card-element"></div>
+              <div class="stripe-error" *ngIf="stripeErroAgendamento">
+                <i class="fas fa-exclamation-circle"></i> {{ stripeErroAgendamento }}
+              </div>
+            </div>
+
+            <div *ngIf="formaPgtoAgendamento === 'PIX'" style="margin-top:12px;text-align:center;padding:12px">
+              <i class="fas fa-qrcode" style="font-size:32px;color:#4361ee"></i>
+              <p style="font-size:12px;color:#6b7280;margin-top:8px">
+                O QR Code PIX será gerado após confirmar o agendamento.
+              </p>
+            </div>
+
+            <div class="info-box" style="margin-top:12px;font-size:12px">
+              <i class="fas fa-shield-alt"></i>
+              Pagamento seguro via Stripe. Reembolso total em caso de cancelamento.
+            </div>
+          </div>
+
           <div class="step-actions">
             <button class="btn-step-voltar" (click)="stepAgendamento = 3">
               <i class="fas fa-arrow-left"></i> Voltar
             </button>
-            <button class="btn-primary-sm" (click)="confirmarAgendamento()" [disabled]="salvandoAgendamento">
-              <span *ngIf="salvandoAgendamento"><i class="fas fa-spinner fa-spin"></i> Agendando...</span>
-              <span *ngIf="!salvandoAgendamento"><i class="fas fa-check"></i> Confirmar Agendamento</span>
+            <button class="btn-primary-sm" (click)="confirmarAgendamento()"
+              [disabled]="salvandoAgendamento || pagandoAgendamento">
+              <span *ngIf="pagandoAgendamento || salvandoAgendamento">
+                <i class="fas fa-spinner fa-spin"></i> Processando...
+              </span>
+              <span *ngIf="!pagandoAgendamento && !salvandoAgendamento">
+                <i class="fas fa-lock"></i>
+                <span *ngIf="formaPgtoAgendamento !== 'PIX'">
+                  Pagar e Agendar — R$ {{ (servicoTemCobrancaVariavel ? valorTotalCalculado : valorTotalServicos) | number:'1.2-2' }}
+                </span>
+                <span *ngIf="formaPgtoAgendamento === 'PIX'">
+                  Confirmar e Gerar PIX
+                </span>
+              </span>
             </button>
           </div>
         </div>
@@ -545,6 +597,10 @@
             (click)="filtroHistorico = 'PENDENTE'">Pendentes</button>
           <button class="filtro-btn" [class.ativo]="filtroHistorico === 'CANCELADO'"
             (click)="filtroHistorico = 'CANCELADO'">Cancelados</button>
+          <button class="filtro-btn" [class.ativo]="filtroHistorico === 'REALIZADO'"
+            (click)="filtroHistorico = 'REALIZADO'">Realizados</button>
+          <button class="filtro-btn" [class.ativo]="filtroHistorico === 'PAGO'"
+            (click)="filtroHistorico = 'PAGO'">Pagos</button>
         </div>
 
         <div class="loading-box" *ngIf="carregandoHistorico">
@@ -767,7 +823,7 @@
           !['CANCELADO','REALIZADO','AUSENTE'].includes(agendamentoDetalhes.statusAgendamento)"
           style="font-size:12px;color:#dc2626;width:100%;text-align:center">
           <i class="fas fa-info-circle"></i>
-          Cancelamento nao permitido com menos de 2 horas de antecedencia.
+          Cancelamento não permitido com menos de 2 horas de antecedencia.
         </div>
       </div>
     </div>
@@ -786,7 +842,7 @@
         <div style="background:#fff5f5;border:1px solid #fca5a5;border-radius:8px;padding:14px;margin-bottom:16px">
           <p style="font-size:13px;color:#7f1d1d;margin:0">
             <i class="fas fa-info-circle"></i>
-            Esta acao nao pode ser desfeita. O agendamento sera cancelado permanentemente.
+            Esta acao não pode ser desfeita. O agendamento sera cancelado permanentemente.
           </p>
         </div>
         <div *ngIf="agendamentoDetalhes" style="margin-bottom:16px;font-size:14px">
@@ -912,9 +968,23 @@
             </div>
           </div>
         </div>
-        <div *ngIf="!pagamentoProcessando && !pagamentoConcluido && formaPgto === 'PIX'" class="pix-info">
+        <!-- PIX - aguardando QR Code -->
+        <div *ngIf="!pagamentoProcessando && !pagamentoConcluido && formaPgto === 'PIX' && !aguardandoPix" class="pix-info">
           <i class="fas fa-qrcode" style="font-size:48px;color:#4361ee"></i>
-          <p>Após confirmar, você receberá as instruções de pagamento PIX.</p>
+          <p>Clique em "Gerar PIX" para obter o QR Code de pagamento.</p>
+        </div>
+
+        <!-- PIX - QR Code gerado -->
+        <div *ngIf="aguardandoPix && !pagamentoConcluido" class="pix-qrcode-container">
+          <p style="font-size:13px;color:#6b7280;margin-bottom:12px">Escaneie o QR Code com o app do seu banco:</p>
+          <img [src]="pixQrCodeUrl" alt="QR Code PIX" style="width:200px;height:200px;border:1px solid #e5e7eb;border-radius:8px;display:block;margin:0 auto 16px" />
+          <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:12px">
+            <div style="font-size:11px;color:#6b7280;margin-bottom:4px">PIX Copia e Cola:</div>
+            <div style="font-size:11px;color:#374151;word-break:break-all;font-family:monospace">{{ pixCopiaCola }}</div>
+          </div>
+          <p style="font-size:12px;color:#f59e0b">
+            <i class="fas fa-clock"></i> Aguardando confirmação do pagamento...
+          </p>
         </div>
         <div class="pagamento-processando" *ngIf="pagamentoProcessando">
           <div class="loading-spinner"></div>
@@ -932,7 +1002,10 @@
       <div class="modal-footer" *ngIf="!pagamentoProcessando && !pagamentoConcluido">
         <button class="btn btn-outline" (click)="fecharModalPagamento()">Cancelar</button>
         <button class="btn btn-primary" (click)="processarPagamento()" [disabled]="!formaPgto">
-          <i class="fas fa-lock"></i> Pagar R$ {{ (agendamentoDetalhes?.valorTotal ?? 0) | number:'1.2-2' }}
+          <i class="fas fa-lock"></i>
+          <span *ngIf="formaPgto !== 'PIX'">Pagar R$ {{ (agendamentoDetalhes?.valorTotal ?? 0) | number:'1.2-2' }}</span>
+          <span *ngIf="formaPgto === 'PIX' && !aguardandoPix">Gerar QR Code PIX</span>
+          <span *ngIf="formaPgto === 'PIX' && aguardandoPix">Já efetuei o pagamento</span>
         </button>
       </div>
       <div class="modal-footer" *ngIf="pagamentoConcluido">

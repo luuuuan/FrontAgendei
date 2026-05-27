@@ -32,11 +32,11 @@ export interface Servico {
   duracaoMinutos: number;
   tempoBuffer?: number;
   valor: number;
-  valorServico?: number;  
+  valorServico?: number;
   valorUnitario?: number;
-  tipoCobranca?: string; 
+  tipoCobranca?: string;
   localAtendimento?: string;
-  profissionalId?: number;      
+  profissionalId?: number;
   profissionalNome?: string;
   nomeProfissional?: string;
   prestadorId?: number;
@@ -78,8 +78,10 @@ export interface Agendamento {
   enderecoId?: number;
 }
 
+
 export interface AgendamentoResponse {
   id?: number;
+
   dataAgendamento: string;
   dataCriacao?: string;
   horaInicio?: string;
@@ -88,7 +90,7 @@ export interface AgendamentoResponse {
   valorTotal?: number;
   observacoes?: string;
   usuarioId: number;
-  profissionalId?: number;  // opcional — se null, é o próprio prestador
+  profissionalId?: number;
   prestadorNome?: string;
   nomePrestador?: string;
   servicoId: number[];

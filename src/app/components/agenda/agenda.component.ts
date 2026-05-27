@@ -5,6 +5,8 @@ import { AgendamentoService } from '../../services/agendamento.service';
 import { ProfissionalService } from '../../services/profissional.service';
 import { ServicoService } from '../../services/servico.service';
 import { ToastService } from '../../services/toast.service';
+import { UsuarioService } from '../../services/usuario.service';
+import { Usuario } from '../../models/models';
 import { AuthService } from '../../services/auth.service';
 import { AgendamentoResponse, Profissional, Servico } from '../../models/models';
 
@@ -18,6 +20,7 @@ import { AgendamentoResponse, Profissional, Servico } from '../../models/models'
 export class AgendaComponent implements OnInit {
   agendamentos: AgendamentoResponse[] = [];
   profissionais: Profissional[] = [];
+  usuarios: Usuario[] = [];
   servicos: Servico[] = [];
   prestadorId: number | null = null;
   carregando = false;
@@ -33,11 +36,11 @@ export class AgendaComponent implements OnInit {
 
   // Status disponíveis para o prestador atualizar
   statusDisponiveis = [
-    { valor: 'PENDENTE',   label: 'Pendente',   classe: 'badge-warning' },
+    { valor: 'PENDENTE', label: 'Pendente', classe: 'badge-warning' },
     { valor: 'CONFIRMADO', label: 'Confirmado', classe: 'badge-success' },
-    { valor: 'REALIZADO',  label: 'Realizado',  classe: 'badge-info'    },
-    { valor: 'CANCELADO',  label: 'Cancelado',  classe: 'badge-danger'  },
-    { valor: 'AUSENTE',    label: 'Ausente',    classe: 'badge-gray'    },
+    { valor: 'REALIZADO', label: 'Realizado', classe: 'badge-info' },
+    { valor: 'CANCELADO', label: 'Cancelado', classe: 'badge-danger' },
+    { valor: 'AUSENTE', label: 'Ausente', classe: 'badge-gray' },
   ];
 
   form: FormGroup;
@@ -48,16 +51,18 @@ export class AgendaComponent implements OnInit {
     private profissionalService: ProfissionalService,
     private servicoService: ServicoService,
     private toast: ToastService,
-    private authService: AuthService
+    private authService: AuthService,
+    private usuarioService: UsuarioService
+
   ) {
     this.form = this.fb.group({
       dataAgendamento: ['', Validators.required],
-      horaInicio:      ['', Validators.required],
-      nomeCliente:     ['', Validators.required],
+      horaInicio: ['', Validators.required],
+      nomeCliente: ['', Validators.required],
       telefoneCliente: [''],
-      profissionalId:  ['', Validators.required],
-      servicos:        ['', Validators.required],
-      observacoes:     ['']
+      profissionalId: ['', Validators.required],
+      servicos: ['', Validators.required],
+      observacoes: ['']
     });
   }
 
@@ -65,8 +70,12 @@ export class AgendaComponent implements OnInit {
     const sessao = this.authService.getSessao();
     this.prestadorId = sessao?.prestadorId ?? null;
     this.buscarAgendamentos();
-    this.profissionalService.listar().subscribe({ next: l => this.profissionais = l, error: () => {} });
-    this.servicoService.listar().subscribe({ next: l => this.servicos = l, error: () => {} });
+    this.usuarioService.listar().subscribe({
+      next: (l: Usuario[]) => this.usuarios = l,
+      error: () => { }
+    });
+    this.profissionalService.listar().subscribe({ next: l => this.profissionais = l, error: () => { } });
+    this.servicoService.listar().subscribe({ next: l => this.servicos = l, error: () => { } });
   }
 
   buscarAgendamentos() {
@@ -108,12 +117,11 @@ export class AgendaComponent implements OnInit {
     });
   }
 
-  // Atualizar status pelo prestador
   atualizarStatus(ag: AgendamentoResponse, novoStatus: string) {
     this.atualizandoStatus = true;
     this.agendamentoService.atualizarStatus(ag.id!, novoStatus).subscribe({
       next: () => {
-        ag.statusAgendamento = novoStatus;
+        ag.statusAgendamento = novoStatus as AgendamentoResponse['statusAgendamento'];
         if (this.agendamentoDetalhes?.id === ag.id) {
           this.agendamentoDetalhes!.statusAgendamento = novoStatus;
         }
@@ -132,11 +140,20 @@ export class AgendaComponent implements OnInit {
     this.form.get('telefoneCliente')?.setValue(v, { emitEvent: false });
   }
 
-  // Fix: extrai nome do cliente das observações
   nomeClienteObs(obs: string | undefined): string {
     if (!obs) return '-';
     const match = obs.match(/Cliente:\s*([^|]+)/);
     return match ? match[1].trim() : '-';
+  }
+
+  nomeCliente(ag: any): string {
+    // Tenta pelo usuarioId primeiro
+    if (ag.usuarioId) {
+      const u = this.usuarios.find((u: any) => u.id === ag.usuarioId);
+      if (u?.nome) return u.nome;
+    }
+    // Fallback: extrai das observações
+    return this.nomeClienteObs(ag.observacoes);
   }
 
   nomeProfissional(id: number | undefined): string {
@@ -145,7 +162,7 @@ export class AgendaComponent implements OnInit {
     return p?.nome || 'Profissional #' + id;
   }
 
- 
+
 
   // Fix Invalid Date - horaInicio separado da data
   formatarHora(v: string | undefined): string {
