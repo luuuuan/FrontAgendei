@@ -87,6 +87,10 @@ export class AreaClienteComponent implements OnInit {
     return ['HORA', 'METRO_QUADRADO', 'METRO_LINEAR', 'UNIDADE', 'DIARIA'];
   }
 
+  get isServicoFixo(): boolean {
+    return !this.servicoTemCobrancaVariavel;
+  }
+
   get servicoTemCobrancaVariavel(): boolean {
     return this.servicosSelecionados.some(s => this.tiposVariaveis.includes(s.tipoCobranca || ''));
   }
@@ -479,7 +483,9 @@ export class AreaClienteComponent implements OnInit {
       String(agora.getDate()).padStart(2, '0');
     if (this.dataSelecionada < hoje) { this.toast.erro('Não é possível agendar para datas passadas.'); return; }
     this.stepAgendamento = 4;
-    this.inicializarStripeAgendamento();
+    if (this.isServicoFixo) {
+      this.inicializarStripeAgendamento();
+    }
   }
 
   // Step 4: inicializa Stripe ao entrar na tela de pagamento
@@ -520,12 +526,19 @@ export class AreaClienteComponent implements OnInit {
 
     const valor = this.servicoTemCobrancaVariavel ? this.valorTotalCalculado : this.valorTotalServicos;
 
+    // Serviço variável: cria solicitação sem pagamento
+    if (this.servicoTemCobrancaVariavel) {
+      this.salvandoAgendamento = true;
+      this.criarAgendamentoESalvar(sessao, valor, null, true);
+      return;
+    }
+
     this.pagandoAgendamento = true;
     this.stripeErroAgendamento = '';
 
     if (this.formaPgtoAgendamento === 'PIX') {
       // PIX: cria agendamento e mostra QR code
-      this.criarAgendamentoESalvar(sessao, valor, null);
+      this.criarAgendamentoESalvar(sessao, valor, null, false);
       return;
     }
 
@@ -539,7 +552,7 @@ export class AreaClienteComponent implements OnInit {
             this.stripeErroAgendamento = result.error.message;
             this.pagandoAgendamento = false;
           } else {
-            this.criarAgendamentoESalvar(sessao, valor, result.paymentIntent.id);
+            this.criarAgendamentoESalvar(sessao, valor, result.paymentIntent.id, false);
           }
         });
       },
@@ -550,13 +563,13 @@ export class AreaClienteComponent implements OnInit {
     });
   }
 
-  criarAgendamentoESalvar(sessao: any, valor: number, paymentIntentId: string | null) {
+  criarAgendamentoESalvar(sessao: any, valor: number, paymentIntentId: string | null, isSolicitacao = false) {
     this.salvandoAgendamento = true;
     this.agendamentoService.criar({
       dataAgendamento: this.dataSelecionada,
       dataCriacao: new Date().toISOString(),
       horaInicio: this.horaSelecionada,
-      statusAgendamento: paymentIntentId ? 'PAGO' : 'PENDENTE',
+      statusAgendamento: 'PENDENTE',
       taxaPlataforma: valor * 0.1,
       valorTotal: valor,
       observacoes: this.observacoes,
@@ -571,9 +584,11 @@ export class AreaClienteComponent implements OnInit {
     } as any).subscribe({
       next: (ag) => {
         // pagamento já confirmado pelo back via @Transactional
-        this.toast.sucesso(paymentIntentId
-          ? 'Agendamento realizado e pagamento confirmado!'
-          : 'Agendamento realizado! Aguardando pagamento PIX.');
+        this.toast.sucesso(isSolicitacao
+          ? 'Solicitação enviada! O prestador irá confirmar prazo e valor.'
+          : paymentIntentId
+            ? 'Agendamento realizado e pagamento confirmado!'
+            : 'Agendamento realizado! Aguardando pagamento PIX.');
         this.telaAtiva = 'historico';
         this.carregarHistorico();
         this.carregarAgendamentosHoje();

@@ -512,12 +512,12 @@
             <label>Observações (opcional)</label>
             <textarea [(ngModel)]="observacoes" rows="3" placeholder="Alguma informação adicional..."></textarea>
           </div>
-          <!-- Pagamento integrado ao agendamento -->
-          <div class="pagamento-agendamento" style="margin:16px 0;padding:16px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px">
+          <!-- SERVIÇO FIXO: pagamento na hora -->
+          <div *ngIf="isServicoFixo" class="pagamento-agendamento"
+            style="margin:16px 0;padding:16px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px">
             <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:12px">
               <i class="fas fa-lock" style="color:#4361ee"></i> Pagamento
             </div>
-
             <div class="formas-pgto">
               <button class="forma-btn" [class.ativo]="formaPgtoAgendamento === 'CARTAO_CREDITO'"
                 (click)="formaPgtoAgendamento = 'CARTAO_CREDITO'; inicializarStripeAgendamento()">
@@ -532,25 +532,38 @@
                 <i class="fas fa-qrcode"></i> PIX
               </button>
             </div>
-
             <div *ngIf="formaPgtoAgendamento !== 'PIX'" style="margin-top:12px">
               <div id="stripe-card-agendamento" class="stripe-card-element"></div>
               <div class="stripe-error" *ngIf="stripeErroAgendamento">
                 <i class="fas fa-exclamation-circle"></i> {{ stripeErroAgendamento }}
               </div>
             </div>
-
             <div *ngIf="formaPgtoAgendamento === 'PIX'" style="margin-top:12px;text-align:center;padding:12px">
               <i class="fas fa-qrcode" style="font-size:32px;color:#4361ee"></i>
-              <p style="font-size:12px;color:#6b7280;margin-top:8px">
-                O QR Code PIX será gerado após confirmar o agendamento.
-              </p>
+              <p style="font-size:12px;color:#6b7280;margin-top:8px">O QR Code PIX será gerado após confirmar.</p>
             </div>
-
             <div class="info-box" style="margin-top:12px;font-size:12px">
               <i class="fas fa-shield-alt"></i>
               Pagamento seguro via Stripe. Reembolso total em caso de cancelamento.
             </div>
+          </div>
+
+          <!-- SERVIÇO VARIÁVEL: solicitação sem pagamento -->
+          <div *ngIf="servicoTemCobrancaVariavel"
+            style="margin:16px 0;padding:16px;background:#fffbeb;border:1px solid #fbbf24;border-radius:12px">
+            <div style="font-size:13px;font-weight:600;color:#92400e;margin-bottom:10px">
+              <i class="fas fa-info-circle"></i> Serviço com valor variável
+            </div>
+            <p style="font-size:13px;color:#78350f;margin:0 0 8px">
+              Este serviço é cobrado por
+              <strong>{{ labelUnidade(servicosSelecionados[0]?.tipoCobranca || '') }}</strong>.
+              O valor final será confirmado após a visita técnica do profissional.
+            </p>
+            <ul style="font-size:12px;color:#92400e;padding-left:16px;margin:0">
+              <li>O prestador irá confirmar prazo e valor após a visita</li>
+              <li>O pagamento será realizado após essa confirmação</li>
+              <li>Você poderá cancelar gratuitamente antes da visita</li>
+            </ul>
           </div>
 
           <div class="step-actions">
@@ -563,13 +576,16 @@
                 <i class="fas fa-spinner fa-spin"></i> Processando...
               </span>
               <span *ngIf="!pagandoAgendamento && !salvandoAgendamento">
-                <i class="fas fa-lock"></i>
-                <span *ngIf="formaPgtoAgendamento !== 'PIX'">
-                  Pagar e Agendar — R$ {{ (servicoTemCobrancaVariavel ? valorTotalCalculado : valorTotalServicos) | number:'1.2-2' }}
-                </span>
-                <span *ngIf="formaPgtoAgendamento === 'PIX'">
-                  Confirmar e Gerar PIX
-                </span>
+                <ng-container *ngIf="isServicoFixo">
+                  <i class="fas fa-lock"></i>
+                  <span *ngIf="formaPgtoAgendamento !== 'PIX'">
+                    Pagar e Agendar — R$ {{ valorTotalServicos | number:'1.2-2' }}
+                  </span>
+                  <span *ngIf="formaPgtoAgendamento === 'PIX'">Confirmar e Gerar PIX</span>
+                </ng-container>
+                <ng-container *ngIf="servicoTemCobrancaVariavel">
+                  <i class="fas fa-calendar-check"></i> Enviar Solicitação
+                </ng-container>
               </span>
             </button>
           </div>
