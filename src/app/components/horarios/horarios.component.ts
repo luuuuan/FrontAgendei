@@ -226,7 +226,8 @@ export class HorariosComponent implements OnInit {
     if (!v.diaInteiro && v.horaInicio >= v.horaFim) { this.toast.erro('Hora de início deve ser anterior à hora de fim.'); return; }
 
     const payload: Folga = {
-      profissionalId: this.profissionalSelecionadoId!,
+      profissionalId: this.modoAutonomo ? undefined : this.profissionalSelecionadoId!,
+      prestadorId:    this.modoAutonomo ? this.prestadorId! : undefined,
       data:       v.data,
       diaInteiro: v.diaInteiro,
       horaInicio: v.diaInteiro ? undefined : v.horaInicio,

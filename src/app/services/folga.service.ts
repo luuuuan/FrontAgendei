@@ -5,7 +5,8 @@ import { environment } from '../../environments/environment';
 
 export interface Folga {
   id?: number;
-  profissionalId: number;
+  profissionalId?: number;
+  prestadorId?: number;
   data: string;
   diaInteiro: boolean;
   horaInicio?: string;

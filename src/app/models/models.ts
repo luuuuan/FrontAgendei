@@ -71,7 +71,7 @@ export interface Agendamento {
   valorTotal?: number;
   observacoes?: string;
   usuarioId: number;
-  profissionalId?: number;  // opcional — se null, é o próprio prestador
+  profissionalId?: number;  
   prestadorNome?: string;
   nomePrestador?: string;
   servicos: number[];
