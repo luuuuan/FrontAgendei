@@ -1,0 +1,101 @@
+<div class="page-title">Gerenciar Usuários</div>
+
+<div class="filter-bar">
+  <div class="search-box">
+    <i class="fas fa-search"></i>
+    <input type="text" placeholder="Buscar por nome ou e-mail..." [(ngModel)]="termoBusca" (input)="filtrar()" />
+  </div>
+  <div class="filtro-tipo">
+    <button *ngFor="let t of tipos" class="filtro-btn" [class.ativo]="filtroTipo === t"
+      (click)="filtroTipo = t; filtrar()">
+      {{ t === 'TODOS' ? 'Todos' : t | titlecase }}
+    </button>
+  </div>
+</div>
+
+<div class="loading-box" *ngIf="carregando">
+  <i class="fas fa-spinner fa-spin"></i> Carregando usuários...
+</div>
+
+<div class="table-container" *ngIf="!carregando">
+  <table>
+    <thead>
+      <tr>
+        <th>Usuário</th>
+        <th>E-mail</th>
+        <th>Tipo</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let u of usuariosFiltrados">
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="avatar-sm">{{ iniciais(u.nome) }}</div>
+            <span>{{ u.nome }}</span>
+          </div>
+        </td>
+        <td>{{ u.email }}</td>
+        <td><span class="badge" [class]="classeTipo(u.tipoUsuario)">{{ u.tipoUsuario }}</span></td>
+        <td><span class="badge" [class]="classeStatus(u.ativo)">{{ u.ativo ? 'Ativo' : 'Bloqueado' }}</span></td>
+        <td>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm btn-outline" (click)="verDetalhes(u)" title="Ver detalhes">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button class="btn btn-sm" [class]="u.ativo ? 'btn-danger-outline' : 'btn-outline'"
+              (click)="bloquear(u)" [disabled]="atualizando === u.id" title="{{ u.ativo ? 'Bloquear' : 'Desbloquear' }}">
+              <i class="fas fa-spinner fa-spin" *ngIf="atualizando === u.id"></i>
+              <i class="fas fa-ban" *ngIf="atualizando !== u.id && u.ativo"></i>
+              <i class="fas fa-unlock" *ngIf="atualizando !== u.id && !u.ativo"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+      <tr *ngIf="usuariosFiltrados.length === 0">
+        <td colspan="5" style="text-align:center;padding:32px;color:#9ca3af">
+          <i class="fas fa-users" style="font-size:24px;margin-bottom:8px;display:block"></i>
+          Nenhum usuário encontrado.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal detalhes -->
+<div class="modal-overlay" *ngIf="modalDetalhesAberto" (click)="fecharDetalhes()">
+  <div class="modal" (click)="$event.stopPropagation()" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-user"></i> Detalhes do Usuário</div>
+      <button class="modal-close" (click)="fecharDetalhes()">×</button>
+    </div>
+    <div class="modal-body" *ngIf="usuarioDetalhes">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+        <div class="avatar-lg">{{ iniciais(usuarioDetalhes.nome) }}</div>
+        <div>
+          <div style="font-size:18px;font-weight:700">{{ usuarioDetalhes.nome }}</div>
+          <span class="badge" [class]="classeTipo(usuarioDetalhes.tipoUsuario)">{{ usuarioDetalhes.tipoUsuario }}</span>
+          <span class="badge" [class]="classeStatus(usuarioDetalhes.ativo)" style="margin-left:6px">
+            {{ usuarioDetalhes.ativo ? 'Ativo' : 'Bloqueado' }}
+          </span>
+        </div>
+      </div>
+      <div class="detalhe-grid">
+        <div class="detalhe-item"><span class="detalhe-label"><i class="fas fa-envelope"></i> E-mail</span><span>{{ usuarioDetalhes.email }}</span></div>
+        <div class="detalhe-item"><span class="detalhe-label"><i class="fas fa-phone"></i> Telefone</span><span>{{ usuarioDetalhes.telefone || '-' }}</span></div>
+        <div class="detalhe-item"><span class="detalhe-label"><i class="fas fa-id-card"></i> CPF</span><span>{{ usuarioDetalhes.cpf || '-' }}</span></div>
+        <div class="detalhe-item"><span class="detalhe-label"><i class="fas fa-birthday-cake"></i> Nascimento</span><span>{{ usuarioDetalhes.dataNascimento || '-' }}</span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="fecharDetalhes()">Fechar</button>
+      <button class="btn" [class]="usuarioDetalhes?.ativo ? 'btn-danger' : 'btn-primary'"
+        (click)="bloquear(usuarioDetalhes!); fecharDetalhes()">
+        <i class="fas fa-ban" *ngIf="usuarioDetalhes?.ativo"></i>
+        <i class="fas fa-unlock" *ngIf="!usuarioDetalhes?.ativo"></i>
+        {{ usuarioDetalhes?.ativo ? 'Bloquear Usuário' : 'Desbloquear Usuário' }}
+      </button>
+    </div>
+  </div>
+</div>

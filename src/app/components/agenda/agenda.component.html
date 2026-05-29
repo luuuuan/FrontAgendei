@@ -105,6 +105,15 @@
         </div>
 
         <div class="detalhe-bloco" *ngIf="agendamentoDetalhes.horaInicio">
+          <!-- Motivo cancelamento -->
+          <div *ngIf="agendamentoDetalhes.statusAgendamento === 'CANCELADO' && agendamentoDetalhes.motivoCancelamento"
+            style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;margin-bottom:12px">
+            <div style="font-size:11px;font-weight:600;color:#dc2626;margin-bottom:4px">
+              <i class="fas fa-ban"></i> MOTIVO DO CANCELAMENTO
+            </div>
+            <div style="font-size:13px;color:#374151">{{ agendamentoDetalhes.motivoCancelamento }}</div>
+          </div>
+
           <div class="detalhe-label"><i class="fas fa-clock"></i> Início</div>
           <div class="detalhe-valor">{{ formatarDataHora(agendamentoDetalhes.horaInicio) }}</div>
         </div>

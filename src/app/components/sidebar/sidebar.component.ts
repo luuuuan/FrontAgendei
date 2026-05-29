@@ -1,7 +1,8 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
+import { AuthService } from '../../services/auth.service';
 
 interface MenuItem { label: string; icon: string; rota: string; }
 
@@ -12,11 +13,12 @@ interface MenuItem { label: string; icon: string; rota: string; }
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.css']
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit {
   rotaAtiva = '/dashboard';
   menuAberto = false;
+  isAdmin = false;
 
-  menuItems: MenuItem[] = [
+  menuItemsPrestador: MenuItem[] = [
     { label: 'Dashboard',     icon: 'fas fa-home',           rota: '/dashboard'     },
     { label: 'Agenda',        icon: 'fas fa-calendar-alt',   rota: '/agenda'        },
     { label: 'Clientes',      icon: 'fas fa-users',          rota: '/clientes'      },
@@ -28,12 +30,27 @@ export class SidebarComponent {
     { label: 'Configurações', icon: 'fas fa-cog',            rota: '/configuracoes' },
   ];
 
-  constructor(private router: Router) {
+  menuItemsAdmin: MenuItem[] = [
+    { label: 'Dashboard',     icon: 'fas fa-home',           rota: '/dashboard'        },
+    { label: 'Usuários',      icon: 'fas fa-users-cog',      rota: '/admin/usuarios'   },
+    { label: 'Avaliações',    icon: 'fas fa-star',           rota: '/admin/avaliacoes' },
+    { label: 'Relatórios',    icon: 'fas fa-chart-bar',      rota: '/relatorios'       },
+  ];
+
+  get menuItems(): MenuItem[] {
+    return this.isAdmin ? this.menuItemsAdmin : this.menuItemsPrestador;
+  }
+
+  constructor(private router: Router, private authService: AuthService) {
     this.router.events.pipe(filter(e => e instanceof NavigationEnd))
       .subscribe((e: any) => {
         this.rotaAtiva = e.urlAfterRedirects;
-        this.menuAberto = false; // fecha menu ao navegar
+        this.menuAberto = false;
       });
+  }
+
+  ngOnInit() {
+    this.isAdmin = this.authService.getTipoUsuario() === 'ADMIN';
   }
 
   navegar(rota: string) {

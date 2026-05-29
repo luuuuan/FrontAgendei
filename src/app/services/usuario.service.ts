@@ -56,4 +56,8 @@ export class UsuarioService {
     return this.http.post(`${this.apiUrl}/redefinirSenha`, { token, novaSenha });
   }
 
+
+  atualizarAtivo(id: number, ativo: boolean): Observable<any> {
+    return this.http.patch<any>(`${environment.apiUrl}/usuarios/${id}/ativo`, { ativo });
+  }
 }

@@ -1,9 +1,12 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
 import { ClienteGuard } from './guards/cliente.guard';
+import { AdminGuard } from './guards/admin.guard';
+
 
 export const routes: Routes = [
-  // 
+  
+  
   { path: 'login',              loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent) },
   { path: 'cadastro-cliente',   loadComponent: () => import('./components/cadastro-cliente/cadastro-cliente.component').then(m => m.CadastroClienteComponent) },
   { path: 'redefinir-senha',    loadComponent: () => import('./components/redefinir-senha/redefinir-senha.component').then(m => m.RedefinirSenhaComponent) },
@@ -21,6 +24,9 @@ export const routes: Routes = [
   { path: 'relatorios',    loadComponent: () => import('./components/relatorios/relatorios.component').then(m => m.RelatoriosComponent),       canActivate: [AuthGuard] },
   { path: 'horarios',      loadComponent: () => import('./components/horarios/horarios.component').then(m => m.HorariosComponent),         canActivate: [AuthGuard] },
   { path: 'configuracoes', loadComponent: () => import('./components/configuracoes/configuracoes.component').then(m => m.ConfiguracoesComponent), canActivate: [AuthGuard] },
+
+  { path: 'admin/usuarios',   loadComponent: () => import('./components/admin-usuarios/admin-usuarios.component').then(m => m.AdminUsuariosComponent), canActivate: [AuthGuard, AdminGuard] },
+  { path: 'admin/avaliacoes', loadComponent: () => import('./components/admin-avaliacoes/admin-avaliacoes.component').then(m => m.AdminAvaliacoesComponent), canActivate: [AuthGuard, AdminGuard] },
 
   { path: '**', redirectTo: '/login' }
 ];

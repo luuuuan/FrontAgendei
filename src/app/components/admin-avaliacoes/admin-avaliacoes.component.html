@@ -1,0 +1,58 @@
+<div class="page-title">Moderação de Avaliações</div>
+
+<div class="filter-bar">
+  <div class="search-box">
+    <i class="fas fa-search"></i>
+    <input type="text" placeholder="Buscar por comentário, cliente ou profissional..." [(ngModel)]="termoBusca" (input)="filtrar()" />
+  </div>
+  <div class="filtro-nota">
+    <button class="filtro-btn" [class.ativo]="filtroNota === 0" (click)="filtroNota = 0; filtrar()">Todas</button>
+    <button *ngFor="let n of [1,2,3,4,5]" class="filtro-btn" [class.ativo]="filtroNota === n"
+      (click)="filtroNota = n; filtrar()">
+      {{ n }}★
+    </button>
+  </div>
+</div>
+
+<div class="loading-box" *ngIf="carregando">
+  <i class="fas fa-spinner fa-spin"></i> Carregando avaliações...
+</div>
+
+<div class="avaliacoes-grid" *ngIf="!carregando">
+  <div class="avaliacao-card" *ngFor="let a of avaliacoesFiltradas">
+    <div class="avaliacao-header">
+      <div class="avaliacao-estrelas">
+        <i class="fas fa-star" *ngFor="let s of estrelas(a.nota)" style="color:#f59e0b"></i>
+        <i class="far fa-star" *ngFor="let s of estrelasVazias(a.nota)" style="color:#d1d5db"></i>
+        <span style="font-size:13px;font-weight:700;margin-left:6px">{{ a.nota }}/5</span>
+      </div>
+      <button class="btn btn-sm btn-danger-outline" (click)="remover(a.id)" [disabled]="removendo === a.id" title="Remover">
+        <i class="fas fa-spinner fa-spin" *ngIf="removendo === a.id"></i>
+        <i class="fas fa-trash" *ngIf="removendo !== a.id"></i>
+      </button>
+    </div>
+
+    <div class="avaliacao-comentario" *ngIf="a.comentario">
+      "{{ a.comentario }}"
+    </div>
+    <div class="avaliacao-comentario sem-comentario" *ngIf="!a.comentario">
+      <i class="fas fa-minus-circle"></i> Sem comentário
+    </div>
+
+    <div class="avaliacao-footer">
+      <div class="avaliacao-info">
+        <i class="fas fa-user" style="color:#6b7280"></i>
+        <span>{{ a.nomeUsuario || 'Cliente #' + a.usuarioId }}</span>
+      </div>
+      <div class="avaliacao-info" *ngIf="a.nomeProfissional || a.profissionalId">
+        <i class="fas fa-user-md" style="color:#4361ee"></i>
+        <span>{{ a.nomeProfissional || 'Profissional #' + a.profissionalId }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" style="grid-column:1/-1" *ngIf="avaliacoesFiltradas.length === 0">
+    <i class="fas fa-star"></i>
+    <p>Nenhuma avaliação encontrada.</p>
+  </div>
+</div>

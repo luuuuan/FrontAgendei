@@ -8,6 +8,7 @@ export interface Usuario {
   dataNascimento?: string;
   enderecoId?: number;
   tipoUsuario?: string;
+  ativo?: boolean;
 }
 
 export interface UsuarioLogin {
@@ -81,7 +82,7 @@ export interface Agendamento {
 
 export interface AgendamentoResponse {
   id?: number;
-
+  motivoCancelamento?: string;
   dataAgendamento: string;
   dataCriacao?: string;
   horaInicio?: string;

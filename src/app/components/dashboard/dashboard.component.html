@@ -151,10 +151,10 @@
         </div>
         <div class="list-item-info">
           <div class="list-item-title">
-            Profissional #{{ ag.profissionalId }}
+            {{ nomeProfissional(ag.profissionalId) }}
           </div>
           <div class="list-item-sub">
-            {{ ag.horaInicio | date:'HH:mm' }} — {{ ag.dataAgendamento | date:'dd/MM/yyyy' }}
+            {{ ag.horaInicio?.substring(0,5) || '-' }} — {{ ag.dataAgendamento }}
           </div>
         </div>
         <span class="badge" [class]="classeStatus(ag.statusAgendamento)">
