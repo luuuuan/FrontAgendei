@@ -8,7 +8,7 @@ import { ToastComponent } from './components/toast/toast.component';
 import { RouterModule } from '@angular/router';
 
 
-const ROTAS_SEM_LAYOUT = ['/login', '/cadastro-cliente', '/cadastro-prestador', '/area-cliente', '/explorar', '/confirmar-conta'];
+const ROTAS_SEM_LAYOUT = ['/login', '/cadastro-cliente', '/cadastro-prestador', '/area-cliente', '/explorar', '/confirmar-conta', '/admin'];
 
 @Component({
   selector: 'app-root',

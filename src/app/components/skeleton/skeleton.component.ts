@@ -6,7 +6,6 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <!-- Tipo: cards de stats -->
     <div *ngIf="tipo === 'stats'" class="skeleton-stats-grid">
       <div class="skeleton-stat-card" *ngFor="let i of arr(count)">
         <div class="sk sk-icon"></div>
@@ -29,7 +28,6 @@ import { CommonModule } from '@angular/common';
       </div>
     </div>
 
-    <!-- Tipo: tabela -->
     <div *ngIf="tipo === 'tabela'" class="skeleton-tabela">
       <div class="sk sk-table-header"></div>
       <div class="skeleton-table-row" *ngFor="let i of arr(count)">
@@ -41,7 +39,6 @@ import { CommonModule } from '@angular/common';
       </div>
     </div>
 
-    <!-- Tipo: cards de serviço/profissional -->
     <div *ngIf="tipo === 'cards'" class="skeleton-cards-grid">
       <div class="skeleton-card" *ngFor="let i of arr(count)">
         <div class="sk sk-card-title"></div>
@@ -51,7 +48,6 @@ import { CommonModule } from '@angular/common';
       </div>
     </div>
 
-    <!-- Tipo: perfil -->
     <div *ngIf="tipo === 'perfil'" class="skeleton-perfil">
       <div class="sk-perfil-header">
         <div class="sk sk-avatar-lg"></div>
@@ -63,7 +59,6 @@ import { CommonModule } from '@angular/common';
       <div class="sk sk-field" *ngFor="let i of arr(count)"></div>
     </div>
 
-    <!-- Tipo: linha única (genérica) -->
     <div *ngIf="tipo === 'linha'" class="skeleton-linha">
       <div class="sk sk-linha" *ngFor="let i of arr(count)"></div>
     </div>

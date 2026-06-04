@@ -50,7 +50,7 @@ export class SidebarComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.isAdmin = this.authService.getTipoUsuario() === 'ADMIN';
+    this.isAdmin = this.authService.getTipoUsuario() === 'ADMINISTRADOR';
   }
 
   navegar(rota: string) {

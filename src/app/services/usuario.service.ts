@@ -8,10 +8,14 @@ import { Usuario, UsuarioLogin, UsuarioLoginResponse } from '../models/models';
 export class UsuarioService {
   private apiUrl = `${environment.apiUrl}/usuarios`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   listar(): Observable<Usuario[]> {
     return this.http.get<Usuario[]>(`${this.apiUrl}/clientes`);
+  }
+
+  listarTodos(): Observable<Usuario[]> {
+    return this.http.get<Usuario[]>(`${this.apiUrl}/todos`);
   }
 
   listarClientesPorPrestador(prestadorId?: number): Observable<Usuario[]> {

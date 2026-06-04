@@ -11,7 +11,6 @@ export const AuthGuard: CanActivateFn = () => {
     return false;
   }
 
-  // Se for cliente, redireciona para a área do cliente
   const tipo = authService.getTipoUsuario();
   if (tipo === 'CLIENTE') {
     router.navigate(['/area-cliente']);

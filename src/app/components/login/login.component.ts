@@ -29,7 +29,6 @@ export class LoginComponent {
     private toast: ToastService,
     private router: Router
   ) {
-    // Fix 7: redireciona se já está logado
     if (this.authService.estaLogado()) {
       const tipo = this.authService.getTipoUsuario();
       if (tipo === 'CLIENTE') {
@@ -64,13 +63,11 @@ export class LoginComponent {
             this.router.navigate(['/area-profissional']);
             break;
           case 'PRESTADOR':
-          case 'ADMIN':
           default:
             this.router.navigate(['/dashboard']);
         }
       },
       error: (err: any) => {
-        // Usa a mensagem do backend diretamente quando disponível
         const msg = err.mensagemAmigavel
           || err.error?.erro
           || err.error?.message

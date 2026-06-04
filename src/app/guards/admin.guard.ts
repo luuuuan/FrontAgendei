@@ -6,7 +6,9 @@ export const AdminGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
   const tipo = authService.getTipoUsuario();
-  if (tipo === 'ADMIN') return true;
+  if (tipo === 'ADMINISTRADOR') return true;
+  
+  //router.navigate(['/admin/usuarios']);
   router.navigate(['/dashboard']);
   return false;
 };

@@ -1,6 +1,8 @@
+import { environment } from '../../../environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { ToastService } from '../../services/toast.service';
 import { AuthService } from '../../services/auth.service';
 import { GradeTrabalhoService } from '../../services/grade-trabalho.service';
@@ -55,6 +57,7 @@ export class ConfiguracoesComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private toast: ToastService,
+    private http: HttpClient,
     private authService: AuthService,
     private gradeTrabalhoService: GradeTrabalhoService,
     private usuarioService: UsuarioService,
@@ -103,6 +106,7 @@ export class ConfiguracoesComponent implements OnInit {
     this.carregarDadosPrestador();
     this.carregarGrade();
     this.carregarDadosBancarios();
+    this.carregarPreferenciasNotificacao();
     this.bancoService.listar().subscribe({
       next: l => {
         this.bancos = l.filter((b, i, arr) => arr.findIndex(x => x.id === b.id) === i);
@@ -333,8 +337,34 @@ export class ConfiguracoesComponent implements OnInit {
   }
 
   salvarNotificacoes() {
+    if (this.formNotificacoes.invalid) return;
+    const sessao = this.authService.getSessao();
+    if (!sessao?.usuarioId) return;
+
     this.salvando = true;
-    setTimeout(() => { this.toast.sucesso('Preferências salvas!'); this.salvando = false; }, 800);
+    const payload = {
+      usuarioId: sessao.usuarioId,
+      ...this.formNotificacoes.value
+    };
+
+    this.http.post(`${environment.apiUrl}/usuarios/${sessao.usuarioId}/preferencias-notificacao`, payload).subscribe({
+      next: () => { this.toast.sucesso('Preferências salvas!'); this.salvando = false; },
+      error: (err: any) => {
+        this.toast.erro(err.mensagemAmigavel || 'Erro ao salvar preferências.');
+        this.salvando = false;
+      }
+    });
+  }
+
+  carregarPreferenciasNotificacao() {
+    const sessao = this.authService.getSessao();
+    if (!sessao?.usuarioId) return;
+    this.http.get<any>(`${environment.apiUrl}/usuarios/${sessao.usuarioId}/preferencias-notificacao`).subscribe({
+      next: (prefs) => {
+        if (prefs) this.formNotificacoes.patchValue(prefs);
+      },
+      error: () => {}
+    });
   }
 
   get urlApi() { return 'http://localhost:8080'; }

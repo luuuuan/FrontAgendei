@@ -6,7 +6,6 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       let mensagemAmigavel = 'Ocorreu um erro inesperado.';
 
-      // Tenta extrair mensagem do backend em múltiplos formatos
       const backendMsg = error.error?.erro
         || error.error?.message
         || error.error?.mensagem

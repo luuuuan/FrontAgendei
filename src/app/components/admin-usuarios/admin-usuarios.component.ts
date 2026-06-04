@@ -22,18 +22,18 @@ export class AdminUsuariosComponent implements OnInit {
   modalDetalhesAberto = false;
   usuarioDetalhes: Usuario | null = null;
 
-  tipos = ['TODOS', 'CLIENTE', 'PRESTADOR', 'ADMIN'];
+  tipos = ['TODOS', 'CLIENTE', 'PRESTADOR', 'ADMINISTRADOR'];
 
   constructor(
     private usuarioService: UsuarioService,
     private toast: ToastService
-  ) {}
+  ) { }
 
   ngOnInit() { this.carregar(); }
 
   carregar() {
     this.carregando = true;
-    this.usuarioService.listar().subscribe({
+    this.usuarioService.listarTodos().subscribe({
       next: (l: Usuario[]) => { this.usuarios = l; this.filtrar(); this.carregando = false; },
       error: () => { this.carregando = false; }
     });
