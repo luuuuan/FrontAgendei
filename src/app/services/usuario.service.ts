@@ -52,6 +52,10 @@ export class UsuarioService {
     return this.http.get<Usuario>(`${this.apiUrl}/buscar`, { params });
   }
 
+  solicitarConfirmacaoConta(email: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/confirmarConta`, { email });
+  }
+
   redefinirSenha(token: string, novaSenha: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/redefinirSenha`, { token, novaSenha });
   }

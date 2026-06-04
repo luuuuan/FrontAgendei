@@ -157,7 +157,9 @@ export class CadastroClienteComponent {
 
         this.usuarioService.cadastrar(payload).subscribe({
           next: () => {
-            this.toast.sucesso('Conta criada com sucesso! Faça login para continuar.');
+            this.toast.sucesso('Conta criada! Verifique seu e-mail para confirmar a conta.');
+            // Dispara e-mail de confirmação
+            this.usuarioService.solicitarConfirmacaoConta(payload.email).subscribe();
             this.router.navigate(['/login']);
           },
           error: (err: any) => {

@@ -215,7 +215,8 @@ export class CadastroPrestadorComponent implements OnInit {
 
         this.usuarioService.cadastrar(payload).subscribe({
           next: () => {
-            this.toast.sucesso('Cadastro realizado com sucesso! Faça login para acessar.');
+            this.toast.sucesso('Cadastro realizado! Verifique seu e-mail para confirmar a conta.');
+            this.usuarioService.solicitarConfirmacaoConta(payload.email).subscribe();
             this.router.navigate(['/login']);
           },
           error: (err: any) => {
