@@ -347,7 +347,7 @@ export class ConfiguracoesComponent implements OnInit {
       ...this.formNotificacoes.value
     };
 
-    this.http.post(`${environment.apiUrl}/usuarios/${sessao.usuarioId}/preferencias-notificacao`, payload).subscribe({
+    this.http.post(`${environment.apiUrl}/preferenciasNotificacao/usuario/${sessao.usuarioId}`, payload).subscribe({
       next: () => { this.toast.sucesso('Preferências salvas!'); this.salvando = false; },
       error: (err: any) => {
         this.toast.erro(err.mensagemAmigavel || 'Erro ao salvar preferências.');
@@ -359,7 +359,7 @@ export class ConfiguracoesComponent implements OnInit {
   carregarPreferenciasNotificacao() {
     const sessao = this.authService.getSessao();
     if (!sessao?.usuarioId) return;
-    this.http.get<any>(`${environment.apiUrl}/usuarios/${sessao.usuarioId}/preferencias-notificacao`).subscribe({
+    this.http.get<any>(`${environment.apiUrl}/preferenciasNotificacao/usuario/${sessao.usuarioId}`).subscribe({
       next: (prefs) => {
         if (prefs) this.formNotificacoes.patchValue(prefs);
       },
