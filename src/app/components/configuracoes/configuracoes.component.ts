@@ -98,7 +98,8 @@ export class ConfiguracoesComponent implements OnInit {
       emailConfirmacao: [true],
       emailLembrete: [true],
       emailCancelamento: [true],
-      antecedenciaLembrete: ['24']
+      whatAppNotificacao: [false],
+      antecedenciaLembrete: [24]
     });
   }
 
@@ -208,6 +209,7 @@ export class ConfiguracoesComponent implements OnInit {
         const endereco = (usuario as any).endereco?.logradouro
           ? `${(usuario as any).endereco.logradouro}, ${(usuario as any).endereco.numero} - ${(usuario as any).endereco.bairro}`
           : '';
+        // Se não veio endereco no usuario, busca separado
         const end = (usuario as any).endereco;
         this.formEmpresa.patchValue({
           nomeEmpresa: nome,
@@ -333,6 +335,17 @@ export class ConfiguracoesComponent implements OnInit {
         this.toast.erro(err.mensagemAmigavel || 'Erro ao salvar.');
         this.salvando = false;
       }
+    });
+  }
+
+  salvarToggle() {
+    // Salva automaticamente ao clicar no toggle
+    const sessao = this.authService.getSessao();
+    if (!sessao?.usuarioId) return;
+    const payload = { usuarioId: sessao.usuarioId, ...this.formNotificacoes.value };
+    this.http.post(`${environment.apiUrl}/preferenciasNotificacao/usuario/${sessao.usuarioId}`, payload).subscribe({
+      next: () => this.toast.sucesso('Preferência salva!'),
+      error: (err: any) => this.toast.erro(err.mensagemAmigavel || 'Erro ao salvar.')
     });
   }
 

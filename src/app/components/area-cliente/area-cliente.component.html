@@ -676,6 +676,10 @@
           <button class="aba-btn" [class.ativo]="abaPerfilAtiva === 'senha'" (click)="abaPerfilAtiva = 'senha'">
             <i class="fas fa-lock"></i> Alterar Senha
           </button>
+          <button class="aba-btn" [class.ativo]="abaPerfilAtiva === 'notificacoes'"
+            (click)="abaPerfilAtiva = 'notificacoes'; carregarPreferenciasNotif()">
+            <i class="fas fa-bell"></i> Notificações
+          </button>
         </div>
 
         <!-- Dados Pessoais -->
@@ -727,6 +731,64 @@
               </button>
             </div>
           </form>
+        </div>
+
+        <!-- Notificações -->
+        <div *ngIf="abaPerfilAtiva === 'notificacoes'">
+          <div class="loading-box" *ngIf="carregandoNotif">
+            <i class="fas fa-spinner fa-spin"></i> Carregando preferências...
+          </div>
+          <div *ngIf="!carregandoNotif">
+            <div class="toggle-item">
+              <div class="toggle-info">
+                <div class="toggle-titulo">E-mail de confirmação</div>
+                <div class="toggle-desc">Receber e-mail quando o agendamento for confirmado</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" [(ngModel)]="formNotif.emailConfirmacao" (change)="salvarToggleNotif()" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="toggle-item">
+              <div class="toggle-info">
+                <div class="toggle-titulo">E-mail de lembrete</div>
+                <div class="toggle-desc">Receber lembrete antes do agendamento</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" [(ngModel)]="formNotif.emailLembrete" (change)="salvarToggleNotif()" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="toggle-item">
+              <div class="toggle-info">
+                <div class="toggle-titulo">E-mail de cancelamento</div>
+                <div class="toggle-desc">Receber notificação em caso de cancelamento</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" [(ngModel)]="formNotif.emailCancelamento" (change)="salvarToggleNotif()" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="toggle-item" style="border-bottom:none">
+              <div class="toggle-info">
+                <div class="toggle-titulo">WhatsApp</div>
+                <div class="toggle-desc">Receber notificações via WhatsApp</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" [(ngModel)]="formNotif.whatAppNotificacao" (change)="salvarToggleNotif()" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="form-group" style="margin-top:20px">
+              <label>Antecedência do lembrete</label>
+              <select [(ngModel)]="formNotif.antecedenciaLembrete" (change)="salvarToggleNotif()">
+                <option [ngValue]="1">1 hora antes</option>
+                <option [ngValue]="2">2 horas antes</option>
+                <option [ngValue]="24">24 horas antes</option>
+                <option [ngValue]="48">48 horas antes</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <!-- Alterar Senha -->

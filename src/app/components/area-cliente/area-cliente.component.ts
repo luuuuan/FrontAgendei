@@ -11,6 +11,7 @@ import { ToastService } from '../../services/toast.service';
 import { AgendamentoResponse, Servico, Profissional, Usuario, EnderecoAgendamento } from '../../models/models';
 import { SkeletonComponent } from '../skeleton/skeleton.component';
 import { AvaliacaoService } from '../../services/avaliacao.service';
+import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { PagamentoService, PagamentoResponse } from '../../services/pagamento.service';
 
@@ -107,6 +108,26 @@ export class AreaClienteComponent implements OnInit {
     return ({ HORA: 'horas', METRO_QUADRADO: 'm²', METRO_LINEAR: 'metros', UNIDADE: 'unidades', DIARIA: 'dias' } as any)[tipo] || '';
   }
 
+  carregarPreferenciasNotif() {
+    const sessao = this.authService.getSessao();
+    if (!sessao?.usuarioId) return;
+    this.carregandoNotif = true;
+    this.http.get<any>(`${environment.apiUrl}/preferenciasNotificacao/usuario/${sessao.usuarioId}`).subscribe({
+      next: (p) => { if (p) this.formNotif = { ...this.formNotif, ...p }; this.carregandoNotif = false; },
+      error: () => { this.carregandoNotif = false; }
+    });
+  }
+
+  salvarToggleNotif() {
+    const sessao = this.authService.getSessao();
+    if (!sessao?.usuarioId) return;
+    const payload = { usuarioId: sessao.usuarioId, ...this.formNotif };
+    this.http.post(`${environment.apiUrl}/preferenciasNotificacao/usuario/${sessao.usuarioId}`, payload).subscribe({
+      next: () => this.toast.sucesso('Preferência salva!'),
+      error: (err: any) => this.toast.erro(err.mensagemAmigavel || 'Erro ao salvar.')
+    });
+  }
+
   get profissionalAtendeADomicilio(): boolean {
     return this.profissionalSelecionado?.atendeADomicilio === true;
   }
@@ -165,7 +186,15 @@ export class AreaClienteComponent implements OnInit {
   formSenha: FormGroup;
   salvandoPerfil = false;
   salvandoSenha = false;
-  abaPerfilAtiva: 'dados' | 'senha' = 'dados';
+  abaPerfilAtiva: 'dados' | 'senha' | 'notificacoes' = 'dados';
+  formNotif = {
+    emailConfirmacao: true,
+    emailLembrete: true,
+    emailCancelamento: true,
+    whatAppNotificacao: false,
+    antecedenciaLembrete: 24
+  };
+  carregandoNotif = false;
 
   filtroHistorico: 'todos' | 'CONFIRMADO' | 'PENDENTE' | 'CANCELADO' | 'REALIZADO' | 'PAGO' = 'todos';
 
@@ -179,7 +208,8 @@ export class AreaClienteComponent implements OnInit {
     private toast: ToastService,
     private router: Router,
     private avaliacaoService: AvaliacaoService,
-    private pagamentoService: PagamentoService
+    private pagamentoService: PagamentoService,
+    private http: HttpClient
   ) {
     this.formPerfil = this.fb.group({
       nome: ['', Validators.required],

@@ -167,7 +167,7 @@
         <div class="toggle-desc">Enviar e-mail ao cliente quando o agendamento for confirmado</div>
       </div>
       <label class="switch">
-        <input type="checkbox" formControlName="emailConfirmacao" />
+        <input type="checkbox" formControlName="emailConfirmacao" (change)="salvarToggle()" />
         <span class="slider"></span>
       </label>
     </div>
@@ -178,7 +178,7 @@
         <div class="toggle-desc">Enviar lembrete antes do agendamento</div>
       </div>
       <label class="switch">
-        <input type="checkbox" formControlName="emailLembrete" />
+        <input type="checkbox" formControlName="emailLembrete" (change)="salvarToggle()" />
         <span class="slider"></span>
       </label>
     </div>
@@ -189,42 +189,30 @@
         <div class="toggle-desc">Notificar cliente em caso de cancelamento</div>
       </div>
       <label class="switch">
-        <input type="checkbox" formControlName="emailCancelamento" />
+        <input type="checkbox" formControlName="emailCancelamento" (change)="salvarToggle()" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-item">
+      <div class="toggle-info">
+        <div class="toggle-titulo">WhatsApp</div>
+        <div class="toggle-desc">Receber notificações de agendamento via WhatsApp</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" formControlName="whatAppNotificacao" (change)="salvarToggle()" />
         <span class="slider"></span>
       </label>
     </div>
 
     <div class="form-group" style="margin-top: 24px;">
       <label>Antecedência do lembrete</label>
-      <select formControlName="antecedenciaLembrete">
-        <option value="1">1 hora antes</option>
-        <option value="2">2 horas antes</option>
-        <option value="24">24 horas antes</option>
-        <option value="48">48 horas antes</option>
+      <select formControlName="antecedenciaLembrete" (change)="salvarToggle()">
+        <option [ngValue]="1">1 hora antes</option>
+        <option [ngValue]="2">2 horas antes</option>
+        <option [ngValue]="24">24 horas antes</option>
+        <option [ngValue]="48">48 horas antes</option>
       </select>
-    </div>
-
-    <!-- Intervalo -->
-    <div class="form-group">
-      <label class="checkbox-label" style="display:flex;align-items:center;gap:10px;cursor:pointer">
-        <input type="checkbox" formControlName="temIntervalo" style="width:16px;height:16px" />
-        <span>Possui intervalo (almoço/pausa)</span>
-      </label>
-    </div>
-
-    <div class="form-row-2" *ngIf="temIntervalo">
-      <div class="form-group">
-        <label>Início do Intervalo</label>
-        <input type="time" formControlName="inicioIntervalo" />
-      </div>
-      <div class="form-group">
-        <label>Fim do Intervalo</label>
-        <input type="time" formControlName="fimIntervalo" />
-      </div>
-    </div>
-
-    <div class="info-aviso" *ngIf="carregandoGrade">
-      <i class="fas fa-spinner fa-spin"></i> Carregando horário de funcionamento...
     </div>
 
     <div class="form-actions">
