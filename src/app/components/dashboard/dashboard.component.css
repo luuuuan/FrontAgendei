@@ -69,3 +69,14 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Marcadores do calendário */
+.dia-cell { position:relative;min-height:48px;display:flex;flex-direction:column;align-items:center;padding-top:6px; }
+.dia-badges { display:flex;gap:2px;flex-wrap:wrap;justify-content:center;margin-top:2px; }
+.dia-dot { width:16px;height:16px;border-radius:50%;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;color:#fff; }
+.dia-dot.agendamento { background:#4361ee; }
+.dia-dot.feriado-dot { background:#f59e0b; }
+.dia-dot.bloqueado-dot { background:#dc2626; }
+.dia-cell.tem-agendamento { background:#eff6ff; }
+.dia-cell.feriado { background:#fffbeb; }
+.dia-cell.bloqueado { background:#fef2f2;opacity:.7; }

@@ -556,42 +556,12 @@ export class AreaClienteComponent implements OnInit {
 
     const valor = this.servicoTemCobrancaVariavel ? this.valorTotalCalculado : this.valorTotalServicos;
 
-    // Serviço variável: cria solicitação sem pagamento
-    if (this.servicoTemCobrancaVariavel) {
-      this.salvandoAgendamento = true;
-      this.criarAgendamentoESalvar(sessao, valor, null, true);
-      return;
-    }
-
-    this.pagandoAgendamento = true;
-    this.stripeErroAgendamento = '';
-
-    if (this.formaPgtoAgendamento === 'PIX') {
-      // PIX: cria agendamento e mostra QR code
-      this.criarAgendamentoESalvar(sessao, valor, null, false);
-      return;
-    }
-
-    // Cartão: cria intent, confirma no Stripe, depois cria agendamento
-    this.pagamentoService.criarIntent(0, valor, this.formaPgtoAgendamento).subscribe({
-      next: (intent) => {
-        this.stripeInstance.confirmCardPayment(intent.clientSecret, {
-          payment_method: { card: this.stripeCardAgendamento }
-        }).then((result: any) => {
-          if (result.error) {
-            this.stripeErroAgendamento = result.error.message;
-            this.pagandoAgendamento = false;
-          } else {
-            this.criarAgendamentoESalvar(sessao, valor, result.paymentIntent.id, false);
-          }
-        });
-      },
-      error: (err: any) => {
-        this.toast.erro(err.mensagemAmigavel || 'Erro ao processar pagamento.');
-        this.pagandoAgendamento = false;
-      }
-    });
+    // Cria agendamento sem pagamento — pagamento ocorre após o serviço
+    this.salvandoAgendamento = true;
+    this.criarAgendamentoESalvar(sessao, valor, null, this.servicoTemCobrancaVariavel);
   }
+
+  
 
   criarAgendamentoESalvar(sessao: any, valor: number, paymentIntentId: string | null, isSolicitacao = false) {
     this.salvandoAgendamento = true;

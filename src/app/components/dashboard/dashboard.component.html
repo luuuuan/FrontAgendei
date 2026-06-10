@@ -75,21 +75,51 @@
       <div
         *ngFor="let dia of diasDoMes"
         class="dia-cell"
-        [class.hoje]="ehHoje(dia)" [class.selecionado]="diaSelecionado === dia" (click)="selecionarDia(dia)" style="cursor:pointer"
-        [class.vazio]="!dia"
-      >
+        [class.hoje]="ehHoje(dia)"
+        [class.selecionado]="diaSelecionado === dia"
+        [class.tem-agendamento]="dia && diasComAgendamento(dia) > 0"
+        [class.feriado]="dia && !!ehFeriado(dia)"
+        [class.bloqueado]="dia && ehDiaBloqueado(dia)"
+        (click)="selecionarDia(dia)"
+        [title]="dia ? (ehFeriado(dia) || '') : ''"
+        style="cursor:pointer"
+        [class.vazio]="!dia">
         <span *ngIf="dia">{{ dia }}</span>
+        <!-- Marcador de agendamentos -->
+        <div class="dia-badges" *ngIf="dia">
+          <span class="dia-dot agendamento" *ngIf="diasComAgendamento(dia) > 0"
+            title="{{ diasComAgendamento(dia) }} agendamento(s)">
+            {{ diasComAgendamento(dia) }}
+          </span>
+          <span class="dia-dot feriado-dot" *ngIf="ehFeriado(dia)" title="{{ ehFeriado(dia) }}">F</span>
+          <span class="dia-dot bloqueado-dot" *ngIf="ehDiaBloqueado(dia)" title="Dia bloqueado">B</span>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Agendamentos do dia selecionado -->
 <div class="card" *ngIf="diaSelecionado" style="margin-top:16px">
-  <div class="card-header">
+  <div class="card-header" style="flex-wrap:wrap;gap:8px">
     <div class="card-title">
       <i class="fas fa-calendar-day"></i>
-      Agendamentos — dia {{ diaSelecionado }}/{{ dataAtual.getMonth() + 1 }}/{{ dataAtual.getFullYear() }}
+      {{ diaSelecionado }}/{{ dataAtual.getMonth() + 1 }}/{{ dataAtual.getFullYear() }}
+      <span *ngIf="ehFeriado(diaSelecionado!)" style="font-size:12px;color:#f59e0b;margin-left:8px">
+        <i class="fas fa-star"></i> {{ ehFeriado(diaSelecionado!) }}
+      </span>
     </div>
+    <button class="btn btn-sm" style="font-size:12px"
+      [class]="ehDiaBloqueado(diaSelecionado!) ? 'btn-outline' : 'btn-danger-outline'"
+      (click)="toggleBloqueio(diaSelecionado!)" [disabled]="salvandoBloqueio">
+      <i class="fas fa-spinner fa-spin" *ngIf="salvandoBloqueio"></i>
+      <i class="fas fa-unlock" *ngIf="!salvandoBloqueio && ehDiaBloqueado(diaSelecionado!)"></i>
+      <i class="fas fa-ban" *ngIf="!salvandoBloqueio && !ehDiaBloqueado(diaSelecionado!)"></i>
+      {{ ehDiaBloqueado(diaSelecionado!) ? 'Desbloquear dia' : 'Bloquear dia' }}
+    </button>
+  </div>
+  <div *ngIf="ehDiaBloqueado(diaSelecionado!)"
+    style="padding:10px 16px;background:#fef2f2;border-bottom:1px solid #fecaca;font-size:13px;color:#dc2626">
+    <i class="fas fa-ban"></i> Este dia está bloqueado — clientes não conseguem agendar.
   </div>
   <div class="loading-box" *ngIf="carregandoDia">
     <i class="fas fa-spinner fa-spin"></i> Carregando...

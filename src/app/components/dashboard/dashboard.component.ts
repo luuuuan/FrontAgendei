@@ -5,12 +5,15 @@ import { ServicoService } from '../../services/servico.service';
 import { ProfissionalService } from '../../services/profissional.service';
 import { AgendamentoService } from '../../services/agendamento.service';
 import { AgendamentoResponse, Profissional, Servico } from '../../models/models';
+import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 import { SkeletonComponent } from '../skeleton/skeleton.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, SkeletonComponent],  // FormsModule adicionado se necessário
+  imports: [CommonModule, SkeletonComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
@@ -24,6 +27,11 @@ export class DashboardComponent implements OnInit {
   profissionais: Profissional[] = [];
   servicos: Servico[] = [];
   carregandoDia = false;
+  agendamentosMes: AgendamentoResponse[] = [];
+  feriados: { data: string; nome: string }[] = [];
+  diasBloqueados: string[] = []; // dias bloqueados pelo prestador
+  carregandoFeriados = false;
+  salvandoBloqueio = false;
   carregandoClientes = false; carregandoServicos = false;
   carregandoProfissionais = false; carregandoAgendamentos = false;
   carregandoInicial = true;
@@ -36,11 +44,16 @@ export class DashboardComponent implements OnInit {
     private usuarioService: UsuarioService,
     private servicoService: ServicoService,
     private profissionalService: ProfissionalService,
-    private agendamentoService: AgendamentoService
+    private agendamentoService: AgendamentoService,
+    private http: HttpClient,
+    private authService: AuthService
   ) { }
 
   ngOnInit() {
     this.gerarCalendario();
+    this.carregarAgendamentosMes();
+    this.carregarFeriados();
+    this.carregarDiasBloqueados();
     this.carregandoClientes = true;
     this.usuarioService.listar().subscribe({ next: (l) => { this.totalClientes = l.length; this.carregandoClientes = false; this.verificarCarregamentoInicial(); }, error: () => { this.carregandoClientes = false; this.verificarCarregamentoInicial(); } });
     this.carregandoServicos = true;
@@ -100,8 +113,105 @@ export class DashboardComponent implements OnInit {
     return this.servicos.find(s => s.id === id)?.nome || 'Serv. #' + id;
   }
 
-  mesAnterior() { this.dataAtual = new Date(this.dataAtual.getFullYear(), this.dataAtual.getMonth() - 1, 1); this.gerarCalendario(); }
-  mesSeguinte() { this.dataAtual = new Date(this.dataAtual.getFullYear(), this.dataAtual.getMonth() + 1, 1); this.gerarCalendario(); }
+  carregarAgendamentosMes() {
+    const ano = this.dataAtual.getFullYear();
+    const mes = String(this.dataAtual.getMonth() + 1).padStart(2, '0');
+    const inicio = `${ano}-${mes}-01`;
+    const ultimoDia = new Date(ano, this.dataAtual.getMonth() + 1, 0).getDate();
+    const fim = `${ano}-${mes}-${String(ultimoDia).padStart(2, '0')}`;
+    this.agendamentoService.buscarPorPeriodo(inicio, fim).subscribe({
+      next: l => this.agendamentosMes = l,
+      error: () => {}
+    });
+  }
+
+  diasComAgendamento(dia: number): number {
+    const ano = this.dataAtual.getFullYear();
+    const mes = String(this.dataAtual.getMonth() + 1).padStart(2, '0');
+    const diaStr = `${ano}-${mes}-${String(dia).padStart(2, '0')}`;
+    return this.agendamentosMes.filter(a => a.dataAgendamento === diaStr).length;
+  }
+
+  carregarFeriados() {
+    const ano = this.dataAtual.getFullYear();
+    this.carregandoFeriados = true;
+    // Google Calendar API - feriados brasileiros
+    const calId = 'pt.brazilian%23holiday%40group.v.calendar.google.com';
+    const apiKey = 'AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY'; // chave pública de exemplo
+    const timeMin = `${ano}-01-01T00:00:00Z`;
+    const timeMax = `${ano}-12-31T23:59:59Z`;
+    this.http.get<any>(
+      `https://www.googleapis.com/calendar/v3/calendars/${calId}/events?key=${apiKey}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`
+    ).subscribe({
+      next: (res) => {
+        this.feriados = (res.items || []).map((item: any) => ({
+          data: item.start?.date || item.start?.dateTime?.substring(0, 10),
+          nome: item.summary
+        }));
+        this.carregandoFeriados = false;
+      },
+      error: () => { this.carregandoFeriados = false; }
+    });
+  }
+
+  ehFeriado(dia: number): string | null {
+    const ano = this.dataAtual.getFullYear();
+    const mes = String(this.dataAtual.getMonth() + 1).padStart(2, '0');
+    const diaStr = `${ano}-${mes}-${String(dia).padStart(2, '0')}`;
+    const feriado = this.feriados.find(f => f.data === diaStr);
+    return feriado?.nome || null;
+  }
+
+  carregarDiasBloqueados() {
+    const sessao = this.authService.getSessao();
+    if (!sessao?.prestadorId) return;
+    const ano = this.dataAtual.getFullYear();
+    const mes = String(this.dataAtual.getMonth() + 1).padStart(2, '0');
+    this.http.get<string[]>(
+      `${environment.apiUrl}/folga/prestador/${sessao.prestadorId}/mes/${ano}/${mes}`
+    ).subscribe({
+      next: l => this.diasBloqueados = l,
+      error: () => {}
+    });
+  }
+
+  ehDiaBloqueado(dia: number): boolean {
+    const ano = this.dataAtual.getFullYear();
+    const mes = String(this.dataAtual.getMonth() + 1).padStart(2, '0');
+    const diaStr = `${ano}-${mes}-${String(dia).padStart(2, '0')}`;
+    return this.diasBloqueados.includes(diaStr);
+  }
+
+  toggleBloqueio(dia: number) {
+    const sessao = this.authService.getSessao();
+    if (!sessao?.prestadorId || !dia) return;
+    const ano = this.dataAtual.getFullYear();
+    const mes = String(this.dataAtual.getMonth() + 1).padStart(2, '0');
+    const diaStr = `${ano}-${mes}-${String(dia).padStart(2, '0')}`;
+    this.salvandoBloqueio = true;
+
+    if (this.ehDiaBloqueado(dia)) {
+      // desbloquear - remove a folga
+      this.http.patch(`${environment.apiUrl}/folga/desativar-data/${sessao.prestadorId}/${diaStr}`, {}).subscribe({
+        next: () => { this.diasBloqueados = this.diasBloqueados.filter(d => d !== diaStr); this.salvandoBloqueio = false; },
+        error: () => { this.salvandoBloqueio = false; }
+      });
+    } else {
+      // bloquear - cria folga dia inteiro
+      this.http.post(`${environment.apiUrl}/folga/cadastrar`, {
+        prestadorId: sessao.prestadorId,
+        data: diaStr,
+        diaInteiro: true,
+        motivo: 'Feriado / Dia bloqueado pelo prestador'
+      }).subscribe({
+        next: () => { this.diasBloqueados.push(diaStr); this.salvandoBloqueio = false; },
+        error: () => { this.salvandoBloqueio = false; }
+      });
+    }
+  }
+
+  mesAnterior() { this.dataAtual = new Date(this.dataAtual.getFullYear(), this.dataAtual.getMonth() - 1, 1); this.gerarCalendario(); this.carregarAgendamentosMes(); this.carregarFeriados(); this.carregarDiasBloqueados(); }
+  mesSeguinte() { this.dataAtual = new Date(this.dataAtual.getFullYear(), this.dataAtual.getMonth() + 1, 1); this.gerarCalendario(); this.carregarAgendamentosMes(); this.carregarFeriados(); this.carregarDiasBloqueados(); }
 
   ehHoje(dia: number | null): boolean {
     if (!dia) return false;

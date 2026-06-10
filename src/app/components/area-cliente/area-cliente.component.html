@@ -182,16 +182,12 @@
             <span>1</span> Serviço
           </div>
           <div class="booking-step-sep"></div>
-          <div class="booking-step-tab" [class.ativo]="stepAgendamento >= 2" [class.concluido]="stepAgendamento > 2" style="display:none">
-            <span>2</span> Profissional
-          </div>
-          <div class="booking-step-sep"></div>
           <div class="booking-step-tab" [class.ativo]="stepAgendamento >= 3" [class.concluido]="stepAgendamento > 3">
-            <span>3</span> Data & Hora
+            <span>2</span> Data & Hora
           </div>
           <div class="booking-step-sep"></div>
           <div class="booking-step-tab" [class.ativo]="stepAgendamento >= 4">
-            <span>4</span> Confirmar
+            <span>3</span> Confirmar
           </div>
         </div>
 
@@ -225,11 +221,11 @@
               <!-- Profissional ou Prestador -->
               <div class="service-profissional-info">
                 <ng-container *ngIf="s.profissionalId">
-                  <div class="service-prof-avatar">{{ gerarIniciais(nomeProfissional(s.profissionalId)) }}</div>
+                  <div class="service-prof-avatar" style="background:#4361ee;color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">{{ gerarIniciais(nomeProfissional(s.profissionalId)) }}</div>
                   <span>{{ nomeProfissional(s.profissionalId) }}</span>
                 </ng-container>
                 <ng-container *ngIf="!s.profissionalId">
-                  <div class="service-prof-avatar" style="background:#6b7280">{{ gerarIniciais(s.nomePrestador || 'P') }}</div>
+                  <div class="service-prof-avatar" style="background:#6b7280;color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">{{ gerarIniciais(s.nomePrestador || 'P') }}</div>
                   <span>{{ s.nomePrestador || 'Prestador' }}</span>
                   <span class="badge badge-gray" style="font-size:10px">Prestador</span>
                 </ng-container>
@@ -275,9 +271,6 @@
             </button>
           </div>
         </div>
-
-        <!-- Step 2: Profissional -->
-        <!-- Step 2 eliminado — profissional selecionado automaticamente pelo serviço -->
 
         <!-- Step 3: Data e Hora -->
         <div *ngIf="stepAgendamento === 3">
@@ -512,43 +505,7 @@
             <label>Observações (opcional)</label>
             <textarea [(ngModel)]="observacoes" rows="3" placeholder="Alguma informação adicional..."></textarea>
           </div>
-          <!-- SERVIÇO FIXO: pagamento na hora -->
-          <div *ngIf="isServicoFixo" class="pagamento-agendamento"
-            style="margin:16px 0;padding:16px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px">
-            <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:12px">
-              <i class="fas fa-lock" style="color:#4361ee"></i> Pagamento
-            </div>
-            <div class="formas-pgto">
-              <button class="forma-btn" [class.ativo]="formaPgtoAgendamento === 'CARTAO_CREDITO'"
-                (click)="formaPgtoAgendamento = 'CARTAO_CREDITO'; inicializarStripeAgendamento()">
-                <i class="fas fa-credit-card"></i> Crédito
-              </button>
-              <button class="forma-btn" [class.ativo]="formaPgtoAgendamento === 'CARTAO_DEBITO'"
-                (click)="formaPgtoAgendamento = 'CARTAO_DEBITO'; inicializarStripeAgendamento()">
-                <i class="fas fa-credit-card"></i> Débito
-              </button>
-              <button class="forma-btn" [class.ativo]="formaPgtoAgendamento === 'PIX'"
-                (click)="formaPgtoAgendamento = 'PIX'">
-                <i class="fas fa-qrcode"></i> PIX
-              </button>
-            </div>
-            <div *ngIf="formaPgtoAgendamento !== 'PIX'" style="margin-top:12px">
-              <div id="stripe-card-agendamento" class="stripe-card-element"></div>
-              <div class="stripe-error" *ngIf="stripeErroAgendamento">
-                <i class="fas fa-exclamation-circle"></i> {{ stripeErroAgendamento }}
-              </div>
-            </div>
-            <div *ngIf="formaPgtoAgendamento === 'PIX'" style="margin-top:12px;text-align:center;padding:12px">
-              <i class="fas fa-qrcode" style="font-size:32px;color:#4361ee"></i>
-              <p style="font-size:12px;color:#6b7280;margin-top:8px">O QR Code PIX será gerado após confirmar.</p>
-            </div>
-            <div class="info-box" style="margin-top:12px;font-size:12px">
-              <i class="fas fa-shield-alt"></i>
-              Pagamento seguro via Stripe. Reembolso total em caso de cancelamento.
-            </div>
-          </div>
-
-          <!-- SERVIÇO VARIÁVEL: solicitação sem pagamento -->
+          <!-- Serviço variável: solicitação sem pagamento -->
           <div *ngIf="servicoTemCobrancaVariavel"
             style="margin:16px 0;padding:16px;background:#fffbeb;border:1px solid #fbbf24;border-radius:12px">
             <div style="font-size:13px;font-weight:600;color:#92400e;margin-bottom:10px">
@@ -570,22 +527,11 @@
             <button class="btn-step-voltar" (click)="stepAgendamento = 3">
               <i class="fas fa-arrow-left"></i> Voltar
             </button>
-            <button class="btn-primary-sm" (click)="confirmarAgendamento()"
-              [disabled]="salvandoAgendamento || pagandoAgendamento">
-              <span *ngIf="pagandoAgendamento || salvandoAgendamento">
-                <i class="fas fa-spinner fa-spin"></i> Processando...
-              </span>
-              <span *ngIf="!pagandoAgendamento && !salvandoAgendamento">
-                <ng-container *ngIf="isServicoFixo">
-                  <i class="fas fa-lock"></i>
-                  <span *ngIf="formaPgtoAgendamento !== 'PIX'">
-                    Pagar e Agendar — R$ {{ valorTotalServicos | number:'1.2-2' }}
-                  </span>
-                  <span *ngIf="formaPgtoAgendamento === 'PIX'">Confirmar e Gerar PIX</span>
-                </ng-container>
-                <ng-container *ngIf="servicoTemCobrancaVariavel">
-                  <i class="fas fa-calendar-check"></i> Enviar Solicitação
-                </ng-container>
+            <button class="btn-primary-sm" (click)="confirmarAgendamento()" [disabled]="salvandoAgendamento">
+              <span *ngIf="salvandoAgendamento"><i class="fas fa-spinner fa-spin"></i> Aguarde...</span>
+              <span *ngIf="!salvandoAgendamento">
+                <i class="fas fa-calendar-check"></i>
+                {{ servicoTemCobrancaVariavel ? 'Enviar Solicitação' : 'Confirmar Agendamento' }}
               </span>
             </button>
           </div>
