@@ -24,6 +24,7 @@ export interface UsuarioLoginResponse {
   prestadorId?: number;
   nomeEmpresa?: string;
   nomeFantasia?: string;
+  token?: string; // JWT retornado pelo back após login
 }
 
 export interface Servico {

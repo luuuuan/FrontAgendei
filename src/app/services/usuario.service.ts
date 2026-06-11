@@ -45,10 +45,6 @@ export class UsuarioService {
     return this.http.post(`${this.apiUrl}/recuperarSenha`, { email }, { responseType: 'text' });
   }
 
-  login(dados: UsuarioLogin): Observable<UsuarioLoginResponse> {
-    return this.http.post<UsuarioLoginResponse>(`${this.apiUrl}/login`, dados);
-  }
-
   buscarPorCpfOuEmail(valor: string): Observable<Usuario> {
     const params = valor.includes('@')
       ? new HttpParams().set('email', valor)

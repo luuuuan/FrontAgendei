@@ -1,7 +1,19 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
+import { AuthService } from '../services/auth.service';
 
 export const apiInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(AuthService);
+  const sessao = authService.getSessao();
+
+  // Injeta o JWT em todas as requisições autenticadas
+  if (sessao?.token) {
+    req = req.clone({
+      setHeaders: { Authorization: `Bearer ${sessao.token}` }
+    });
+  }
+
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       let mensagemAmigavel = 'Ocorreu um erro inesperado.';
@@ -17,6 +29,8 @@ export const apiInterceptor: HttpInterceptorFn = (req, next) => {
         mensagemAmigavel = backendMsg || 'Dados inválidos. Verifique os campos.';
       } else if (error.status === 401) {
         mensagemAmigavel = backendMsg || 'Acesso não autorizado.';
+      } else if (error.status === 403) {
+        mensagemAmigavel = 'Você não tem permissão para acessar este recurso.';
       } else if (error.status === 404) {
         mensagemAmigavel = backendMsg || 'Recurso não encontrado.';
       } else if (error.status === 500) {
