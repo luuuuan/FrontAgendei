@@ -33,7 +33,7 @@ export class FolgaService {
   }
 
   buscarDiasBloqueadosPorMes(prestadorId: number, mes: string): Observable<Folga[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/prestador/${prestadorId}?mes=${mes}`);
+    return this.http.get<Folga[]>(`${this.apiUrl}/prestador/${prestadorId}?mes=${mes}`);
   }
 
   desativarPorData(prestadorId: number, data: string): Observable<any> {
