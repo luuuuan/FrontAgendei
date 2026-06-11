@@ -6,6 +6,7 @@ import { ProfissionalService } from '../../services/profissional.service';
 import { AgendamentoService } from '../../services/agendamento.service';
 import { AgendamentoResponse, Profissional, Servico } from '../../models/models';
 import { HttpClient } from '@angular/common/http';
+import { FolgaService, Folga } from '../../services/folga.service';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { SkeletonComponent } from '../skeleton/skeleton.component';
@@ -46,7 +47,8 @@ export class DashboardComponent implements OnInit {
     private profissionalService: ProfissionalService,
     private agendamentoService: AgendamentoService,
     private http: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
+    private folgaService: FolgaService
   ) { }
 
   ngOnInit() {
@@ -167,9 +169,7 @@ export class DashboardComponent implements OnInit {
     if (!sessao?.prestadorId) return;
     const ano = this.dataAtual.getFullYear();
     const mes = String(this.dataAtual.getMonth() + 1).padStart(2, '0');
-    this.http.get<string[]>(
-      `${environment.apiUrl}/folga/prestador/${sessao.prestadorId}/mes/${ano}/${mes}`
-    ).subscribe({
+    this.folgaService.buscarDiasBloqueadosPorMes(sessao.prestadorId, `${ano}-${mes}`).subscribe({
       next: l => this.diasBloqueados = l,
       error: () => {}
     });
@@ -191,19 +191,12 @@ export class DashboardComponent implements OnInit {
     this.salvandoBloqueio = true;
 
     if (this.ehDiaBloqueado(dia)) {
-      // desbloquear - remove a folga
-      this.http.patch(`${environment.apiUrl}/folga/desativar-data/${sessao.prestadorId}/${diaStr}`, {}).subscribe({
+      this.folgaService.desativarPorData(sessao.prestadorId, diaStr).subscribe({
         next: () => { this.diasBloqueados = this.diasBloqueados.filter(d => d !== diaStr); this.salvandoBloqueio = false; },
         error: () => { this.salvandoBloqueio = false; }
       });
     } else {
-      // bloquear - cria folga dia inteiro
-      this.http.post(`${environment.apiUrl}/folga/cadastrar`, {
-        prestadorId: sessao.prestadorId,
-        data: diaStr,
-        diaInteiro: true,
-        motivo: 'Feriado / Dia bloqueado pelo prestador'
-      }).subscribe({
+      this.folgaService.cadastrar({ prestadorId: sessao.prestadorId, data: diaStr, diaInteiro: true, motivo: 'Dia bloqueado pelo prestador' }).subscribe({
         next: () => { this.diasBloqueados.push(diaStr); this.salvandoBloqueio = false; },
         error: () => { this.salvandoBloqueio = false; }
       });

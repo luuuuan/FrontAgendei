@@ -32,6 +32,14 @@ export class FolgaService {
     return this.http.get<Folga[]>(`${this.apiUrl}/prestador/${prestadorId}`);
   }
 
+  buscarDiasBloqueadosPorMes(prestadorId: number, mes: string): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/prestador/${prestadorId}?mes=${mes}`);
+  }
+
+  desativarPorData(prestadorId: number, data: string): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/desativar/${prestadorId}/${data}`, {});
+  }
+
   excluir(id: number ): Observable<void> {
     return this.http.patch<void>(`${this.apiUrl}/desativar/${id}`, { ativo: false }   
     );
