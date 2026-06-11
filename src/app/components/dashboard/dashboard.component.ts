@@ -170,7 +170,7 @@ export class DashboardComponent implements OnInit {
     const ano = this.dataAtual.getFullYear();
     const mes = String(this.dataAtual.getMonth() + 1).padStart(2, '0');
     this.folgaService.buscarDiasBloqueadosPorMes(sessao.prestadorId, `${ano}-${mes}`).subscribe({
-      next: l => this.diasBloqueados = l,
+      next: l => this.diasBloqueados = l.map(f => f.data),
       error: () => {}
     });
   }
